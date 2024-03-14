@@ -1,6 +1,13 @@
 # MutRingBuf
 
+[![crates.io][crates-badge]][crates-url]
+[![Documentation][docs-badge]][docs-url]
 [![Rust + Miri](https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml/badge.svg)](https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml)
+
+[crates-badge]: https://img.shields.io/crates/v/mutringbuf.svg
+[crates-url]: https://crates.io/crates/mutringbuf
+[docs-badge]: https://docs.rs/mutringbuf/badge.svg
+[docs-url]: https://docs.rs/mutringbuf
 
 A *very* simple lock-free SPSC FIFO ring buffer, with in-place mutability.
 
