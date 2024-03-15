@@ -2,7 +2,7 @@ pub trait Iterable<T> {
     /// Advances the iterator by `count`.
     ///
     /// # Safety
-    /// An iterator should never cross over its successor, so it must be: `count` <= [`Iterable::available()`]
+    /// An iterator should never overstep its successor, so it must always be: `count` <= [`Iterable::available()`]!
     unsafe fn advance(&mut self, count: usize);
 
     /// Returns the number of items available for an iterator.
@@ -44,21 +44,23 @@ pub(crate) trait PrivateIterable<T> {
 
 pub(crate) mod macros {
     macro_rules! prod_alive { () => (
-        /// Returns `true` if the producer iterator is still alive, `false` if it has been dropped
+        /// Returns `true` if the producer iterator is still alive, `false` if it has been dropped.
         #[inline]
         pub fn is_prod_alive(&self) -> bool {
             self.buffer.prod_alive()
         }
     )}
     macro_rules! work_alive { () => (
-        /// Returns `true` if the worker iterator is still alive, `false` if it has been dropped
+        /// Returns `true` if the worker iterator is still alive, `false` if it has been dropped.
+        ///
+        /// Note: when the buffer is used in non-mutable mode this will always return `false`.
         #[inline]
         pub fn is_work_alive(&self) -> bool {
             self.buffer.work_alive()
         }
     )}
     macro_rules! cons_alive { () => (
-        /// Returns `true` if the consumer iterator is still alive, `false` if it has been dropped
+        /// Returns `true` if the consumer iterator is still alive, `false` if it has been dropped.
         #[inline]
         pub fn is_cons_alive(&self) -> bool {
             self.buffer.cons_alive()

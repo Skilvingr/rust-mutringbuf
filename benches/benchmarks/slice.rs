@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 extern crate alloc;
 
 use alloc::vec;
@@ -20,7 +22,7 @@ fn slice_x10(b: &mut Bencher) {
     prod.push_slice(&[1; RB_SIZE / 2]);
 
     let mut data = [1; 10];
-    b.iter(|| unsafe {
+    b.iter(|| {
         prod.push_slice(&data);
         cons.copy_slice(&mut data);
         black_box(data);
@@ -34,7 +36,7 @@ fn slice_x100(b: &mut Bencher) {
     prod.push_slice(&[1; RB_SIZE / 2]);
 
     let mut data = [1; 100];
-    b.iter(|| unsafe {
+    b.iter(|| {
         prod.push_slice(&data);
         cons.copy_slice(&mut data);
         black_box(data);
@@ -48,7 +50,7 @@ fn slice_x1000(b: &mut Bencher) {
     prod.push_slice(&[1; 12]);
 
     let mut data = [1; 1000];
-    b.iter(|| unsafe {
+    b.iter(|| {
         prod.push_slice(&data);
         cons.copy_slice(&mut data);
     });

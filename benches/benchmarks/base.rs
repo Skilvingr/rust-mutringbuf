@@ -1,9 +1,11 @@
+#![allow(dead_code)]
+
 extern crate alloc;
 
 use alloc::vec;
 
 use criterion::{Bencher, black_box, Criterion};
-use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, Iterable};
+use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, Iterator};
 
 const RB_SIZE: usize = 256;
 const BATCH_SIZE: usize = 100;
