@@ -16,8 +16,8 @@ pub use ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 use crate::ring_buffer::storage::heap::HeapStorage;
 use crate::ring_buffer::storage::stack::StackStorage;
 
-use crate::ring_buffer::variants::local::LocalMutRingBuf;
-use crate::ring_buffer::variants::concurrent::ConcurrentMutRingBuf;
+use crate::ring_buffer::variants::local_rb::LocalMutRingBuf;
+use crate::ring_buffer::variants::concurrent_rb::ConcurrentMutRingBuf;
 
 
 pub mod iterators;

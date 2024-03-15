@@ -1,4 +1,5 @@
 use core::cell::UnsafeCell;
+use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;
 
@@ -6,7 +7,7 @@ use crate::iterators::{cons_alive, private_impl, prod_alive, public_impl};
 use crate::iterators::impls::detached_work_iter::DetachedWorkIter;
 use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
+use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
@@ -28,7 +29,7 @@ in order to move the iterator.
 </div>
 "##]
 
-pub struct WorkIter<B: IterManager + StorageManager<StoredType = T>, T, BT> {
+pub struct WorkIter<B: MutRB<T>, T, BT> {
     pub(crate) index: usize,
 
     pub(crate) buf_len: usize,
@@ -37,17 +38,19 @@ pub struct WorkIter<B: IterManager + StorageManager<StoredType = T>, T, BT> {
     cached_avail: usize,
 
     backtrack: UnsafeCell<BT>,
+
+    _phantom: PhantomData<T>
 }
 
-unsafe impl<B: ConcurrentRB + IterManager + StorageManager<StoredType = T>, T, BT> Send for WorkIter<B, T, BT> {}
+unsafe impl<B: ConcurrentRB + MutRB<T>, T, BT> Send for WorkIter<B, T, BT> {}
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, BT> Drop for WorkIter<B, T, BT> {
+impl<B: MutRB<T> + IterManager, T, BT> Drop for WorkIter<B, T, BT> {
     fn drop(&mut self) {
         self.buffer.set_work_alive(false);
     }
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, BT> PrivateIterator<T> for WorkIter<B, T, BT> {
+impl<B: MutRB<T>, T, BT> PrivateIterator<T> for WorkIter<B, T, BT> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_work_index(index);
@@ -60,7 +63,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> PrivateIterator<T> 
 
     private_impl!(); }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, BT> Iterator<T> for WorkIter<B, T, BT> {
+impl<B: MutRB<T>, T, BT> Iterator<T> for WorkIter<B, T, BT> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -76,7 +79,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> Iterator<T> for Wor
     public_impl!();
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, BT> WorkIter<B, T, BT> {
+impl<B: MutRB<T>, T, BT> WorkIter<B, T, BT> {
     prod_alive!();
     cons_alive!();
 
@@ -88,6 +91,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> WorkIter<B, T, BT> 
             buf_len: value.inner_len(),
             buffer: value,
             backtrack: backtrack.into(),
+
+            _phantom: PhantomData
         }
     }
 

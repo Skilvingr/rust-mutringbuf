@@ -1,10 +1,11 @@
+use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;
 
 use crate::iterators::{private_impl, prod_alive, public_impl, work_alive};
 use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
+use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
@@ -17,23 +18,25 @@ When working with types which implement both
 preferred over `clone` methods.
 "##]
 
-pub struct ConsIter<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> {
+pub struct ConsIter<B: MutRB<T>, T, const W: bool> {
     index: usize,
     buf_len: usize,
     cached_avail: usize,
 
     buffer: BufRef<B>,
+
+    _phantom: PhantomData<T>
 }
 
-unsafe impl<B: ConcurrentRB + IterManager + StorageManager<StoredType = T>, T, const W: bool> Send for ConsIter<B, T, W> {}
+unsafe impl<B: ConcurrentRB + MutRB<T>, T, const W: bool> Send for ConsIter<B, T, W> {}
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> Drop for ConsIter<B, T, W> {
+impl<B: MutRB<T> + IterManager, T, const W: bool> Drop for ConsIter<B, T, W> {
     fn drop(&mut self) {
         self.buffer.set_cons_alive(false);
     }
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> PrivateIterator<T> for ConsIter<B, T, W> {
+impl<B: MutRB<T>, T, const W: bool> PrivateIterator<T> for ConsIter<B, T, W> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -51,7 +54,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> PrivateI
     private_impl!();
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> Iterator<T> for ConsIter<B, T, W> {
+impl<B: MutRB<T>, T, const W: bool> Iterator<T> for ConsIter<B, T, W> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -67,7 +70,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> Iterator
     public_impl!();
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> ConsIter<B, T, W> {
+impl<B: MutRB<T>, T, const W: bool> ConsIter<B, T, W> {
     prod_alive!();
     work_alive!();
 
@@ -78,6 +81,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> ConsIter
 
             buf_len: value.inner_len(),
             buffer: value,
+
+            _phantom: PhantomData
         }
     }
 

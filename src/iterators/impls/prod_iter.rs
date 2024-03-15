@@ -1,10 +1,11 @@
+use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;
 
 use crate::iterators::{cons_alive, private_impl, public_impl, work_alive};
 use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
+use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
@@ -17,27 +18,25 @@ When working with types which implement both
 preferred over `clone` methods.
 "##]
 
-pub struct ProdIter<
-    B: IterManager + StorageManager<StoredType = T>,
-    T,
-> {
+pub struct ProdIter<B: MutRB<T>, T> {
     index: usize,
     buf_len: usize,
     cached_avail: usize,
 
     buffer: BufRef<B>,
+
+    _phantom: PhantomData<T>
 }
 
-unsafe impl<B: ConcurrentRB + IterManager + StorageManager<StoredType = T>, T> Send for ProdIter<B, T> {}
+unsafe impl<B: ConcurrentRB + MutRB<T>, T> Send for ProdIter<B, T> {}
 
-impl<B: IterManager + StorageManager<StoredType = T>,
-    T> Drop for ProdIter<B, T> {
+impl<B: MutRB<T> + IterManager, T> Drop for ProdIter<B, T> {
     fn drop(&mut self) {
         self.buffer.set_prod_alive(false);
     }
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T,> PrivateIterator<T> for ProdIter<B, T> {
+impl<B: MutRB<T>, T,> PrivateIterator<T> for ProdIter<B, T> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_prod_index(index);
@@ -51,7 +50,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T,> PrivateIterator<T> for
     private_impl!();
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T> Iterator<T> for ProdIter<B, T> {
+impl<B: MutRB<T>, T> Iterator<T> for ProdIter<B, T> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -67,7 +66,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T> Iterator<T> for ProdIte
     public_impl!();
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T> ProdIter<B, T> {
+impl<B: MutRB<T>, T> ProdIter<B, T> {
     work_alive!();
     cons_alive!();
 
@@ -78,6 +77,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T> ProdIter<B, T> {
 
             buf_len: value.inner_len(),
             buffer: value,
+
+            _phantom: PhantomData
         }
     }
 

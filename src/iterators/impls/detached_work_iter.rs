@@ -1,8 +1,6 @@
 use crate::iterators::impls::work_iter::WorkableSlice;
 use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
-
-
+use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
 use crate::WorkIter;
 
 #[doc = r##"
@@ -21,14 +19,14 @@ Note that, in order to avoid buffer saturation, atomic index can be synced with 
 this synchronises indices making the consumer iterator able to move on.
 "##]
 
-pub struct DetachedWorkIter<B: IterManager + StorageManager<StoredType = T>, T, BT> {
+pub struct DetachedWorkIter<B: MutRB<T>, T, BT> {
     work_iter: WorkIter<B, T, BT>
 }
 
-unsafe impl<B: ConcurrentRB + IterManager + StorageManager<StoredType = T>, T, BT> Send for DetachedWorkIter<B, T, BT> {}
+unsafe impl<B: ConcurrentRB + MutRB<T>, T, BT> Send for DetachedWorkIter<B, T, BT> {}
 
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, BT> DetachedWorkIter<B, T, BT> {
+impl<B: MutRB<T>, T, BT> DetachedWorkIter<B, T, BT> {
     /// See [`WorkIter::available`].
     #[inline]
     pub fn available(&mut self) -> usize {
@@ -70,11 +68,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> DetachedWorkIter<B,
     }
 }
 
-impl<
-    B: IterManager + StorageManager<StoredType = T>,
-    T,
-    BT
-> DetachedWorkIter<B, T, BT> {
+impl<B: MutRB<T>, T, BT> DetachedWorkIter<B, T, BT> {
     /// Creates a [`Self`] from a [`WorkIter`].
     #[inline]
     pub(crate) fn from_work(work: WorkIter<B, T, BT>) -> DetachedWorkIter<B, T, BT> {

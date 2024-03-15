@@ -4,7 +4,7 @@ use core::marker::PhantomData;
 use crate::{ConsIter, LocalStackRB, ProdIter, WorkIter};
 use crate::ring_buffer::storage::stack::StackStorage;
 use crate::ring_buffer::storage::storage_trait::Storage;
-use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, LocalRB, StorageManager};
+use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, LocalRB, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
 pub struct LocalMutRingBuf<S: Storage<T>, T> {
@@ -21,6 +21,8 @@ pub struct LocalMutRingBuf<S: Storage<T>, T> {
 
     _phantom: PhantomData<T>
 }
+
+impl<S: Storage<T>, T> MutRB<T> for LocalMutRingBuf<S, T> {}
 
 impl<S: Storage<T>, T> LocalRB for LocalMutRingBuf<S, T> {}
 

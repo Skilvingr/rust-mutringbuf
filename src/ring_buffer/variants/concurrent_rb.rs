@@ -8,7 +8,7 @@ use crossbeam_utils::CachePadded;
 use crate::{ConcurrentStackRB, ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::stack::StackStorage;
 use crate::ring_buffer::storage::storage_trait::Storage;
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
+use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
 pub struct ConcurrentMutRingBuf<S: Storage<T>, T> {
@@ -25,6 +25,8 @@ pub struct ConcurrentMutRingBuf<S: Storage<T>, T> {
 
     _phantom: PhantomData<T>
 }
+
+impl<S: Storage<T>, T> MutRB<T> for ConcurrentMutRingBuf<S, T> {}
 
 impl<S: Storage<T>, T> ConcurrentRB for ConcurrentMutRingBuf<S, T> {}
 

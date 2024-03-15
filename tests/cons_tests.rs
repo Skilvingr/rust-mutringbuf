@@ -1,5 +1,6 @@
-use mutringbuf::{ConcurrentHeapRB, Iterator, ProdIter, ConcurrentStackRB, LocalStackRB, LocalHeapRB};
-use mutringbuf::ring_buffer::variants::ring_buffer_trait::{IterManager, StorageManager};
+use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, Iterator, LocalHeapRB, LocalStackRB, ProdIter};
+use mutringbuf::ring_buffer::variants::ring_buffer_trait::MutRB;
+
 use crate::BufferTypes::{ConcurrentHeap, ConcurrentStack, LocalHeap, LocalStack};
 
 const BUFFER_SIZE: usize = 100;
@@ -27,7 +28,7 @@ fn get_buf(local: bool, stack: bool) -> BufferTypes<usize> {
     }
 }
 
-fn fill_buf<B: IterManager + StorageManager<StoredType = usize>>(prod: &mut ProdIter<B, usize>, count: usize) {
+fn fill_buf<B: MutRB<usize>>(prod: &mut ProdIter<B, usize>, count: usize) {
     for i in 0..count {
         let _ = prod.push(i);
     }

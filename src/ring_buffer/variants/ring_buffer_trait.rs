@@ -4,6 +4,9 @@ use crate::ring_buffer::storage::storage_trait::Storage;
 pub trait LocalRB {}
 /// Trait implemented by concurrent ring buffer.
 pub trait ConcurrentRB {}
+/// Trait implemented by ring buffers.
+#[allow(private_bounds)]
+pub trait MutRB<T>: IterManager + StorageManager<StoredType = T> {}
 
 /// Trait used to manage indices
 pub trait IterManager {
@@ -23,7 +26,7 @@ pub trait IterManager {
 }
 
 /// Trait used to manage storage.
-pub trait StorageManager {
+pub(crate) trait StorageManager {
     type StoredType;
     type S: Storage<Self::StoredType>;
 
