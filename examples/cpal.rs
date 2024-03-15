@@ -6,7 +6,7 @@ fn main() {
     use std::thread;
     use cpal::{InputCallbackInfo, OutputCallbackInfo, StreamConfig};
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-    use mutringbuf::{ConcurrentHeapRB, Iterable};
+    use mutringbuf::{ConcurrentHeapRB, Iterator};
 
     const BUF_SIZE: usize = 1000000;
     const DELAY_MS: usize = 500;

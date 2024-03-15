@@ -1,6 +1,6 @@
 extern crate alloc;
 
-use mutringbuf::{ConcurrentHeapRB, Iterable};
+use mutringbuf::{ConcurrentHeapRB, Iterator};
 
 const BUFFER_SIZE: usize = 100;
 

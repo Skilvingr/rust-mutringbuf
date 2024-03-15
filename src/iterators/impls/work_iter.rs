@@ -1,19 +1,14 @@
 use core::cell::UnsafeCell;
-
 use core::mem::transmute;
 use core::slice;
 
 use crate::iterators::{cons_alive, private_impl, prod_alive, public_impl};
 use crate::iterators::impls::detached_work_iter::DetachedWorkIter;
-use crate::iterators::iterable::{Iterable, PrivateIterable};
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
+use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
-
-#[doc = r##"
-
-"##]
 
 /// Returned by slice-specialised functions.
 /// # Fields:
@@ -21,6 +16,17 @@ use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 /// - 2: tail
 /// - 3: backtrack
 pub type WorkableSlice<'a, T, BT> = ((&'a mut [T], &'a mut [T]), &'a mut BT);
+
+#[doc = r##"
+Iterator used to mutate elements in-place.
+
+<div class="warning">
+
+This iterator returns mutable references to data stored within the buffer.
+Thus, as stated in the docs below, [`Self::advance()`] has to be called when done with the mutation
+in order to move the iterator.
+</div>
+"##]
 
 pub struct WorkIter<B: IterManager + StorageManager<StoredType = T>, T, BT> {
     pub(crate) index: usize,
@@ -41,7 +47,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> Drop for WorkIter<B
     }
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, BT> PrivateIterable<T> for WorkIter<B, T, BT> {
+impl<B: IterManager + StorageManager<StoredType = T>, T, BT> PrivateIterator<T> for WorkIter<B, T, BT> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_work_index(index);
@@ -54,7 +60,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> PrivateIterable<T> 
 
     private_impl!(); }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, BT> Iterable<T> for WorkIter<B, T, BT> {
+impl<B: IterManager + StorageManager<StoredType = T>, T, BT> Iterator<T> for WorkIter<B, T, BT> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -103,8 +109,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> WorkIter<B, T, BT> 
     ///
     /// <div class="warning">
     ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the data,
-    /// in order to move on the iterator.
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
     /// </div>
     #[inline]
     pub fn get_workable(&mut self) -> Option<(&mut T, &mut BT)> {
@@ -117,8 +123,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> WorkIter<B, T, BT> 
     /// with backtrack.
     /// <div class="warning">
     ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the data,
-    /// in order to move on the iterator.
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
     /// </div>
     #[inline]
     pub fn get_workable_slice_exact(&mut self, count: usize) -> Option<WorkableSlice<T, BT>> {
@@ -131,8 +137,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> WorkIter<B, T, BT> 
     /// with backtrack.
     /// <div class="warning">
     ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the data,
-    /// in order to move on the iterator.
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
     /// </div>
     #[inline]
     pub fn get_workable_slice_avail(&mut self) -> Option<WorkableSlice<T, BT>> {
@@ -144,8 +150,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, BT> WorkIter<B, T, BT> 
     /// maximum multiple of `modulo`, along with backtrack.
     /// <div class="warning">
     ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the data,
-    /// in order to move on the iterator.
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
     /// </div>
     #[inline]
     pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> Option<WorkableSlice<T, BT>> {

@@ -2,19 +2,19 @@ use core::mem::transmute;
 use core::slice;
 
 use crate::iterators::{cons_alive, private_impl, public_impl, work_alive};
-use crate::iterators::iterable::{Iterable, PrivateIterable};
+use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
 #[doc = r##"
-Iterator used to push data within the buffer.
+Iterator used to push data into the buffer.
 
-When used to push slices, if working with types which implement both
+When working with types which implement both
 [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html) and
-[`Clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html) traits, [`Self::push_slice`]
-should be preferred over [`Self::push_slice_clone`].
+[`Clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html) traits, `copy` methods should be
+preferred over `clone` methods.
 "##]
 
 pub struct ProdIter<
@@ -37,7 +37,7 @@ impl<B: IterManager + StorageManager<StoredType = T>,
     }
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T,> PrivateIterable<T> for ProdIter<B, T> {
+impl<B: IterManager + StorageManager<StoredType = T>, T,> PrivateIterator<T> for ProdIter<B, T> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_prod_index(index);
@@ -51,7 +51,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T,> PrivateIterable<T> for
     private_impl!();
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T> Iterable<T> for ProdIter<B, T> {
+impl<B: IterManager + StorageManager<StoredType = T>, T> Iterator<T> for ProdIter<B, T> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();

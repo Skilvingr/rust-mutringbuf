@@ -9,7 +9,7 @@ pub use iterators::impls::prod_iter::ProdIter;
 pub use iterators::impls::work_iter::WorkIter;
 pub use iterators::impls::detached_work_iter::DetachedWorkIter;
 pub use iterators::impls::cons_iter::ConsIter;
-pub use iterators::iterable::Iterable;
+pub use iterators::iterator_trait::Iterator;
 pub use ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
 #[cfg(feature = "alloc")]

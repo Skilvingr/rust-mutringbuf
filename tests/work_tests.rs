@@ -1,6 +1,6 @@
 extern crate alloc;
 
-use mutringbuf::{ConcurrentHeapRB, Iterable, ProdIter};
+use mutringbuf::{ConcurrentHeapRB, Iterator, ProdIter};
 
 
 

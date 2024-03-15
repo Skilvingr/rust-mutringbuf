@@ -1,17 +1,20 @@
-
 use core::mem::transmute;
-
 use core::slice;
 
 use crate::iterators::{private_impl, prod_alive, public_impl, work_alive};
-use crate::iterators::iterable::{Iterable, PrivateIterable};
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
+use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
 #[doc = r##"
+Iterator used to pop data from the buffer.
 
+When working with types which implement both
+[`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html) and
+[`Clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html) traits, `copy` methods should be
+preferred over `clone` methods.
 "##]
 
 pub struct ConsIter<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> {
@@ -30,7 +33,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> Drop for
     }
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> PrivateIterable<T> for ConsIter<B, T, W> {
+impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> PrivateIterator<T> for ConsIter<B, T, W> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -48,7 +51,7 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> PrivateI
     private_impl!();
 }
 
-impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> Iterable<T> for ConsIter<B, T, W> {
+impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> Iterator<T> for ConsIter<B, T, W> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -89,8 +92,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> ConsIter
     /// Returns a reference to an element.
     /// <div class="warning">
     ///
-    /// Being this a reference, [`Self::advance()`] has to be called when done with the data,
-    /// in order to move on the iterator.
+    /// Being this a reference, [`Self::advance()`] has to be called when done with the data
+    /// in order to move the iterator.
     /// </div>
     #[inline]
     pub fn peek_ref(&mut self) -> Option<&T> {
@@ -100,8 +103,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> ConsIter
     /// Returns a tuple of slice references, the sum of which with len equal to `count`.
     /// <div class="warning">
     ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the data,
-    /// in order to move on the iterator.
+    /// Being these references, [`Self::advance()`] has to be called when done with the data
+    /// in order to move the iterator.
     /// </div>
     #[inline]
     pub fn peek_slice(&mut self, count: usize) -> Option<(&[T], &[T])> {
@@ -111,8 +114,8 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> ConsIter
     /// Returns a tuple of slice references, the sum of which with len equal to available data.
     /// <div class="warning">
     ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the data,
-    /// in order to move on the iterator.
+    /// Being these references, [`Self::advance()`] has to be called when done with the data
+    /// in order to move the iterator.
     /// </div>
     #[inline]
     pub fn peek_available(&mut self) -> Option<(&[T], &[T])> {
@@ -126,8 +129,9 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> ConsIter
         self.next()
     }
 
-    /// Returns `Some(())`, copying next item into `dst`, if available.
-    /// Returns `None` doing nothing, otherwise.
+    /// - Returns `Some(())`, copying next item into `dst`, if available.
+    /// - Returns `None` doing nothing, otherwise.
+    ///
     /// This method uses `copy` and should be preferred over `clone` version, if possible.
     /// <div class="warning">
     ///
@@ -162,8 +166,9 @@ impl<B: IterManager + StorageManager<StoredType = T>, T, const W: bool> ConsIter
         } else { None }
     }
 
-    /// Returns `Some(())`, filling `dst` slice with the next `dst.len()` values, if available.
-    /// Returns `None` doing nothing, otherwise.
+    /// - Returns `Some(())`, filling `dst` slice with the next `dst.len()` values, if available.
+    /// - Returns `None` doing nothing, otherwise.
+    ///
     /// This method fills the slice using `copy` and should be preferred over `clone` version, if possible.
     /// <div class="warning">
     ///

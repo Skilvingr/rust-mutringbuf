@@ -1,5 +1,5 @@
 use crate::iterators::impls::work_iter::WorkableSlice;
-use crate::iterators::iterable::{Iterable, PrivateIterable};
+use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, StorageManager};
 
 

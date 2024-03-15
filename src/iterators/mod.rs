@@ -1,4 +1,4 @@
-pub mod iterable;
+pub mod iterator_trait;
 pub mod impls;
 
-pub(crate) use iterable::macros::*;
+pub(crate) use iterator_trait::macros::*;

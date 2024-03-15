@@ -1,8 +1,8 @@
-pub trait Iterable<T> {
+pub trait Iterator<T> {
     /// Advances the iterator by `count`.
     ///
     /// # Safety
-    /// An iterator should never overstep its successor, so it must always be: `count` <= [`Iterable::available()`]!
+    /// An iterator should never overstep its successor, so it must always be: `count` <= [`Iterator::available()`]!
     unsafe fn advance(&mut self, count: usize);
 
     /// Returns the number of items available for an iterator.
@@ -15,7 +15,7 @@ pub trait Iterable<T> {
     fn buf_len(&self) -> usize;
 }
 
-pub(crate) trait PrivateIterable<T> {
+pub(crate) trait PrivateIterator<T> {
     /// Sets the global index of this iterator.
     fn set_index(&self, index: usize);
 
