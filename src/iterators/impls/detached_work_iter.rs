@@ -19,14 +19,14 @@ Note that, in order to avoid buffer saturation, atomic index can be synced with 
 this synchronises indices making the consumer iterator able to move on.
 "##]
 
-pub struct DetachedWorkIter<B: MutRB<T>, T, BT> {
-    work_iter: WorkIter<B, T, BT>
+pub struct DetachedWorkIter<B: MutRB<T>, T, A> {
+    work_iter: WorkIter<B, T, A>
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<T>, T, BT> Send for DetachedWorkIter<B, T, BT> {}
+unsafe impl<B: ConcurrentRB + MutRB<T>, T, A> Send for DetachedWorkIter<B, T, A> {}
 
 
-impl<B: MutRB<T>, T, BT> DetachedWorkIter<B, T, BT> {
+impl<B: MutRB<T>, T, A> DetachedWorkIter<B, T, A> {
     /// See [`WorkIter::available`].
     #[inline]
     pub fn available(&mut self) -> usize {
@@ -68,10 +68,10 @@ impl<B: MutRB<T>, T, BT> DetachedWorkIter<B, T, BT> {
     }
 }
 
-impl<B: MutRB<T>, T, BT> DetachedWorkIter<B, T, BT> {
+impl<B: MutRB<T>, T, A> DetachedWorkIter<B, T, A> {
     /// Creates a [`Self`] from a [`WorkIter`].
     #[inline]
-    pub(crate) fn from_work(work: WorkIter<B, T, BT>) -> DetachedWorkIter<B, T, BT> {
+    pub(crate) fn from_work(work: WorkIter<B, T, A>) -> DetachedWorkIter<B, T, A> {
         Self {
             work_iter: work
         }
@@ -79,7 +79,7 @@ impl<B: MutRB<T>, T, BT> DetachedWorkIter<B, T, BT> {
 
     /// Attaches the iterator, yielding a [`WorkIter`].
     #[inline]
-    pub fn attach(self) -> WorkIter<B, T, BT> {
+    pub fn attach(self) -> WorkIter<B, T, A> {
         self.sync_index();
 
         self.work_iter
@@ -117,25 +117,25 @@ impl<B: MutRB<T>, T, BT> DetachedWorkIter<B, T, BT> {
 
     /// See [`WorkIter::get_workable`].
     #[inline]
-    pub fn get_workable(&mut self) -> Option<(&mut T, &mut BT)> {
+    pub fn get_workable(&mut self) -> Option<(&mut T, &mut A)> {
         self.work_iter.get_workable()
     }
 
     /// See [`WorkIter::get_workable_slice_exact`].
     #[inline]
-    pub fn get_workable_slice_exact(&mut self, count: usize) -> Option<WorkableSlice<'_, T, BT>> {
+    pub fn get_workable_slice_exact(&mut self, count: usize) -> Option<WorkableSlice<'_, T, A>> {
         self.work_iter.get_workable_slice_exact(count)
     }
 
     /// See [`WorkIter::get_workable_slice_avail`].
     #[inline]
-    pub fn get_workable_slice_avail(&mut self) -> Option<WorkableSlice<'_, T, BT>> {
+    pub fn get_workable_slice_avail(&mut self) -> Option<WorkableSlice<'_, T, A>> {
         self.work_iter.get_workable_slice_avail()
     }
 
     /// See [`WorkIter::get_workable_slice_multiple_of`].
     #[inline]
-    pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> Option<WorkableSlice<'_, T, BT>> {
+    pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> Option<WorkableSlice<'_, T, A>> {
         self.work_iter.get_workable_slice_multiple_of(rhs)
     }
 }

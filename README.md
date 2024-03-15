@@ -96,10 +96,10 @@ let (mut prod, mut cons) = buf.split();
 #### Mutable
 As in the immutable case, but a third iterator `work` stands between `prod` and `cons`.
 
-This iterator mutates elements in place, bearing a backtrack that can be used to keep track of
+This iterator mutates elements in place, bearing an accumulator that can be used to keep track of
 modifications made over previous elements.
 
-Backtrack element must be initialised during this phase.
+accumulator element must be initialised during this phase.
 
 ```rust
 use mutringbuf::LocalHeapRB;

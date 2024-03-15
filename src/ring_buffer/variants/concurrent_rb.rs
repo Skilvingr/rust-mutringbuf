@@ -35,7 +35,7 @@ impl<S: Storage<T>, T> ConcurrentMutRingBuf<S, T> {
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    pub fn split_mut<BT>(self, backtrack: BT) -> (ProdIter<ConcurrentMutRingBuf<S, T>, T>, WorkIter<ConcurrentMutRingBuf<S, T>, T, BT>, ConsIter<ConcurrentMutRingBuf<S, T>, T, true>) {
+    pub fn split_mut<A>(self, accumulator: A) -> (ProdIter<ConcurrentMutRingBuf<S, T>, T>, WorkIter<ConcurrentMutRingBuf<S, T>, T, A>, ConsIter<ConcurrentMutRingBuf<S, T>, T, true>) {
         self.prod_alive.store(true, Relaxed);
         self.work_alive.store(true, Relaxed);
         self.cons_alive.store(true, Relaxed);
@@ -43,7 +43,7 @@ impl<S: Storage<T>, T> ConcurrentMutRingBuf<S, T> {
         let r = BufRef::new(self);
         (
             ProdIter::new(r.clone()),
-            WorkIter::new(r.clone(), backtrack),
+            WorkIter::new(r.clone(), accumulator),
             ConsIter::new(r),
         )
     }
