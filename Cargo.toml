@@ -20,7 +20,7 @@ alloc = []
 crossbeam-utils = { version = "0.8.16", default-features = false }
 
 [target.'cfg(bench)'.dependencies]
-criterion = { version = "0.5.1", features = ["html_reports"] }
+criterion = { version = "0.5.1" }
 
 [target.'cfg(cpal)'.dependencies]
 cpal = { version = "0.15.2" }
@@ -32,7 +32,3 @@ harness = false
 [[bench]]
 name = "bench_slices"
 harness = false
-
-[profile.release]
-debug = true
-strip = false
