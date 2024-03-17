@@ -1,6 +1,6 @@
 [package]
 name = "mutringbuf"
-version = "0.1.0-alpha.1"
+version = "0.1.0"
 edition = "2021"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]

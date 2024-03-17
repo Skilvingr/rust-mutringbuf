@@ -1,3 +1,9 @@
+<a name="v0.1.0"></a>
+## v0.1.0 (17/03/2024)
+
+* Rename `new_heap(capacity)` method to `new(capacity)`
+* Add a new `default method` for heap-allocated buffers.
+
 <a name="v0.1.0-alpha.1"></a>
 ## v0.1.0-alpha.1 (15/03/2024)
 
