@@ -51,15 +51,17 @@ impl<T> UnsafeSyncCell<T> {
 
     /// Returns a mutable reference to inner value.
     /// # Safety
-    /// Not to be used to initialise inner value! Use `as_mut_ptr`, instead.
+    /// Not to be used to initialise inner value! Use [`Self::as_mut_ptr`], instead.
     #[inline]
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn inner_ref_mut(&self) -> &mut T {
         (*self.0.get()).assume_init_mut()
     }
 
+    /// Gets a mutable pointer to the contained value.
+    /// See [`MaybeUninit::as_mut_ptr`].
     #[inline]
-    pub unsafe fn as_mut_ptr(&self) -> *mut T {
-        (*self.0.get()).as_mut_ptr()
+    pub fn as_mut_ptr(&self) -> *mut T {
+        unsafe { (*self.0.get()).as_mut_ptr() }
     }
 }

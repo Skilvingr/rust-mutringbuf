@@ -6,7 +6,7 @@ const BUFFER_SIZE: usize = 300;
 
 #[test]
 fn test_push_work_pop_single() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -40,7 +40,7 @@ fn test_push_work_pop_single() {
 
 #[test]
 fn test_push_work_pop_slice() {
-    let (mut prod, mut work, mut cons) = LocalHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = LocalHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     let slice = (0..BUFFER_SIZE).collect::<Vec<usize>>();
 
@@ -82,7 +82,7 @@ fn test_push_work_pop_slice() {
 
 #[test]
 fn test_reset() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     let two_thirds_slice = (0..BUFFER_SIZE/3 * 2).collect::<Vec<usize>>();
     let slice = (0..BUFFER_SIZE).collect::<Vec<usize>>();

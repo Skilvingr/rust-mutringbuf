@@ -13,7 +13,7 @@ fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>, usize>) {
 
 #[test]
 fn test_work_single() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -46,7 +46,7 @@ fn test_work_single() {
 
 #[test]
 fn test_work_mul() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -105,7 +105,7 @@ fn test_work_mul() {
 }
 #[test]
 fn test_work_exact() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);

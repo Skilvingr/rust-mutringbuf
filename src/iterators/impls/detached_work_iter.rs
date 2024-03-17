@@ -17,6 +17,13 @@ When done, a worker iterator can be re-obtained via [`Self::attach`].
 
 Note that, in order to avoid buffer saturation, atomic index can be synced with [`Self::sync_index`];
 this synchronises indices making the consumer iterator able to move on.
+
+<div class="warning">
+
+As [`WorkIter`], this iterator returns mutable references to data stored within the buffer.
+Thus, as stated in the docs written for the former, [`Self::advance`] has to be called when done with the mutation
+in order to move the iterator.
+</div>
 "##]
 
 pub struct DetachedWorkIter<B: MutRB<T>, T, A> {

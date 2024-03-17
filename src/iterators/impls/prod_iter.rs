@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;
@@ -82,7 +83,7 @@ impl<B: MutRB<T>, T> ProdIter<B, T> {
         }
     }
 
-    /// Tries to push a new item moving it.
+    /// Tries to push a new item by moving or copying it.
     ///
     /// Returns:
     /// * `Err(value)`, if the buffer is full;
@@ -98,7 +99,7 @@ impl<B: MutRB<T>, T> ProdIter<B, T> {
         }
     }
 
-    /// Tries to push a slice of items copying the elements.
+    /// Tries to push a slice of items by copying the elements.
     /// The elements must implement [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html) trait.
     ///
     /// Returns:
@@ -127,7 +128,7 @@ impl<B: MutRB<T>, T> ProdIter<B, T> {
         }
     }
 
-    /// Tries to push a slice of items cloning the elements.
+    /// Tries to push a slice of items by cloning the elements.
     /// The elements must implement [`Clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html) trait.
     ///
     /// Returns:

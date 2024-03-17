@@ -24,9 +24,12 @@ Iterator used to mutate elements in-place.
 <div class="warning">
 
 This iterator returns mutable references to data stored within the buffer.
-Thus, as stated in the docs below, [`Self::advance()`] has to be called when done with the mutation
+Thus, as stated in the docs below, [`Self::advance`] has to be called when done with the mutation
 in order to move the iterator.
 </div>
+
+[`Self::advance`] updates a global iterator, which is read by the consumer to decide if it can move on.
+To avoid this, a [`DetachedWorkIter`] can be obtained by calling [`Self::detach`].
 "##]
 
 pub struct WorkIter<B: MutRB<T>, T, A> {

@@ -60,7 +60,7 @@ fn test_pop_exact() {
 
 #[test]
 fn test_pop_ref_exact() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
@@ -74,7 +74,7 @@ fn test_pop_ref_exact() {
 
 #[test]
 fn test_pop_slice_exact() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
@@ -91,7 +91,7 @@ fn test_pop_slice_exact() {
 
 #[test]
 fn test_pop_avail_nw_exact() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
@@ -108,7 +108,7 @@ fn test_pop_avail_nw_exact() {
 
 #[test]
 fn test_pop_slice_seam() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE / 2);
 
@@ -133,7 +133,7 @@ fn test_pop_slice_seam() {
 
 #[test]
 fn test_pop_slice_copy() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE / 2);
 

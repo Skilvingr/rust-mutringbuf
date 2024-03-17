@@ -6,7 +6,7 @@ const BUFFER_SIZE: usize = 100;
 
 #[test]
 fn test_push_one_by_one() {
-    let (mut prod, _cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split();
+    let (mut prod, _cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     for i in 0..BUFFER_SIZE {
@@ -18,7 +18,7 @@ fn test_push_one_by_one() {
 
 #[test]
 fn test_push_slice() {
-    let (mut prod, _cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split();
+    let (mut prod, _cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
 
     let half_slice = (0..BUFFER_SIZE / 2).collect::<Vec<usize>>();
     let slice = (0..BUFFER_SIZE).collect::<Vec<usize>>();

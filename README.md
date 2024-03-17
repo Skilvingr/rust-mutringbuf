@@ -11,7 +11,7 @@
 [tests-badge]: https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml/badge.svg
 [tests-url]: https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml
 
-A *very* simple lock-free SPSC FIFO ring buffer, with in-place mutability.
+A simple lock-free SPSC FIFO ring buffer, with in-place mutability.
 
 ## Should I use it?
 
@@ -19,7 +19,7 @@ If you are in search of a ring buffer to use in production environment, take a l
 * [ringbuf](https://github.com/agerasev/ringbuf);
 * [thingbuf](https://github.com/hawkw/thingbuf).
 
-This is a young project, so it might contain mistakes and performance penalties. If you find any, please, open an [issue](https://github.com/Skilvingr/rust-mutringbuf/issues/new/choose); I'll be glad to take a look!
+If you find any mistakes with this project, please, open an [issue](https://github.com/Skilvingr/rust-mutringbuf/issues/new/choose); I'll be glad to take a look!
 
 ## Performance
 
@@ -63,8 +63,8 @@ let local_buf = LocalStackRB::from([0; 10]);
 
 ```rust
 use mutringbuf::{ConcurrentHeapRB, LocalHeapRB};
-let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::new_heap(10);
-let local_buf: LocalHeapRB<usize> = LocalHeapRB::new_heap(10);
+let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::new(10);
+let local_buf: LocalHeapRB<usize> = LocalHeapRB::new(10);
 ```
 or:
 ```rust
@@ -99,7 +99,7 @@ As in the immutable case, but a third iterator `work` stands between `prod` and 
 This iterator mutates elements in place, bearing an accumulator that can be used to keep track of
 modifications made over previous elements.
 
-accumulator element must be initialised during this phase.
+Accumulator must be initialised during this phase.
 
 ```rust
 use mutringbuf::LocalHeapRB;
@@ -113,7 +113,10 @@ order to explore produced data back and forth.
 <br/>
 
 Each iterator can then be passed to a thread to do its job. More information can be found
-in the relative pages.
+in the relative pages:
+- [`ProdIter`]
+- [`WorkIter`]
+- [`ConsIter`]
 
 Note that a buffer, no matter its type, lives until the last of the iterators does so.
 

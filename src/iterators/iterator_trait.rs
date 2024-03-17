@@ -123,7 +123,7 @@ pub(crate) mod macros {
 
         #[inline]
         fn next_ref_mut_init(&mut self) -> Option<*mut T> {
-            unsafe { self.check(1).then(|| self.buffer.inner()[self.index].as_mut_ptr()) }
+            self.check(1).then(|| self.buffer.inner()[self.index].as_mut_ptr())
         }
 
         #[inline]

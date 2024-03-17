@@ -12,9 +12,7 @@ use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 #[doc = r##"
 Iterator used to pop data from the buffer.
 
-When working with types which implement both
-[`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html) and
-[`Clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html) traits, `copy` methods should be
+When working with types which implement both [`Copy`] and [`Clone`] traits, `copy` methods should be
 preferred over `clone` methods.
 "##]
 

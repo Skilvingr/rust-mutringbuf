@@ -40,7 +40,7 @@ fn prepare(mut prod: ProdIter<ConcurrentHeapRB<usize>, usize>, mut work: WorkIte
 
 #[test]
 fn test_work_detached_sync_index() {
-    let (prod, work, cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (prod, work, cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     let (mut prod, mut work, mut cons) = prepare(prod, work, cons);
 
@@ -61,7 +61,7 @@ fn test_work_detached_sync_index() {
 
 #[test]
 fn test_work_detached() {
-    let (prod, work, cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (prod, work, cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     let (mut prod, work, mut cons) = prepare(prod, work, cons);
 
@@ -82,7 +82,7 @@ fn test_work_detached() {
 
 #[test]
 fn test_work_detached_set_index() {
-    let (prod, work, cons) = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1).split_mut(0);
+    let (prod, work, cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
 
     let (mut prod, mut work, mut cons) = prepare(prod, work, cons);
 
@@ -109,7 +109,7 @@ fn test_work_detached_set_index() {
 
 #[test]
 fn test_work_go_back() {
-    let buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::new_heap(BUFFER_SIZE + 1);
+    let buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::new(BUFFER_SIZE + 1);
     let (_, work, _) = buf.split_mut(0);
 
     let mut work = work.detach();
