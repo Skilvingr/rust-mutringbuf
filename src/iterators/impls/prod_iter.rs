@@ -1,4 +1,3 @@
-use alloc::boxed::Box;
 use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;

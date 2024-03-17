@@ -31,9 +31,7 @@ impl<B> BufRef<B> {
     }
 
     #[cfg(not(feature = "alloc"))]
-    pub(crate) fn drop(&self) {
-        drop(self.inner.as_ptr());
-    }
+    pub(crate) fn drop(&self) {}
 }
 
 impl<B> Clone for BufRef<B> {
