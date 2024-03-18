@@ -28,7 +28,7 @@ fn main() {
     let stop_clone = stop_worker.clone();
     let worker = thread::spawn(move || {
         while !stop_clone.load(Relaxed) {
-            if let Some(((h, t), bt)) = work.get_workable_slice_multiple_of(delay_samples) {
+            if let Some(((h, t), bt)) = work.get_workable_slice_exact(delay_samples) {
                 let len = h.len() + t.len();
                 h.swap_with_slice(&mut bt[..h.len()]);
                 t.swap_with_slice(&mut bt[h.len()..]);
