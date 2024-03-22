@@ -17,13 +17,13 @@ alloc = []
 
 
 [dependencies]
-crossbeam-utils = { version = "0.8.16", default-features = false }
+crossbeam-utils = { version = "0.8.19", default-features = false }
 
 [target.'cfg(bench)'.dependencies]
 criterion = { version = "0.5.1" }
 
 [target.'cfg(cpal)'.dependencies]
-cpal = { version = "0.15.2" }
+cpal = { version = "0.15.3" }
 
 [[bench]]
 name = "bench_main"
