@@ -5,7 +5,7 @@ extern crate alloc;
 use alloc::vec;
 
 use criterion::{Bencher, black_box, Criterion};
-use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, Iterator};
+use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, MRBIterator};
 
 const RB_SIZE: usize = 256;
 const BATCH_SIZE: usize = 100;

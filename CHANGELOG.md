@@ -1,3 +1,8 @@
+<a name="v0.1.2"></a>
+## v0.1.2 (22/03/2024)
+
+* rename `Iterator` to `MRBIterator` to avoid annoying conflicts with other imports.
+
 <a name="v0.1.1"></a>
 ## v0.1.1 (17/03/2024)
 

@@ -1,4 +1,4 @@
-use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, Iterator, LocalHeapRB, LocalStackRB, ProdIter};
+use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, MRBIterator, LocalHeapRB, LocalStackRB, ProdIter};
 use mutringbuf::ring_buffer::variants::ring_buffer_trait::MutRB;
 
 use crate::BufferTypes::{ConcurrentHeap, ConcurrentStack, LocalHeap, LocalStack};

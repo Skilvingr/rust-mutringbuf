@@ -5,7 +5,7 @@ use core::slice;
 
 use crate::iterators::{cons_alive, private_impl, prod_alive, public_impl};
 use crate::iterators::impls::detached_work_iter::DetachedWorkIter;
-use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
+use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
@@ -53,7 +53,7 @@ impl<B: MutRB<T> + IterManager, T, A> Drop for WorkIter<B, T, A> {
     }
 }
 
-impl<B: MutRB<T>, T, A> PrivateIterator<T> for WorkIter<B, T, A> {
+impl<B: MutRB<T>, T, A> PrivateMRBIterator<T> for WorkIter<B, T, A> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_work_index(index);
@@ -66,7 +66,7 @@ impl<B: MutRB<T>, T, A> PrivateIterator<T> for WorkIter<B, T, A> {
 
     private_impl!(); }
 
-impl<B: MutRB<T>, T, A> Iterator<T> for WorkIter<B, T, A> {
+impl<B: MutRB<T>, T, A> MRBIterator<T> for WorkIter<B, T, A> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();

@@ -6,7 +6,7 @@ fn main() {
     use std::thread;
     use cpal::{InputCallbackInfo, OutputCallbackInfo, StreamConfig};
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-    use mutringbuf::{ConcurrentHeapRB, Iterator};
+    use mutringbuf::{ConcurrentHeapRB, MRBIterator};
 
     const BUF_SIZE: usize = 1000000;
     const DELAY_MS: usize = 500;
@@ -41,13 +41,14 @@ fn main() {
                 unsafe { work.advance(len) };
             }
         };
+
+        // work was moved by thread::spawn, so, returning it here will allow to use it after call to join
         work
     });
 
     let in_stream = in_dev.build_input_stream(
         &in_cfg,
         move |slice: &[f32], _info: &InputCallbackInfo| {
-            // Wait until the whole slice can be pushed...
             if prod.push_slice(slice).is_none() { println!("Input iter fell behind!"); }
         },
         move |err| { println!("INPUT ERROR: {}", err) },

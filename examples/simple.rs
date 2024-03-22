@@ -21,15 +21,14 @@ fn f() {
         let mut counter = 0;
 
         while !stop_clone.load(Acquire) {
-            if prod.push(counter).is_err() {
-                continue;
+            if prod.push(counter).is_ok() {
+
+                // Store produced values to check them later
+                produced.push(counter);
+
+                // Reset counter to avoid overflow
+                if counter < u8::MAX { counter += 1; } else { counter = 0; }
             }
-
-            // Store produced values to check them later
-            produced.push(counter);
-
-            // Reset counter to avoid overflow
-            if counter < u8::MAX { counter += 1; } else { counter = 0; }
         }
 
         // Iterator has to be returned here, as it was moved at the beginning of the thread

@@ -4,7 +4,7 @@ use std::sync::atomic::Ordering::{Acquire, Release};
 use std::thread;
 use std::time::Duration;
 
-use mutringbuf::{ConcurrentHeapRB, Iterator};
+use mutringbuf::{ConcurrentHeapRB, MRBIterator};
 
 const RB_SIZE: usize = 30;
 

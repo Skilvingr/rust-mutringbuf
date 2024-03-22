@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::sync::atomic::Ordering::{Acquire, Release};
 use std::thread;
 use std::time::Duration;
-use mutringbuf::{ConcurrentStackRB, Iterator as MRBIt, LocalStackRB};
+use mutringbuf::{ConcurrentStackRB, MRBIterator as MRBIt, LocalStackRB};
 
 const BUFFER_SIZE: usize = 300;
 

@@ -3,7 +3,7 @@ use core::mem::transmute;
 use core::slice;
 
 use crate::iterators::{private_impl, prod_alive, public_impl, work_alive};
-use crate::iterators::iterator_trait::{Iterator, PrivateIterator};
+use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
@@ -34,7 +34,7 @@ impl<B: MutRB<T> + IterManager, T, const W: bool> Drop for ConsIter<B, T, W> {
     }
 }
 
-impl<B: MutRB<T>, T, const W: bool> PrivateIterator<T> for ConsIter<B, T, W> {
+impl<B: MutRB<T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B, T, W> {
     #[inline]
     fn set_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -52,7 +52,7 @@ impl<B: MutRB<T>, T, const W: bool> PrivateIterator<T> for ConsIter<B, T, W> {
     private_impl!();
 }
 
-impl<B: MutRB<T>, T, const W: bool> Iterator<T> for ConsIter<B, T, W> {
+impl<B: MutRB<T>, T, const W: bool> MRBIterator<T> for ConsIter<B, T, W> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
