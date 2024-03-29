@@ -1,5 +1,5 @@
 use core::marker::PhantomData;
-use core::mem::transmute;
+use core::mem::{transmute};
 use core::slice;
 
 use crate::iterators::{cons_alive, private_impl, public_impl, work_alive};
@@ -154,5 +154,40 @@ impl<B: MutRB<T>, T> ProdIter<B, T> {
         } else {
             None
         }
+    }
+
+    /// If available, returns a mutable reference to the next item.
+    /// This reference can be used to write data into an *initialised* item.
+    ///
+    /// Items can be initialised by calling [`Self::get_next_item_mut_init`] or by creating a buffer
+    /// using `default` constructor. E.g.: [`ConcurrentHeapRB::default`] or [`LocalStackRB::default`].
+    ///
+    /// For uninitialised items, use [`Self::get_next_item_mut_init`], instead.
+    ///
+    /// <div class="warning">
+    ///
+    /// Being this a reference, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
+    /// </div>
+    ///
+    /// # Safety
+    /// The retrieved item must be initialised! For more info, refer to [`MaybeUninit::assume_init_mut`].
+    pub unsafe fn get_next_item_mut(&mut self) -> Option<&mut T> {
+        self.next_ref_mut()
+    }
+
+    /// If available, returns a mutable pointer to the next item.
+    /// This pointer can be used to write data into the item, even if this is not already initialised.
+    /// It is important to note that reading from this pointer or turning it into a reference is still
+    /// undefined behavior, unless the item is initialized.
+    ///
+    /// For more info, refer to [`MaybeUninit::as_mut_ptr`].
+    /// <div class="warning">
+    ///
+    /// Being this a pointer, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
+    /// </div>
+    pub fn get_next_item_mut_init(&mut self) -> Option<*mut T> {
+        self.next_ref_mut_init()
     }
 }
