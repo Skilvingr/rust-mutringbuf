@@ -1,3 +1,10 @@
+<a name="v0.1.3"></a>
+## v0.1.3 (29/03/2024)
+
+* `ProdIter` has now two methods to write data using a mutable reference or a mutable pointer:
+  - `get_next_item_mut`;
+  - `get_next_item_mut_init`.
+
 <a name="v0.1.2"></a>
 ## v0.1.2 (22/03/2024)
 
