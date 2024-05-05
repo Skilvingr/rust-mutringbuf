@@ -19,10 +19,10 @@ alloc = []
 [dependencies]
 crossbeam-utils = { version = "0.8.19", default-features = false }
 
-[target.'cfg(bench)'.dependencies]
+[target.'cfg(bench)'.dev-dependencies]
 criterion = { version = "0.5.1" }
 
-[target.'cfg(cpal)'.dependencies]
+[target.'cfg(cpal)'.dev-dependencies]
 cpal = { version = "0.15.3" }
 
 [[bench]]
