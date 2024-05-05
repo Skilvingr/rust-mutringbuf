@@ -119,7 +119,7 @@ impl<B: MutRB<T>, T, A> DetachedWorkIter<B, T, A> {
     /// advance.
     #[inline]
     pub fn sync_index(&self) {
-        self.work_iter.set_index(self.work_iter.index);
+        self.work_iter.set_atomic_index(self.work_iter.index);
     }
 
     /// See [`WorkIter::get_workable`].

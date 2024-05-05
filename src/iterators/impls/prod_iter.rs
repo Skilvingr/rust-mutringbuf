@@ -38,7 +38,7 @@ impl<B: MutRB<T> + IterManager, T> Drop for ProdIter<B, T> {
 
 impl<B: MutRB<T>, T,> PrivateMRBIterator<T> for ProdIter<B, T> {
     #[inline]
-    fn set_index(&self, index: usize) {
+    fn set_atomic_index(&self, index: usize) {
         self.buffer.set_prod_index(index);
     }
 

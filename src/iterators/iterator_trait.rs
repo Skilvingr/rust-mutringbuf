@@ -17,7 +17,7 @@ pub trait MRBIterator<T> {
 
 pub(crate) trait PrivateMRBIterator<T> {
     /// Sets the global index of this iterator.
-    fn set_index(&self, index: usize);
+    fn set_atomic_index(&self, index: usize);
 
     /// Returns the global index of successor.
     fn succ_index(&self) -> usize;
@@ -75,7 +75,7 @@ pub(crate) mod macros {
                 false => self.index + count
             };
 
-            self.set_index(self.index);
+            self.set_atomic_index(self.index);
         }
 
         #[inline]

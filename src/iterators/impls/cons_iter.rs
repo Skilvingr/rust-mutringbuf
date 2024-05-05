@@ -36,7 +36,7 @@ impl<B: MutRB<T> + IterManager, T, const W: bool> Drop for ConsIter<B, T, W> {
 
 impl<B: MutRB<T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B, T, W> {
     #[inline]
-    fn set_index(&self, index: usize) {
+    fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
     }
 
@@ -89,7 +89,7 @@ impl<B: MutRB<T>, T, const W: bool> ConsIter<B, T, W> {
     pub fn reset_index(&mut self) {
         let new_idx = self.succ_index();
         self.index = new_idx;
-        self.set_index(new_idx);
+        self.set_atomic_index(new_idx);
     }
 
     /// Returns a reference to an element.

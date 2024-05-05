@@ -55,7 +55,7 @@ impl<B: MutRB<T> + IterManager, T, A> Drop for WorkIter<B, T, A> {
 
 impl<B: MutRB<T>, T, A> PrivateMRBIterator<T> for WorkIter<B, T, A> {
     #[inline]
-    fn set_index(&self, index: usize) {
+    fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);
     }
 
@@ -110,7 +110,7 @@ impl<B: MutRB<T>, T, A> WorkIter<B, T, A> {
     pub fn reset_index(&mut self) {
         let new_idx = self.succ_index();
         self.index = new_idx;
-        self.set_index(new_idx);
+        self.set_atomic_index(new_idx);
     }
 
     /// Returns a tuple containing mutable references to actual value and accumulator.
