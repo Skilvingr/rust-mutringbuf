@@ -72,9 +72,9 @@ fn push_pop_x100(b: &mut Bencher) {
 
 fn push_pop_work(b: &mut Bencher) {
     let buf = ConcurrentHeapRB::from(vec![0u64; RB_SIZE + 1]);
-    let (mut prod, mut work, mut cons) = buf.split_mut(1);
+    let (mut prod, mut work, mut cons) = buf.split_mut();
 
-    let f = |x: &mut u64, _bt: &mut u64| {
+    let f = |x: &mut u64| {
         *x += 1u64;
     };
 
@@ -86,9 +86,10 @@ fn push_pop_work(b: &mut Bencher) {
         for _ in 0..BATCH_SIZE {
             let _ = prod.push(1);
         }
+
         for _ in 0..BATCH_SIZE {
-            if let Some((data, bt)) = work.get_workable() {
-                f(data, bt);
+            if let Some(data) = work.get_workable() {
+                f(data);
                 unsafe { work.advance(1) };
             }
         }

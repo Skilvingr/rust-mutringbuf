@@ -22,18 +22,20 @@ fn main() {
     let delay_samples = DELAY_MS * (in_cfg.sample_rate.0 as usize / 1000);
 
     let buf = ConcurrentHeapRB::from(vec![0.; BUF_SIZE]);
-    let (mut prod, mut work, mut cons) = buf.split_mut(vec![0f32; delay_samples]);
+    let (mut prod, mut work, mut cons) = buf.split_mut();
 
     let stop_worker = Arc::new(AtomicBool::new(false));
     let stop_clone = stop_worker.clone();
     let worker = thread::spawn(move || {
-        while !stop_clone.load(Relaxed) {
-            if let Some(((h, t), bt)) = work.get_workable_slice_exact(delay_samples) {
-                let len = h.len() + t.len();
-                h.swap_with_slice(&mut bt[..h.len()]);
-                t.swap_with_slice(&mut bt[h.len()..]);
+        let mut acc = vec![0f32; delay_samples];
 
-                for (v, w) in h.iter_mut().chain(t).zip(bt) {
+        while !stop_clone.load(Relaxed) {
+            if let Some((h, t)) = work.get_workable_slice_exact(delay_samples) {
+                let len = h.len() + t.len();
+                h.swap_with_slice(&mut acc[..h.len()]);
+                t.swap_with_slice(&mut acc[h.len()..]);
+
+                for (v, w) in h.iter_mut().chain(t).zip(&acc) {
                     *v *= DECAY;
                     *v += *w;
                 }

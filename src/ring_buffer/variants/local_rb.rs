@@ -31,7 +31,7 @@ impl<S: Storage<T>, T> LocalMutRingBuf<S, T> {
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    pub fn split_mut<A>(self, accumulator: A) -> (ProdIter<LocalMutRingBuf<S, T>, T>, WorkIter<LocalMutRingBuf<S, T>, T, A>, ConsIter<LocalMutRingBuf<S, T>, T, true>) {
+    pub fn split_mut(self) -> (ProdIter<LocalMutRingBuf<S, T>, T>, WorkIter<LocalMutRingBuf<S, T>, T>, ConsIter<LocalMutRingBuf<S, T>, T, true>) {
         self.prod_alive.set(true);
         self.work_alive.set(true);
         self.cons_alive.set(true);
@@ -39,7 +39,7 @@ impl<S: Storage<T>, T> LocalMutRingBuf<S, T> {
         let r = BufRef::new(self);
         (
             ProdIter::new(r.clone()),
-            WorkIter::new(r.clone(), accumulator),
+            WorkIter::new(r.clone()),
             ConsIter::new(r),
         )
     }

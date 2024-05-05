@@ -1,4 +1,3 @@
-use core::cell::UnsafeCell;
 use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;
@@ -15,8 +14,7 @@ use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 /// # Fields:
 /// - 1: head
 /// - 2: tail
-/// - 3: accumulator
-pub type WorkableSlice<'a, T, A> = ((&'a mut [T], &'a mut [T]), &'a mut A);
+pub type WorkableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
 
 #[doc = r##"
 Iterator used to mutate elements in-place.
@@ -24,36 +22,34 @@ Iterator used to mutate elements in-place.
 <div class="warning">
 
 This iterator returns mutable references to data stored within the buffer.
-Thus, as stated in the docs below, [`Self::advance`] has to be called when done with the mutation
+Thuss stated in the docs below, [`Self::advance`] has to be called when done with the mutation
 in order to move the iterator.
 </div>
 
 [`Self::advance`] updates a global iterator, which is read by the consumer to decide if it can move on.
-To avoid this, a [`DetachedWorkIter`] can be obtained by calling [`Self::detach`].
+To avoid this [`DetachedWorkIter`] can be obtained by calling [`Self::detach`].
 "##]
 
-pub struct WorkIter<B: MutRB<T>, T, A> {
+pub struct WorkIter<B: MutRB<T>, T> {
     pub(crate) index: usize,
 
     pub(crate) buf_len: usize,
     pub(crate) buffer: BufRef<B>,
 
     cached_avail: usize,
-
-    accumulator: UnsafeCell<A>,
-
+    
     _phantom: PhantomData<T>
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<T>, T, A> Send for WorkIter<B, T, A> {}
+unsafe impl<B: ConcurrentRB + MutRB<T>, T> Send for WorkIter<B, T> {}
 
-impl<B: MutRB<T> + IterManager, T, A> Drop for WorkIter<B, T, A> {
+impl<B: MutRB<T> + IterManager, T> Drop for WorkIter<B, T> {
     fn drop(&mut self) {
         self.buffer.set_work_alive(false);
     }
 }
 
-impl<B: MutRB<T>, T, A> PrivateMRBIterator<T> for WorkIter<B, T, A> {
+impl<B: MutRB<T>, T> PrivateMRBIterator<T> for WorkIter<B, T> {
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);
@@ -66,7 +62,7 @@ impl<B: MutRB<T>, T, A> PrivateMRBIterator<T> for WorkIter<B, T, A> {
 
     private_impl!(); }
 
-impl<B: MutRB<T>, T, A> MRBIterator<T> for WorkIter<B, T, A> {
+impl<B: MutRB<T>, T> MRBIterator<T> for WorkIter<B, T> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -82,18 +78,17 @@ impl<B: MutRB<T>, T, A> MRBIterator<T> for WorkIter<B, T, A> {
     public_impl!();
 }
 
-impl<B: MutRB<T>, T, A> WorkIter<B, T, A> {
+impl<B: MutRB<T>, T> WorkIter<B, T> {
     prod_alive!();
     cons_alive!();
 
-    pub(crate) fn new(value: BufRef<B>, accumulator: A) -> WorkIter<B, T, A> {
+    pub(crate) fn new(value: BufRef<B>) -> WorkIter<B, T> {
         Self {
             index: 0,
             cached_avail: 0,
 
             buf_len: value.inner_len(),
             buffer: value,
-            accumulator: accumulator.into(),
 
             _phantom: PhantomData
         }
@@ -101,7 +96,7 @@ impl<B: MutRB<T>, T, A> WorkIter<B, T, A> {
 
     /// Detaches the iterator yielding a [`DetachedWorkIter`].
     #[inline]
-    pub fn detach(self) -> DetachedWorkIter<B, T, A> {
+    pub fn detach(self) -> DetachedWorkIter<B, T> {
         DetachedWorkIter::from_work(self)
     }
 
@@ -113,7 +108,7 @@ impl<B: MutRB<T>, T, A> WorkIter<B, T, A> {
         self.set_atomic_index(new_idx);
     }
 
-    /// Returns a tuple containing mutable references to actual value and accumulator.
+    /// Returns a mutable references to the current value.
     ///
     /// <div class="warning">
     ///
@@ -121,48 +116,42 @@ impl<B: MutRB<T>, T, A> WorkIter<B, T, A> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable(&mut self) -> Option<(&mut T, &mut A)> {
-        let bt = self.accumulator.get();
-
-        unsafe { self.next_ref_mut().map(|v| (v, &mut *bt)) }
+    pub fn get_workable(&mut self) -> Option<&mut T> {
+        self.next_ref_mut()
     }
 
-    /// Returns a tuple of mutable slice references, the sum of which with len equal to `count`, along
-    /// with accumulator.
+    /// Returns a tuple of mutable slice references, the sum of which with len equal to `count`.
     /// <div class="warning">
     ///
     /// Being these references, [`Self::advance()`] has to be called when done with the mutation
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_exact(&mut self, count: usize) -> Option<WorkableSlice<T, A>> {
-        let bt = self.accumulator.get();
-
-        unsafe { self.next_chunk_mut(count).map(|x| (x, &mut *bt)) }
+    pub fn get_workable_slice_exact(&mut self, count: usize) -> Option<WorkableSlice<T>> {
+        self.next_chunk_mut(count)
     }
 
-    /// Returns a tuple of mutable slice references, the sum of which with len equal to [`Self::available()`], along
-    /// with accumulator.
+    /// Returns a tuple of mutable slice references, the sum of which with len equal to [`Self::available()`].
     /// <div class="warning">
     ///
     /// Being these references, [`Self::advance()`] has to be called when done with the mutation
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_avail(&mut self) -> Option<WorkableSlice<T, A>> {
+    pub fn get_workable_slice_avail(&mut self) -> Option<WorkableSlice<T>> {
         let avail = self.available();
         if avail > 0 { self.get_workable_slice_exact(avail) } else { None }
     }
 
     /// Returns a tuple of mutable slice references, the sum of which with len equal to the
-    /// maximum multiple of `modulo`, along with accumulator.
+    /// maximum multiple of `modulo`.
     /// <div class="warning">
     ///
     /// Being these references, [`Self::advance()`] has to be called when done with the mutation
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> Option<WorkableSlice<T, A>> {
+    pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> Option<WorkableSlice<T>> {
         let avail = self.available();
         let avail = avail - avail % rhs;
         if avail > 0 { self.get_workable_slice_exact(avail) } else { None }

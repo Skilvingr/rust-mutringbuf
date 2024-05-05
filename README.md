@@ -96,15 +96,12 @@ let (mut prod, mut cons) = buf.split();
 #### Mutable
 As in the immutable case, but a third iterator `work` stands between `prod` and `cons`.
 
-This iterator mutates elements in place, bearing an accumulator that can be used to keep track of
-modifications made over previous elements.
-
-Accumulator must be initialised during this phase.
+This iterator mutates elements in place.
 
 ```rust
 use mutringbuf::LocalHeapRB;
 let buf = LocalHeapRB::from(vec![0; 10]);
-let (mut prod, mut work, mut cons) = buf.split_mut(0);
+let (mut prod, mut work, mut cons) = buf.split_mut();
 ```
 
 Worker iterator can also be wrapped in a [`DetachedWorkIter`], indirectly pausing the consumer, in

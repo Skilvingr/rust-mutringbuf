@@ -10,7 +10,7 @@ const RB_SIZE: usize = 30;
 
 fn rb_fibonacci() {
     let buf = ConcurrentHeapRB::from(vec![0; RB_SIZE]);
-    let (mut prod, mut work, mut cons) = buf.split_mut((1, 0));
+    let (mut prod, mut work, mut cons) = buf.split_mut();
 
     // Flag variable to stop threads
     let stop_prod = Arc::new(AtomicBool::new(false));
@@ -46,9 +46,13 @@ fn rb_fibonacci() {
     let prod_finished_clone = prod_finished.clone();
     let worker = thread::spawn(move || {
 
+        let mut acc = (1, 0);
+
         while !prod_finished_clone.load(Acquire) || work.index() != prod_last_index_clone.load(Acquire) {
 
-            if let Some((value, (bt_h, bt_t))) = work.get_workable() {
+            if let Some(value) = work.get_workable() {
+                let (bt_h, bt_t) = &mut acc;
+
                 if *value == 1 { (*bt_h, *bt_t) = (1, 0); }
 
                 *value = *bt_h + *bt_t;

@@ -13,7 +13,7 @@ fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>, usize>) {
 
 #[test]
 fn test_work_single() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -26,7 +26,7 @@ fn test_work_single() {
     assert_eq!(cons.available(), 0);
 
     for _ in 0..BUFFER_SIZE {
-        if let Some((data, _)) = work.get_workable() {
+        if let Some(data) = work.get_workable() {
             *data += 1;
             unsafe { work.advance(1) };
         }
@@ -46,7 +46,7 @@ fn test_work_single() {
 
 #[test]
 fn test_work_mul() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -58,7 +58,7 @@ fn test_work_mul() {
     assert_eq!(work.available(), BUFFER_SIZE);
     assert_eq!(cons.available(), 0);
 
-    if let Some(((h, t), _)) = work.get_workable_slice_multiple_of(42) {
+    if let Some((h, t)) = work.get_workable_slice_multiple_of(42) {
 
         let len = h.len() + t.len();
 
@@ -81,7 +81,7 @@ fn test_work_mul() {
     assert_eq!(work.available(), 16);
     assert_eq!(cons.available(), 0);
 
-    if let Some(((h, t), _)) = work.get_workable_slice_avail() {
+    if let Some((h, t)) = work.get_workable_slice_avail() {
 
         let len = h.len() + t.len();
 
@@ -105,7 +105,7 @@ fn test_work_mul() {
 }
 #[test]
 fn test_work_exact() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut(0);
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -118,7 +118,7 @@ fn test_work_exact() {
     assert_eq!(cons.available(), 0);
 
     for _ in 0..20 {
-        if let Some(((h, t), _)) = work.get_workable_slice_exact(5) {
+        if let Some((h, t)) = work.get_workable_slice_exact(5) {
             let len = h.len() + t.len();
 
             h.iter_mut().for_each(|v| *v += 1);
