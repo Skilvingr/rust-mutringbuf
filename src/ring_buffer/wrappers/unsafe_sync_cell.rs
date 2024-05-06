@@ -1,6 +1,8 @@
 use core::cell::UnsafeCell;
 use core::mem::MaybeUninit;
 
+/// Sync version of `UnsafeCell<MaybeUninit<T>>`.
+/// While it should not be used outside of this crate, it might result useful in certain cases.
 pub struct UnsafeSyncCell<T>(UnsafeCell<MaybeUninit<T>>);
 
 unsafe impl<T: Sync> Sync for UnsafeSyncCell<T> {}

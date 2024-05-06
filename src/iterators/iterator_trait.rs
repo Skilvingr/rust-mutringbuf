@@ -1,3 +1,4 @@
+/// Trait implemented by iterators.
 pub trait MRBIterator<T> {
     /// Advances the iterator by `count`.
     ///
