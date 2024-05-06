@@ -1,5 +1,4 @@
-use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, MRBIterator, ProdIter};
-use mutringbuf::ring_buffer::variants::ring_buffer_trait::MutRB;
+use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, MRBIterator, MutRB, ProdIter};
 
 const BUFFER_SIZE: usize = 100;
 

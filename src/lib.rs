@@ -10,6 +10,7 @@ pub use iterators::impls::work_iter::WorkIter;
 pub use iterators::impls::detached_work_iter::DetachedWorkIter;
 pub use iterators::impls::cons_iter::ConsIter;
 pub use iterators::iterator_trait::MRBIterator;
+pub use ring_buffer::variants::ring_buffer_trait::MutRB;
 pub use ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
 #[cfg(feature = "alloc")]
@@ -20,8 +21,8 @@ use crate::ring_buffer::variants::local_rb::LocalMutRingBuf;
 use crate::ring_buffer::variants::concurrent_rb::ConcurrentMutRingBuf;
 
 
-pub mod iterators;
-pub mod ring_buffer;
+mod iterators;
+mod ring_buffer;
 
 
 // Concurrent buffer types
