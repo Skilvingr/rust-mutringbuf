@@ -1,3 +1,10 @@
+<a name="v0.2.0"></a>
+## v0.2.0 (06/05/2024)
+
+* Accumulator has been removed from `WorkIter`. There are better ways to achieve the same behaviour, like:
+  [this one](https://github.com/Skilvingr/rust-mutringbuf/commit/c931aecc775fe0b222db9ff0cc4bb9ab04881bd4#diff-0b0e4efcf55f384696cdccec18c30a9dee3e81722afeca2b0509e12dc44a946b).
+* Types have been simplified, so instead of e.g. `ProdIter<ConcurrentHeapRB<usize>, usize>`, one can directly write `ProdIter<ConcurrentHeapRB<usize>>`.
+
 <a name="v0.1.3"></a>
 ## v0.1.3 (29/03/2024)
 
