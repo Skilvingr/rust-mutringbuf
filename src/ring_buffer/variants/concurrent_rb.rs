@@ -23,7 +23,9 @@ pub struct ConcurrentMutRingBuf<S: Storage> {
     cons_alive: AtomicBool,
 }
 
-impl<S: Storage<Item = T>, T> MutRB<T> for ConcurrentMutRingBuf<S> {}
+impl<S: Storage<Item = T>, T> MutRB for ConcurrentMutRingBuf<S> {
+    type Item = T;
+}
 
 impl<S: Storage<Item = T>, T> ConcurrentRB for ConcurrentMutRingBuf<S> {}
 
@@ -32,7 +34,7 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    pub fn split_mut(self) -> (ProdIter<ConcurrentMutRingBuf<S>, T>, WorkIter<ConcurrentMutRingBuf<S>, T>, ConsIter<ConcurrentMutRingBuf<S>, T, true>) {
+    pub fn split_mut(self) -> (ProdIter<ConcurrentMutRingBuf<S>>, WorkIter<ConcurrentMutRingBuf<S>>, ConsIter<ConcurrentMutRingBuf<S>, true>) {
         self.prod_alive.store(true, Relaxed);
         self.work_alive.store(true, Relaxed);
         self.cons_alive.store(true, Relaxed);
@@ -48,7 +50,7 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// Consumes the buffer, yielding two iterators. See:
     /// - [`ProdIter`];
     /// - [`ConsIter`].
-    pub fn split(self) -> (ProdIter<ConcurrentMutRingBuf<S>, T>, ConsIter<ConcurrentMutRingBuf<S>, T, false>) {
+    pub fn split(self) -> (ProdIter<ConcurrentMutRingBuf<S>>, ConsIter<ConcurrentMutRingBuf<S>, false>) {
         self.prod_alive.store(true, Relaxed);
         self.cons_alive.store(true, Relaxed);
 

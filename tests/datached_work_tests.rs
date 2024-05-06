@@ -4,14 +4,14 @@ use mutringbuf::{ConsIter, DetachedWorkIter, ConcurrentHeapRB, MRBIterator, Prod
 
 const BUFFER_SIZE: usize = 100;
 
-fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>, usize>) {
+fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>>) {
     let slice = (0..BUFFER_SIZE).collect::<Vec<usize>>();
     prod.push_slice(&slice);
 }
 
 #[allow(clippy::type_complexity)]
-fn prepare(mut prod: ProdIter<ConcurrentHeapRB<usize>, usize>, mut work: WorkIter<ConcurrentHeapRB<usize>, usize>, mut cons: ConsIter<ConcurrentHeapRB<usize>, usize, true>)
-           -> (ProdIter<ConcurrentHeapRB<usize>, usize>, DetachedWorkIter<ConcurrentHeapRB<usize>, usize>, ConsIter<ConcurrentHeapRB<usize>, usize, true>) {
+fn prepare(mut prod: ProdIter<ConcurrentHeapRB<usize>>, mut work: WorkIter<ConcurrentHeapRB<usize>>, mut cons: ConsIter<ConcurrentHeapRB<usize>, true>)
+           -> (ProdIter<ConcurrentHeapRB<usize>>, DetachedWorkIter<ConcurrentHeapRB<usize>>, ConsIter<ConcurrentHeapRB<usize>, true>) {
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);

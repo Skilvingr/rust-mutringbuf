@@ -1,5 +1,4 @@
-use core::marker::PhantomData;
-use core::mem::{transmute};
+use core::mem::transmute;
 use core::slice;
 
 use crate::iterators::{cons_alive, private_impl, public_impl, work_alive};
@@ -18,25 +17,23 @@ When working with types which implement both
 preferred over `clone` methods.
 "##]
 
-pub struct ProdIter<B: MutRB<T>, T> {
+pub struct ProdIter<B: MutRB> {
     index: usize,
     buf_len: usize,
-    cached_avail: usize,
-
     buffer: BufRef<B>,
 
-    _phantom: PhantomData<T>
+    cached_avail: usize,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<T>, T> Send for ProdIter<B, T> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for ProdIter<B> {}
 
-impl<B: MutRB<T> + IterManager, T> Drop for ProdIter<B, T> {
+impl<B: MutRB + IterManager> Drop for ProdIter<B> {
     fn drop(&mut self) {
         self.buffer.set_prod_alive(false);
     }
 }
 
-impl<B: MutRB<T>, T,> PrivateMRBIterator<T> for ProdIter<B, T> {
+impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<B> {
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_prod_index(index);
@@ -50,7 +47,7 @@ impl<B: MutRB<T>, T,> PrivateMRBIterator<T> for ProdIter<B, T> {
     private_impl!();
 }
 
-impl<B: MutRB<T>, T> MRBIterator<T> for ProdIter<B, T> {
+impl<B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<B> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -66,19 +63,16 @@ impl<B: MutRB<T>, T> MRBIterator<T> for ProdIter<B, T> {
     public_impl!();
 }
 
-impl<B: MutRB<T>, T> ProdIter<B, T> {
+impl<B: MutRB<Item = T>, T> ProdIter<B> {
     work_alive!();
     cons_alive!();
 
     pub(crate) fn new(value: BufRef<B>) -> Self {
         Self {
             index: 0,
-            cached_avail: 0,
-
             buf_len: value.inner_len(),
             buffer: value,
-
-            _phantom: PhantomData
+            cached_avail: 0
         }
     }
 

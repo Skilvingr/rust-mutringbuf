@@ -19,7 +19,9 @@ pub struct LocalMutRingBuf<S: Storage> {
     pub(crate) cons_alive: Cell<bool>,
 }
 
-impl<S: Storage<Item = T>, T> MutRB<T> for LocalMutRingBuf<S> {}
+impl<S: Storage<Item = T>, T> MutRB for LocalMutRingBuf<S> {
+    type Item = T;
+}
 
 impl<S: Storage<Item = T>, T> LocalRB for LocalMutRingBuf<S> {}
 
@@ -28,7 +30,7 @@ impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    pub fn split_mut(self) -> (ProdIter<LocalMutRingBuf<S>, T>, WorkIter<LocalMutRingBuf<S>, T>, ConsIter<LocalMutRingBuf<S>, T, true>) {
+    pub fn split_mut(self) -> (ProdIter<LocalMutRingBuf<S>>, WorkIter<LocalMutRingBuf<S>>, ConsIter<LocalMutRingBuf<S>, true>) {
         self.prod_alive.set(true);
         self.work_alive.set(true);
         self.cons_alive.set(true);
@@ -44,7 +46,7 @@ impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
     /// Consumes the buffer, yielding two iterators. See:
     /// - [`ProdIter`];
     /// - [`ConsIter`].
-    pub fn split(self) -> (ProdIter<LocalMutRingBuf<S>, T>, ConsIter<LocalMutRingBuf<S>, T, false>) {
+    pub fn split(self) -> (ProdIter<LocalMutRingBuf<S>>, ConsIter<LocalMutRingBuf<S>, false>) {
         self.prod_alive.set(true);
         self.cons_alive.set(true);
 

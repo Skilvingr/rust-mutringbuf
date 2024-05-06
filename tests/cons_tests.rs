@@ -28,7 +28,7 @@ fn get_buf(local: bool, stack: bool) -> BufferTypes<usize> {
     }
 }
 
-fn fill_buf<B: MutRB<usize>>(prod: &mut ProdIter<B, usize>, count: usize) {
+fn fill_buf<B: MutRB<Item = usize>>(prod: &mut ProdIter<B>, count: usize) {
     for i in 0..count {
         let _ = prod.push(i);
     }

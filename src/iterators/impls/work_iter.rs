@@ -1,4 +1,3 @@
-use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;
 
@@ -30,26 +29,23 @@ in order to move the iterator.
 To avoid this [`DetachedWorkIter`] can be obtained by calling [`Self::detach`].
 "##]
 
-pub struct WorkIter<B: MutRB<T>, T> {
+pub struct WorkIter<B: MutRB> {
     pub(crate) index: usize,
-
     pub(crate) buf_len: usize,
     pub(crate) buffer: BufRef<B>,
 
-    cached_avail: usize,
-    
-    _phantom: PhantomData<T>
+    cached_avail: usize
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<T>, T> Send for WorkIter<B, T> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for WorkIter<B> {}
 
-impl<B: MutRB<T> + IterManager, T> Drop for WorkIter<B, T> {
+impl<B: MutRB + IterManager> Drop for WorkIter<B> {
     fn drop(&mut self) {
         self.buffer.set_work_alive(false);
     }
 }
 
-impl<B: MutRB<T>, T> PrivateMRBIterator<T> for WorkIter<B, T> {
+impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<B> {
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);
@@ -62,7 +58,7 @@ impl<B: MutRB<T>, T> PrivateMRBIterator<T> for WorkIter<B, T> {
 
     private_impl!(); }
 
-impl<B: MutRB<T>, T> MRBIterator<T> for WorkIter<B, T> {
+impl<B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<B> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -78,25 +74,22 @@ impl<B: MutRB<T>, T> MRBIterator<T> for WorkIter<B, T> {
     public_impl!();
 }
 
-impl<B: MutRB<T>, T> WorkIter<B, T> {
+impl<B: MutRB<Item = T>, T> WorkIter<B> {
     prod_alive!();
     cons_alive!();
 
-    pub(crate) fn new(value: BufRef<B>) -> WorkIter<B, T> {
+    pub(crate) fn new(value: BufRef<B>) -> WorkIter<B> {
         Self {
             index: 0,
-            cached_avail: 0,
-
             buf_len: value.inner_len(),
             buffer: value,
-
-            _phantom: PhantomData
+            cached_avail: 0
         }
     }
 
     /// Detaches the iterator yielding a [`DetachedWorkIter`].
     #[inline]
-    pub fn detach(self) -> DetachedWorkIter<B, T> {
+    pub fn detach(self) -> DetachedWorkIter<B> {
         DetachedWorkIter::from_work(self)
     }
 

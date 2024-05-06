@@ -6,7 +6,7 @@ use mutringbuf::{ConcurrentHeapRB, MRBIterator, ProdIter};
 
 const BUFFER_SIZE: usize = 100;
 
-fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>, usize>) {
+fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>>) {
     let slice = (0..BUFFER_SIZE).collect::<Vec<usize>>();
     prod.push_slice(&slice);
 }

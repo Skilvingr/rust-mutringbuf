@@ -1,4 +1,3 @@
-use core::marker::PhantomData;
 use core::mem::transmute;
 use core::slice;
 
@@ -16,25 +15,23 @@ When working with types which implement both [`Copy`] and [`Clone`] traits, `cop
 preferred over `clone` methods.
 "##]
 
-pub struct ConsIter<B: MutRB<T>, T, const W: bool> {
+pub struct ConsIter<B: MutRB, const W: bool> {
     index: usize,
     buf_len: usize,
-    cached_avail: usize,
-
     buffer: BufRef<B>,
 
-    _phantom: PhantomData<T>
+    cached_avail: usize,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<T>, T, const W: bool> Send for ConsIter<B, T, W> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for ConsIter<B, W> {}
 
-impl<B: MutRB<T> + IterManager, T, const W: bool> Drop for ConsIter<B, T, W> {
+impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<B, W> {
     fn drop(&mut self) {
         self.buffer.set_cons_alive(false);
     }
 }
 
-impl<B: MutRB<T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B, T, W> {
+impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B, W> {
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -52,7 +49,7 @@ impl<B: MutRB<T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B, T, W> 
     private_impl!();
 }
 
-impl<B: MutRB<T>, T, const W: bool> MRBIterator<T> for ConsIter<B, T, W> {
+impl<B: MutRB<Item = T>, T, const W: bool> MRBIterator<T> for ConsIter<B, W> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -68,19 +65,16 @@ impl<B: MutRB<T>, T, const W: bool> MRBIterator<T> for ConsIter<B, T, W> {
     public_impl!();
 }
 
-impl<B: MutRB<T>, T, const W: bool> ConsIter<B, T, W> {
+impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
     prod_alive!();
     work_alive!();
 
     pub(crate) fn new(value: BufRef<B>) -> Self {
         Self {
             index: 0,
-            cached_avail: 0,
-
             buf_len: value.inner_len(),
             buffer: value,
-
-            _phantom: PhantomData
+            cached_avail: 0
         }
     }
 

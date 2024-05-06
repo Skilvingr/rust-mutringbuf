@@ -26,14 +26,14 @@ in order to move the iterator.
 </div>
 "##]
 
-pub struct DetachedWorkIter<B: MutRB<T>, T> {
-    work_iter: WorkIter<B, T>
+pub struct DetachedWorkIter<B: MutRB> {
+    work_iter: WorkIter<B>
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<T>, T> Send for DetachedWorkIter<B, T> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for DetachedWorkIter<B> {}
 
 
-impl<B: MutRB<T>, T> DetachedWorkIter<B, T> {
+impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
     /// See [`WorkIter::available`].
     #[inline]
     pub fn available(&mut self) -> usize {
@@ -75,10 +75,10 @@ impl<B: MutRB<T>, T> DetachedWorkIter<B, T> {
     }
 }
 
-impl<B: MutRB<T>, T> DetachedWorkIter<B, T> {
+impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
     /// Creates a [`Self`] from a [`WorkIter`].
     #[inline]
-    pub(crate) fn from_work(work: WorkIter<B, T>) -> DetachedWorkIter<B, T> {
+    pub(crate) fn from_work(work: WorkIter<B>) -> DetachedWorkIter<B> {
         Self {
             work_iter: work
         }
@@ -86,7 +86,7 @@ impl<B: MutRB<T>, T> DetachedWorkIter<B, T> {
 
     /// Attaches the iterator, yielding a [`WorkIter`].
     #[inline]
-    pub fn attach(self) -> WorkIter<B, T> {
+    pub fn attach(self) -> WorkIter<B> {
         self.sync_index();
 
         self.work_iter

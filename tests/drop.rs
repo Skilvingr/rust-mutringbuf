@@ -1,7 +1,7 @@
 use mutringbuf::{ConsIter, ConcurrentHeapRB, ProdIter, WorkIter};
 
 
-fn prepare() -> (ProdIter<ConcurrentHeapRB<usize>, usize>, WorkIter<ConcurrentHeapRB<usize>, usize>, ConsIter<ConcurrentHeapRB<usize>, usize, true>) {
+fn prepare() -> (ProdIter<ConcurrentHeapRB<usize>>, WorkIter<ConcurrentHeapRB<usize>>, ConsIter<ConcurrentHeapRB<usize>, true>) {
     let buf = ConcurrentHeapRB::from(vec![0; 10]);
     buf.split_mut()
 }

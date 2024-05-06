@@ -6,7 +6,9 @@ pub trait LocalRB {}
 pub trait ConcurrentRB {}
 /// Trait implemented by ring buffers.
 #[allow(private_bounds)]
-pub trait MutRB<T>: IterManager + StorageManager<StoredType = T> {}
+pub trait MutRB: IterManager + StorageManager<StoredType = Self::Item> {
+    type Item;
+}
 
 /// Trait used to manage indices
 pub trait IterManager {
