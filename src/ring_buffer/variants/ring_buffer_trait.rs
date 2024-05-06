@@ -1,7 +1,5 @@
 use crate::ring_buffer::storage::storage_trait::Storage;
 
-/// Trait implemented by local ring buffer.
-pub trait LocalRB {}
 /// Trait implemented by concurrent ring buffer.
 pub trait ConcurrentRB {}
 /// Trait implemented by ring buffers.

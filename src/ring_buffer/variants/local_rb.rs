@@ -3,7 +3,7 @@ use core::cell::{Cell, UnsafeCell};
 use crate::{ConsIter, LocalStackRB, ProdIter, WorkIter};
 use crate::ring_buffer::storage::stack::StackStorage;
 use crate::ring_buffer::storage::storage_trait::Storage;
-use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, LocalRB, MutRB, StorageManager};
+use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
 pub struct LocalMutRingBuf<S: Storage> {
@@ -22,8 +22,6 @@ pub struct LocalMutRingBuf<S: Storage> {
 impl<S: Storage<Item = T>, T> MutRB for LocalMutRingBuf<S> {
     type Item = T;
 }
-
-impl<S: Storage<Item = T>, T> LocalRB for LocalMutRingBuf<S> {}
 
 impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
     /// Consumes the buffer, yielding three iterators. See:
