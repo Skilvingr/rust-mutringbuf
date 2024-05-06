@@ -1,7 +1,5 @@
-use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, MRBIterator, LocalHeapRB, LocalStackRB, ProdIter};
+use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, MRBIterator, ProdIter};
 use mutringbuf::ring_buffer::variants::ring_buffer_trait::MutRB;
-
-use crate::BufferTypes::{ConcurrentHeap, ConcurrentStack, LocalHeap, LocalStack};
 
 const BUFFER_SIZE: usize = 100;
 
@@ -10,22 +8,6 @@ macro_rules! get_buf {
     (Local, Heap) => { LocalHeapRB::from(vec![0; BUFFER_SIZE + 1]) };
     (Concurrent, Stack) => { ConcurrentStackRB::from([0; BUFFER_SIZE + 1]) };
     (Concurrent, Heap) => { ConcurrentHeapRB::from(vec![0; BUFFER_SIZE + 1]) };
-}
-
-enum BufferTypes<T> {
-    LocalStack(LocalStackRB<T, { BUFFER_SIZE + 1 }>),
-    LocalHeap(LocalHeapRB<T>),
-    ConcurrentStack(ConcurrentStackRB<T, { BUFFER_SIZE + 1 }>),
-    ConcurrentHeap(ConcurrentHeapRB<T>)
-}
-
-fn get_buf(local: bool, stack: bool) -> BufferTypes<usize> {
-    match (local, stack) {
-        (true, true) => LocalStack(LocalStackRB::from([0; BUFFER_SIZE + 1])),
-        (true, false) => LocalHeap(LocalHeapRB::from(vec![0; BUFFER_SIZE + 1])),
-        (false, true) => ConcurrentStack(ConcurrentStackRB::from([0; BUFFER_SIZE + 1])),
-        (false, false) => ConcurrentHeap(ConcurrentHeapRB::from(vec![0; BUFFER_SIZE + 1]))
-    }
 }
 
 fn fill_buf<B: MutRB<Item = usize>>(prod: &mut ProdIter<B>, count: usize) {
