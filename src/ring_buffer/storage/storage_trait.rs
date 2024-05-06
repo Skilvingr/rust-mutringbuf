@@ -3,8 +3,10 @@ use core::ops::Index;
 use crate::UnsafeSyncCell;
 
 #[allow(clippy::len_without_is_empty)]
-pub trait Storage<T>: Index<usize, Output = UnsafeSyncCell<T>>
+pub trait Storage: Index<usize, Output = UnsafeSyncCell<Self::Item>>
 {
+    type Item;
+
     /// Returns the underlying array as a const ptr.
     fn as_ptr(&self) -> *const Self::Output;
     /// Returns the underlying array as a mutable ptr.

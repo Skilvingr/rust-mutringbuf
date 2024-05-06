@@ -1,5 +1,4 @@
 use core::cell::UnsafeCell;
-use core::marker::PhantomData;
 use core::sync::atomic::{AtomicBool, AtomicUsize};
 use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 
@@ -11,7 +10,7 @@ use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
-pub struct ConcurrentMutRingBuf<S: Storage<T>, T> {
+pub struct ConcurrentMutRingBuf<S: Storage> {
     inner_len: usize,
     inner: UnsafeCell<S>,
 
@@ -22,20 +21,18 @@ pub struct ConcurrentMutRingBuf<S: Storage<T>, T> {
     prod_alive: AtomicBool,
     work_alive: AtomicBool,
     cons_alive: AtomicBool,
-
-    _phantom: PhantomData<T>
 }
 
-impl<S: Storage<T>, T> MutRB<T> for ConcurrentMutRingBuf<S, T> {}
+impl<S: Storage<Item = T>, T> MutRB<T> for ConcurrentMutRingBuf<S> {}
 
-impl<S: Storage<T>, T> ConcurrentRB for ConcurrentMutRingBuf<S, T> {}
+impl<S: Storage<Item = T>, T> ConcurrentRB for ConcurrentMutRingBuf<S> {}
 
-impl<S: Storage<T>, T> ConcurrentMutRingBuf<S, T> {
+impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// Consumes the buffer, yielding three iterators. See:
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    pub fn split_mut(self) -> (ProdIter<ConcurrentMutRingBuf<S, T>, T>, WorkIter<ConcurrentMutRingBuf<S, T>, T>, ConsIter<ConcurrentMutRingBuf<S, T>, T, true>) {
+    pub fn split_mut(self) -> (ProdIter<ConcurrentMutRingBuf<S>, T>, WorkIter<ConcurrentMutRingBuf<S>, T>, ConsIter<ConcurrentMutRingBuf<S>, T, true>) {
         self.prod_alive.store(true, Relaxed);
         self.work_alive.store(true, Relaxed);
         self.cons_alive.store(true, Relaxed);
@@ -51,7 +48,7 @@ impl<S: Storage<T>, T> ConcurrentMutRingBuf<S, T> {
     /// Consumes the buffer, yielding two iterators. See:
     /// - [`ProdIter`];
     /// - [`ConsIter`].
-    pub fn split(self) -> (ProdIter<ConcurrentMutRingBuf<S, T>, T>, ConsIter<ConcurrentMutRingBuf<S, T>, T, false>) {
+    pub fn split(self) -> (ProdIter<ConcurrentMutRingBuf<S>, T>, ConsIter<ConcurrentMutRingBuf<S>, T, false>) {
         self.prod_alive.store(true, Relaxed);
         self.cons_alive.store(true, Relaxed);
 
@@ -62,7 +59,7 @@ impl<S: Storage<T>, T> ConcurrentMutRingBuf<S, T> {
         )
     }
 
-    pub(crate) fn _from(value: S) -> ConcurrentMutRingBuf<S, T> {
+    pub(crate) fn _from(value: S) -> ConcurrentMutRingBuf<S> {
         assert!(value.len() > 1);
 
         ConcurrentMutRingBuf {
@@ -75,13 +72,12 @@ impl<S: Storage<T>, T> ConcurrentMutRingBuf<S, T> {
 
             prod_alive: AtomicBool::default(),
             work_alive: AtomicBool::default(),
-            cons_alive: AtomicBool::default(),
-            _phantom: PhantomData
+            cons_alive: AtomicBool::default()
         }
     }
 }
 
-impl<S: Storage<T>, T> IterManager for ConcurrentMutRingBuf<S, T> {
+impl<S: Storage> IterManager for ConcurrentMutRingBuf<S> {
     #[inline(always)]
     fn prod_index(&self) -> usize {
         self.prod_idx.load(Acquire)
@@ -137,7 +133,7 @@ impl<S: Storage<T>, T> IterManager for ConcurrentMutRingBuf<S, T> {
     }
 }
 
-impl<S: Storage<T>, T> StorageManager for ConcurrentMutRingBuf<S, T> {
+impl<S: Storage<Item = T>, T> StorageManager for ConcurrentMutRingBuf<S> {
     type StoredType = T;
     type S = S;
 

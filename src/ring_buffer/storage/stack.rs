@@ -27,7 +27,9 @@ impl<T, const N: usize> Index<usize> for StackStorage<T, N> {
     }
 }
 
-impl<T, const N: usize> Storage<T> for StackStorage<T, N> {
+impl<T, const N: usize> Storage for StackStorage<T, N> {
+    type Item = T;
+
     #[inline]
     fn as_ptr(&self) -> *const Self::Output {
         self.inner.as_ptr()

@@ -27,19 +27,19 @@ pub mod ring_buffer;
 // Concurrent buffer types
 
 /// A stack-allocated ring buffer usable in concurrent environment.
-pub type ConcurrentStackRB<T, const N: usize> = ConcurrentMutRingBuf<StackStorage<T, N>, T>;
+pub type ConcurrentStackRB<T, const N: usize> = ConcurrentMutRingBuf<StackStorage<T, N>>;
 
 /// A heap-allocated ring buffer usable in concurrent environment.
 #[cfg(feature = "alloc")]
-pub type ConcurrentHeapRB<T> = ConcurrentMutRingBuf<HeapStorage<T>, T>;
+pub type ConcurrentHeapRB<T> = ConcurrentMutRingBuf<HeapStorage<T>>;
 
 
 // Local buffer types
 
 /// A stack-allocated ring buffer usable in local environment.
-pub type LocalStackRB<T, const N: usize> = LocalMutRingBuf<StackStorage<T, N>, T>;
+pub type LocalStackRB<T, const N: usize> = LocalMutRingBuf<StackStorage<T, N>>;
 
 /// A heap-allocated ring buffer usable in local environment.
 #[cfg(feature = "alloc")]
-pub type LocalHeapRB<T> = LocalMutRingBuf<HeapStorage<T>, T>;
+pub type LocalHeapRB<T> = LocalMutRingBuf<HeapStorage<T>>;
 

@@ -1,5 +1,4 @@
 use core::cell::{Cell, UnsafeCell};
-use core::marker::PhantomData;
 
 use crate::{ConsIter, LocalStackRB, ProdIter, WorkIter};
 use crate::ring_buffer::storage::stack::StackStorage;
@@ -7,7 +6,7 @@ use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, LocalRB, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
-pub struct LocalMutRingBuf<S: Storage<T>, T> {
+pub struct LocalMutRingBuf<S: Storage> {
     pub(crate) inner_len: usize,
     pub(crate) inner: UnsafeCell<S>,
 
@@ -18,20 +17,18 @@ pub struct LocalMutRingBuf<S: Storage<T>, T> {
     pub(crate) prod_alive: Cell<bool>,
     pub(crate) work_alive: Cell<bool>,
     pub(crate) cons_alive: Cell<bool>,
-
-    _phantom: PhantomData<T>
 }
 
-impl<S: Storage<T>, T> MutRB<T> for LocalMutRingBuf<S, T> {}
+impl<S: Storage<Item = T>, T> MutRB<T> for LocalMutRingBuf<S> {}
 
-impl<S: Storage<T>, T> LocalRB for LocalMutRingBuf<S, T> {}
+impl<S: Storage<Item = T>, T> LocalRB for LocalMutRingBuf<S> {}
 
-impl<S: Storage<T>, T> LocalMutRingBuf<S, T> {
+impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
     /// Consumes the buffer, yielding three iterators. See:
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    pub fn split_mut(self) -> (ProdIter<LocalMutRingBuf<S, T>, T>, WorkIter<LocalMutRingBuf<S, T>, T>, ConsIter<LocalMutRingBuf<S, T>, T, true>) {
+    pub fn split_mut(self) -> (ProdIter<LocalMutRingBuf<S>, T>, WorkIter<LocalMutRingBuf<S>, T>, ConsIter<LocalMutRingBuf<S>, T, true>) {
         self.prod_alive.set(true);
         self.work_alive.set(true);
         self.cons_alive.set(true);
@@ -47,7 +44,7 @@ impl<S: Storage<T>, T> LocalMutRingBuf<S, T> {
     /// Consumes the buffer, yielding two iterators. See:
     /// - [`ProdIter`];
     /// - [`ConsIter`].
-    pub fn split(self) -> (ProdIter<LocalMutRingBuf<S, T>, T>, ConsIter<LocalMutRingBuf<S, T>, T, false>) {
+    pub fn split(self) -> (ProdIter<LocalMutRingBuf<S>, T>, ConsIter<LocalMutRingBuf<S>, T, false>) {
         self.prod_alive.set(true);
         self.cons_alive.set(true);
 
@@ -58,7 +55,7 @@ impl<S: Storage<T>, T> LocalMutRingBuf<S, T> {
         )
     }
 
-    pub(crate) fn _from(value: S) -> LocalMutRingBuf<S, T> {
+    pub(crate) fn _from(value: S) -> LocalMutRingBuf<S> {
         assert!(value.len() > 1);
 
         LocalMutRingBuf {
@@ -71,13 +68,12 @@ impl<S: Storage<T>, T> LocalMutRingBuf<S, T> {
 
             prod_alive: false.into(),
             work_alive: false.into(),
-            cons_alive: false.into(),
-            _phantom: PhantomData
+            cons_alive: false.into()
         }
     }
 }
 
-impl<S: Storage<T>, T> IterManager for LocalMutRingBuf<S, T> {
+impl<S: Storage> IterManager for LocalMutRingBuf<S> {
     #[inline(always)]
     fn prod_index(&self) -> usize {
         self.prod_idx.get()
@@ -133,7 +129,7 @@ impl<S: Storage<T>, T> IterManager for LocalMutRingBuf<S, T> {
     }
 }
 
-impl<S: Storage<T>, T> StorageManager for LocalMutRingBuf<S, T> {
+impl<S: Storage<Item = T>, T> StorageManager for LocalMutRingBuf<S> {
     type StoredType = T;
     type S = S;
 

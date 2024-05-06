@@ -35,7 +35,9 @@ impl<T> Index<usize> for HeapStorage<T> {
     }
 }
 
-impl<T> Storage<T> for HeapStorage<T> {
+impl<T> Storage for HeapStorage<T> {
+    type Item = T;
+
     #[inline]
     fn as_ptr(&self) -> *const Self::Output {
         self.inner.as_ptr()
