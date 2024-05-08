@@ -14,11 +14,11 @@ pub use ring_buffer::variants::ring_buffer_trait::MutRB;
 pub use ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
 #[cfg(feature = "alloc")]
-use crate::ring_buffer::storage::heap::HeapStorage;
-use crate::ring_buffer::storage::stack::StackStorage;
+pub use crate::ring_buffer::storage::heap::HeapStorage;
+pub use crate::ring_buffer::storage::stack::StackStorage;
 
-use crate::ring_buffer::variants::local_rb::LocalMutRingBuf;
-use crate::ring_buffer::variants::concurrent_rb::ConcurrentMutRingBuf;
+pub use crate::ring_buffer::variants::local_rb::LocalMutRingBuf;
+pub use crate::ring_buffer::variants::concurrent_rb::ConcurrentMutRingBuf;
 
 
 mod iterators;
