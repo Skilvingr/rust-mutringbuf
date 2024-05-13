@@ -93,4 +93,7 @@ fn main() {
 }
 
 #[cfg(not(cpal))]
-pub fn main() {}
+pub fn main() {
+    eprintln!("To run this example, please, use the following command:");
+    println!("RUSTFLAGS=\"--cfg cpal\" cargo run --example cpal");
+}

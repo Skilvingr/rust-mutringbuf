@@ -2,6 +2,7 @@
 use alloc::boxed::Box;
 use core::ops::{Deref, DerefMut};
 use core::ptr::NonNull;
+
 use crate::ring_buffer::variants::ring_buffer_trait::IterManager;
 
 pub struct BufRef<B> {

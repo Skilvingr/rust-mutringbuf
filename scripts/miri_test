@@ -1,4 +1,4 @@
 #!/bin/bash
 
 MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}"\
-    cargo +nightly miri test
+    cargo +nightly miri test --features async

@@ -30,20 +30,20 @@ pub(crate) trait PrivateMRBIterator<T> {
     fn next(&mut self) -> Option<T>;
 
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
-    fn next_ref(&mut self) -> Option<&T>;
+    fn next_ref<'a>(&mut self) -> Option<&'a T>;
 
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
-    fn next_ref_mut(&mut self) -> Option<&mut T>;
+    fn next_ref_mut<'a>(&mut self) -> Option<&'a mut T>;
 
     /// As next_ref_mut, but can be used for initialisation of inner MaybeUninit.
     fn next_ref_mut_init(&mut self) -> Option<*mut T>;
 
-    fn next_chunk(&mut self, count: usize) -> Option<(&[T], &[T])>;
+    fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])>;
 
-    fn next_chunk_mut(&mut self, count: usize) -> Option<(&mut [T], &mut [T])>;
+    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])>;
 }
 
-pub(crate) mod macros {
+pub(crate) mod iter_macros {
     macro_rules! prod_alive { () => (
         /// Returns `true` if the producer iterator is still alive, `false` if it has been dropped.
         #[inline]
@@ -113,12 +113,12 @@ pub(crate) mod macros {
         }
 
         #[inline]
-        fn next_ref(&mut self) -> Option<&T> {
+        fn next_ref<'a>(&mut self) -> Option<&'a T> {
             unsafe { self.check(1).then(|| self.buffer.inner()[self.index].inner_ref()) }
         }
 
         #[inline]
-        fn next_ref_mut(&mut self) -> Option<&mut T> {
+        fn next_ref_mut<'a>(&mut self) -> Option<&'a mut T> {
             unsafe { self.check(1).then(|| self.buffer.inner()[self.index].inner_ref_mut()) }
         }
 
@@ -128,7 +128,7 @@ pub(crate) mod macros {
         }
 
         #[inline]
-        fn next_chunk(&mut self, count: usize) -> Option<(&[T], &[T])> {
+        fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])> {
             self.check(count).then(|| {
                 let inner = unsafe {
                     transmute::<&[UnsafeSyncCell<T>], &[T]>(
@@ -150,7 +150,7 @@ pub(crate) mod macros {
         }
 
         #[inline]
-        fn next_chunk_mut(&mut self, count: usize) -> Option<(&mut [T], &mut [T])> {
+        fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])> {
             self.check(count).then(|| {
 
                 let inner = unsafe {

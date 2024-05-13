@@ -323,7 +323,7 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
     ///
     /// # Safety
     /// The retrieved item must be initialised! For more info, refer to [`MaybeUninit::assume_init_mut`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#method.assume_init_mut).
-    pub unsafe fn get_next_item_mut(&mut self) -> Option<&mut T> {
+    pub unsafe fn get_next_item_mut<'a>(&mut self) -> Option<&'a mut T> {
         self.next_ref_mut()
     }
 

@@ -2,13 +2,14 @@ use crate::ring_buffer::storage::storage_trait::Storage;
 
 /// Trait implemented by concurrent ring buffer.
 pub trait ConcurrentRB {}
+
 /// Trait implemented by ring buffers.
 #[allow(private_bounds)]
 pub trait MutRB: IterManager + StorageManager<StoredType = Self::Item> {
     type Item;
 }
 
-/// Trait used to manage indices
+/// Trait used to manage indices.
 pub trait IterManager {
     fn prod_index(&self) -> usize;
     fn work_index(&self) -> usize;

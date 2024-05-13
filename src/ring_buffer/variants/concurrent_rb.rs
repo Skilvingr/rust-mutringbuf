@@ -5,10 +5,14 @@ use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 use crossbeam_utils::CachePadded;
 
 use crate::{ConcurrentStackRB, ConsIter, ProdIter, WorkIter};
+
 use crate::ring_buffer::storage::stack::StackStorage;
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
+
+#[cfg(any(feature = "async", doc))]
+use crate::{AsyncWorkIter, AsyncConsIter, AsyncProdIter};
 
 pub struct ConcurrentMutRingBuf<S: Storage> {
     inner_len: usize,
@@ -58,6 +62,39 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
         (
             ProdIter::new(r.clone()),
             ConsIter::new(r),
+        )
+    }
+
+    /// Consumes the buffer, yielding three async iterators. See:
+    /// - [`AsyncProdIter`];
+    /// - [`AsyncWorkIter`];
+    /// - [`AsyncConsIter`].
+    #[cfg(any(feature = "async", doc))]
+    pub fn split_mut_async(self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncWorkIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, true>) {
+        self.prod_alive.store(true, Relaxed);
+        self.work_alive.store(true, Relaxed);
+        self.cons_alive.store(true, Relaxed);
+
+        let r = BufRef::new(self);
+        (
+            AsyncProdIter::from_sync(ProdIter::new(r.clone())),
+            AsyncWorkIter::from_sync(WorkIter::new(r.clone())),
+            AsyncConsIter::from_sync(ConsIter::new(r)),
+        )
+    }
+
+    /// Consumes the buffer, yielding two async iterators. See:
+    /// - [`AsyncProdIter`];
+    /// - [`AsyncConsIter`].
+    #[cfg(any(feature = "async", doc))]
+    pub fn split_async(self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, false>) {
+        self.prod_alive.store(true, Relaxed);
+        self.cons_alive.store(true, Relaxed);
+
+        let r = BufRef::new(self);
+        (
+            AsyncProdIter::from_sync(ProdIter::new(r.clone())),
+            AsyncConsIter::from_sync(ConsIter::new(r)),
         )
     }
 

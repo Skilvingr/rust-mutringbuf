@@ -1,12 +1,16 @@
 #![cfg(feature = "alloc")]
+
 use alloc::vec;
 use alloc::vec::Vec;
-use crate::{ConcurrentHeapRB, LocalHeapRB, UnsafeSyncCell};
+use crate::{ConcurrentMutRingBuf, LocalMutRingBuf, UnsafeSyncCell};
 use crate::HeapStorage;
 #[allow(unused_imports)]
 use crate::ProdIter;
 
 // Concurrent
+
+/// A heap-allocated ring buffer usable in concurrent environment.
+pub type ConcurrentHeapRB<T> = ConcurrentMutRingBuf<HeapStorage<T>>;
 
 impl<T> From<Vec<T>> for ConcurrentHeapRB<T> {
     /// Constructs a `ConcurrentHeapRB` using the passed vector.
@@ -41,6 +45,9 @@ impl<T> ConcurrentHeapRB<T> {
 
 
 // Local
+
+/// A heap-allocated ring buffer usable in local environment.
+pub type LocalHeapRB<T> = LocalMutRingBuf<HeapStorage<T>>;
 
 impl<T> From<Vec<T>> for LocalHeapRB<T> {
     /// Constructs a `LocalHeapRB` using the passed vector.

@@ -95,7 +95,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn peek_ref(&mut self) -> Option<&T> {
+    pub fn peek_ref<'a>(&mut self) -> Option<&'a T> {
         self.next_ref()
     }
 
@@ -106,7 +106,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn peek_slice(&mut self, count: usize) -> Option<(&[T], &[T])> {
+    pub fn peek_slice<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])> {
         self.next_chunk(count)
     }
 
@@ -117,7 +117,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn peek_available(&mut self) -> Option<(&[T], &[T])> {
+    pub fn peek_available<'a>(&mut self) -> Option<(&'a [T], &'a [T])> {
         let avail = self.available();
         self.peek_slice(avail)
     }

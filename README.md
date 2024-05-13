@@ -37,13 +37,15 @@ To run it, jump [here](#tests-benchmarks-and-examples).
 ## Features
 - `default`: `alloc`
 - `alloc`: uses alloc crate, enabling heap-allocated buffers
+- `async`: enables async/await support
 
 ## Usage
 
 ### A note about uninitialised items
 This buffer can handle uninitialised items.
 They are produced either when the buffer is created with `new_zeroed` methods, or when an initialised item
-is moved out of the buffer via [`ConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/cons_iter/struct.ConsIter.html#method.pop).
+is moved out of the buffer via [`ConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/cons_iter/struct.ConsIter.html#method.pop) or
+[`AsyncConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/cons_iter/struct.AsyncConsIter.html#method.pop).
 
 As also stated in `ProdIter` doc page, there are two ways to push an item into the buffer:
 * normal methods can be used *only* when the location in which we are pushing the item is initialised;
@@ -102,7 +104,7 @@ Thus, a buffer of size `SIZE` can keep a max amount of `SIZE - 1` values!
 
 Then such buffer can be used in two ways:
 
-#### Immutable
+#### Sync immutable
 The normal way to make use of a ring buffer: a producer inserts values that will eventually be taken
 by a consumer.
 
@@ -112,7 +114,7 @@ let buf = LocalHeapRB::from(vec![0; 10]);
 let (mut prod, mut cons) = buf.split();
 ```
 
-#### Mutable
+#### Sync mutable
 As in the immutable case, but a third iterator `work` stands between `prod` and `cons`.
 
 This iterator mutates elements in place.
@@ -123,16 +125,44 @@ let buf = LocalHeapRB::from(vec![0; 10]);
 let (mut prod, mut work, mut cons) = buf.split_mut();
 ```
 
-Worker iterator can also be wrapped in a [`DetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/detached_work_iter/struct.DetachedWorkIter.html), indirectly pausing the consumer, in
+#### Async immutable
+The normal way to make use of a ring buffer: a producer inserts values that will eventually be taken
+by a consumer.
+
+```rust ignore
+use mutringbuf::LocalHeapRB;
+let buf = LocalHeapRB::from(vec![0; 10]);
+let (mut as_prod, mut as_cons) = buf.split_async();
+```
+
+#### Async mutable
+As in the immutable case, but a third iterator `work` stands between `prod` and `cons`.
+
+This iterator mutates elements in place.
+
+```rust ignore
+use mutringbuf::LocalHeapRB;
+let buf = LocalHeapRB::from(vec![0; 10]);
+let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
+```
+
+Worker iterators can also be wrapped in a [`DetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached_work_iter/struct.DetachedWorkIter.html),
+as well as in an [`AsyncDetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached_work_iter/struct.AsyncDetachedWorkIter.html), indirectly pausing the consumer, in
 order to explore produced data back and forth.
 
 <br/>
 
 Each iterator can then be passed to a thread to do its job. More information can be found
 in the relative pages:
-- [`ProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/prod_iter/struct.ProdIter.html)
-- [`WorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/work_iter/struct.WorkIter.html)
-- [`ConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/cons_iter/struct.ConsIter.html)
+- [`ProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/prod_iter/struct.ProdIter.html)
+- [`WorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/work_iter/struct.WorkIter.html)
+- [`DetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached_work_iter/struct.DetachedWorkIter.html)
+- [`ConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/cons_iter/struct.ConsIter.html)
+
+- [`AsyncProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/prod_iter/struct.AsyncProdIter.html)
+- [`AsyncWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/work_iter/struct.AsyncWorkIter.html)
+- [`AsyncDetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached_work_iter/struct.AsyncDetachedWorkIter.html)
+- [`AsyncConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/cons_iter/struct.AsyncConsIter.html)
 
 Note that a buffer, no matter its type, lives until the last of the iterators does so.
 
@@ -159,11 +189,13 @@ CPAL example can be run with:
 RUSTFLAGS="--cfg cpal" cargo run --example cpal
 ```
 
+Async example can be run with:
+
+```shell
+cargo run --example simple_async --features async
+```
+
 Every other `example_name` can be run with:
 ```shell
 cargo run --example `example_name`
 ```
-
-## To do
-- [ ] Implement an async/await version;
-- [ ] (Maybe) add the ability to spawn an arbitrary number of worker iterators.

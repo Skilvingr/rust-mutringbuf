@@ -2,7 +2,6 @@
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-
 use core::ops::Index;
 
 use crate::ring_buffer::storage::storage_trait::Storage;
@@ -16,6 +15,14 @@ impl<T> From<Box<[T]>> for HeapStorage<T> {
     fn from(value: Box<[T]>) -> Self {
         Self {
             inner: unsafe { core::mem::transmute::<Box<[T]>, Box<[UnsafeSyncCell<T>]>>(value) }
+        }
+    }
+}
+
+impl<T> From<Box<[UnsafeSyncCell<T>]>> for HeapStorage<T> {
+    fn from(value: Box<[UnsafeSyncCell<T>]>) -> Self {
+        Self {
+            inner: value
         }
     }
 }

@@ -56,7 +56,7 @@ fn f() {
     // Stop threads
     stop.store(true, Release);
 
-    let (_prod, produced) = producer.join().unwrap();
+    let (prod, produced) = producer.join().unwrap();
     let (mut cons, mut consumed) = consumer.join().unwrap();
 
     // Consume the remaining part of the buffer
@@ -65,7 +65,10 @@ fn f() {
         consumed.extend_from_slice(tail);
     }
 
-    assert_eq!(produced, consumed)
+    assert_eq!(produced, consumed);
+
+    drop(prod);
+    drop(cons);
 }
 
 fn main() {

@@ -2,7 +2,7 @@ use core::mem::transmute;
 use core::slice;
 
 use crate::iterators::{cons_alive, private_impl, prod_alive, public_impl};
-use crate::iterators::impls::detached_work_iter::DetachedWorkIter;
+use crate::iterators::sync_iterators::detached_work_iter::DetachedWorkIter;
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
@@ -109,7 +109,7 @@ impl<B: MutRB<Item = T>, T> WorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable(&mut self) -> Option<&mut T> {
+    pub fn get_workable<'a>(&mut self) -> Option<&'a mut T> {
         self.next_ref_mut()
     }
 
@@ -120,7 +120,7 @@ impl<B: MutRB<Item = T>, T> WorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_exact(&mut self, count: usize) -> Option<WorkableSlice<T>> {
+    pub fn get_workable_slice_exact<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
         self.next_chunk_mut(count)
     }
 
@@ -131,7 +131,7 @@ impl<B: MutRB<Item = T>, T> WorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_avail(&mut self) -> Option<WorkableSlice<T>> {
+    pub fn get_workable_slice_avail<'a>(&mut self) -> Option<WorkableSlice<'a, T>> {
         let avail = self.available();
         if avail > 0 { self.get_workable_slice_exact(avail) } else { None }
     }
@@ -144,7 +144,7 @@ impl<B: MutRB<Item = T>, T> WorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> Option<WorkableSlice<T>> {
+    pub fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, T>> {
         let avail = self.available();
         let avail = avail - avail % rhs;
         if avail > 0 { self.get_workable_slice_exact(avail) } else { None }
