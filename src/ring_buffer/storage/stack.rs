@@ -18,6 +18,14 @@ impl<T, const N: usize> From<[T; N]> for StackStorage<T, N> {
     }
 }
 
+impl<T, const N: usize> From<[UnsafeSyncCell<T>; N]> for StackStorage<T, N> {
+    fn from(value: [UnsafeSyncCell<T>; N]) -> StackStorage<T, N> {
+        Self {
+            inner: value
+        }
+    }
+}
+
 impl<T, const N: usize> Index<usize> for StackStorage<T, N> {
     type Output = UnsafeSyncCell<T>;
 

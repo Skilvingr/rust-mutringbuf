@@ -34,7 +34,7 @@ fn test_local_stack() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        assert_eq!(cons.pop().unwrap(), i + 1);
+        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -110,7 +110,10 @@ fn rb_fibonacci() {
         while !prod_finished.load(Acquire) || cons.index() != prod_last_index.load(Acquire) {
 
             // Store consumed values to check them later
-            if let Some(value) = cons.pop() { consumed.push(value); }
+            if let Some(value) = cons.peek_ref() {
+                consumed.push(*value);
+                unsafe { cons.advance(1); }
+            }
         }
 
         // Iterator has to be returned here, as it was moved at the beginning of the thread

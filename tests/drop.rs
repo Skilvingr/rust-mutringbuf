@@ -50,3 +50,12 @@ pub fn cons_drop_test() {
     assert!(prod.is_work_alive());
     assert!(!prod.is_cons_alive());
 }
+
+#[test]
+pub fn drop_everything() {
+    let (prod, work, cons) = prepare();
+
+    drop(prod);
+    drop(work);
+    drop(cons);
+}

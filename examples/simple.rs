@@ -3,7 +3,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::{Acquire, Release};
 use std::thread;
 use std::time::Duration;
-use mutringbuf::ConcurrentHeapRB;
+use mutringbuf::{ConcurrentHeapRB, MRBIterator};
 
 const RB_SIZE: usize = 10;
 
@@ -41,7 +41,10 @@ fn f() {
 
         while !stop_clone.load(Acquire) {
             // Store consumed values to check them later
-            if let Some(value) = cons.pop() { consumed.push(value); }
+            if let Some(value) = cons.peek_ref() {
+                consumed.push(*value);
+                unsafe { cons.advance(1); }
+            }
         }
 
         // Iterator has to be returned here, as it was moved at the beginning of the thread
@@ -66,7 +69,7 @@ fn f() {
 }
 
 fn main() {
-   for _ in 0 .. 1000 {
+   for _ in 0 .. 100 {
        f();
    }
 }

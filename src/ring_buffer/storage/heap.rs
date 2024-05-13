@@ -26,6 +26,14 @@ impl<T> From<Vec<T>> for HeapStorage<T> {
     }
 }
 
+impl<T> From<Vec<UnsafeSyncCell<T>>> for HeapStorage<T> {
+    fn from(value: Vec<UnsafeSyncCell<T>>) -> Self {
+        Self {
+            inner: value.into_boxed_slice()
+        }
+    }
+}
+
 impl<T> Index<usize> for HeapStorage<T> {
     type Output = UnsafeSyncCell<T>;
 

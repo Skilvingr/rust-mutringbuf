@@ -13,7 +13,7 @@ fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>>) {
 
 #[test]
 fn test_work_single() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut();
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -36,7 +36,7 @@ fn test_work_single() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        assert_eq!(cons.pop().unwrap(), i + 1);
+        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -46,7 +46,7 @@ fn test_work_single() {
 
 #[test]
 fn test_work_mul() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut();
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -74,7 +74,8 @@ fn test_work_mul() {
     assert_eq!(cons.available(), 84);
 
     for i in 0..84 {
-        assert_eq!(cons.pop().unwrap(), i + 1);
+        assert_eq!(*cons.peek_ref().unwrap(), i + 1);
+        unsafe { cons.advance(1); }
     }
 
     assert_eq!(prod.available(), 84);
@@ -96,7 +97,7 @@ fn test_work_mul() {
     assert_eq!(cons.available(), 16);
 
     for i in 84..BUFFER_SIZE {
-        assert_eq!(cons.pop().unwrap(), i + 1);
+        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -105,7 +106,7 @@ fn test_work_mul() {
 }
 #[test]
 fn test_work_exact() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split_mut();
+    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -133,7 +134,7 @@ fn test_work_exact() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        assert_eq!(cons.pop().unwrap(), i + 1);
+        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);

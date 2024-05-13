@@ -33,8 +33,9 @@ fn push_pop_shared(b: &mut Bencher) {
     prod.push_slice(&[1; RB_SIZE / 2]);
 
     b.iter(|| {
-        let _ = prod.push(1);
-        black_box(cons.pop().unwrap());
+        prod.push(1).unwrap();
+        black_box(cons.peek_ref().unwrap());
+        unsafe { cons.advance(1); }
     });
 }
 
@@ -46,9 +47,8 @@ fn pop_x100(b: &mut Bencher) {
         prod.push_slice(&[1; BATCH_SIZE]);
 
         for _ in 0..BATCH_SIZE {
-            black_box({
-                cons.pop().unwrap()
-            });
+            black_box(cons.peek_ref().unwrap());
+            unsafe { cons.advance(1); }
         }
     });
 }
@@ -58,14 +58,15 @@ fn push_pop_x100(b: &mut Bencher) {
 
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; RB_SIZE / 2]).unwrap();
 
     b.iter(|| {
         for _ in 0..BATCH_SIZE {
-            let _ = prod.push(1).unwrap();
+            prod.push(1).unwrap();
         }
         for _ in 0..BATCH_SIZE {
-            black_box(cons.pop().unwrap());
+            black_box(cons.peek_ref().unwrap());
+            unsafe { cons.advance(1); }
         }
     });
 }
@@ -79,12 +80,12 @@ fn push_pop_work(b: &mut Bencher) {
     };
 
     for _ in 0..RB_SIZE / 2 {
-        let _ = prod.push(1);
+        prod.push(1).unwrap();
     }
 
     b.iter(|| {
         for _ in 0..BATCH_SIZE {
-            let _ = prod.push(1);
+            prod.push(1).unwrap();
         }
 
         for _ in 0..BATCH_SIZE {
@@ -94,9 +95,8 @@ fn push_pop_work(b: &mut Bencher) {
             }
         }
         for _ in 0..BATCH_SIZE {
-            black_box({
-                cons.pop().unwrap()
-            });
+            black_box(cons.peek_ref().unwrap());
+            unsafe { cons.advance(1); }
         }
     });
 }

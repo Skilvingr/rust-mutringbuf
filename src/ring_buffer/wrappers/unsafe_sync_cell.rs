@@ -1,9 +1,18 @@
 use core::cell::UnsafeCell;
 use core::mem::MaybeUninit;
+use core::ptr::slice_from_raw_parts;
 
 /// Sync version of `UnsafeCell<MaybeUninit<T>>`.
 /// While it should not be used outside of this crate, it might result useful in certain cases.
 pub struct UnsafeSyncCell<T>(UnsafeCell<MaybeUninit<T>>);
+
+impl<T> Drop for UnsafeSyncCell<T> {
+    fn drop(&mut self) {
+        if !UnsafeSyncCell::check_zeroed(self.0.get_mut().as_mut_ptr()) {
+            unsafe { self.0.get_mut().assume_init_drop() }
+        }
+    }
+}
 
 unsafe impl<T: Sync> Sync for UnsafeSyncCell<T> {}
 impl<T: Default> Default for UnsafeSyncCell<T> {
@@ -20,28 +29,36 @@ impl<T> From<T> for UnsafeSyncCell<T> {
 }
 
 impl<T> UnsafeSyncCell<T> {
-    /// Constructs a new instance of `UnsafeSyncCell` which will wrap the specified value.
+    /// Constructs a new instance of `UnsafeSyncCell` which wraps the specified value.
     #[inline]
     pub(crate) fn new(value: T) -> Self {
         Self(UnsafeCell::new(MaybeUninit::new(value)))
     }
 
+    /// Constructs a new instance of `UnsafeSyncCell` filled with zeros.
+    #[inline]
+    pub(crate) fn new_zeroed() -> Self {
+        Self(UnsafeCell::new(MaybeUninit::zeroed()))
+    }
+
+    /// Checks whether the memory pointed by `ptr`, for a certain type T, is only composed of zeros.
+    #[inline]
+    pub fn check_zeroed(ptr: *const T) -> bool {
+        unsafe {
+            (*slice_from_raw_parts(ptr as *const u8, core::mem::size_of::<T>())).iter().all(|x| x == &0)
+        }
+    }
+
+    /// Takes inner value, replacing its old location with zeros.
     #[inline]
     pub(crate) unsafe fn take_inner(&self) -> T {
-        let mut v = MaybeUninit::<T>::uninit();
+        let mut v = MaybeUninit::<T>::zeroed();
 
         core::ptr::swap(&mut v, self.0.get());
 
         v.assume_init()
     }
 
-    /// Unwraps the value, consuming the cell.
-    /// # Safety
-    /// Inner value must be initialised.
-    #[inline]
-    pub unsafe fn into_inner(self) -> T {
-        self.0.into_inner().assume_init()
-    }
 
     /// Returns a reference to inner value.
     /// # Safety

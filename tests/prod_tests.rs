@@ -6,7 +6,7 @@ const BUFFER_SIZE: usize = 100;
 
 #[test]
 fn test_push_one_by_one() {
-    let (mut prod, _cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, _cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     for i in 0..BUFFER_SIZE {
@@ -18,7 +18,7 @@ fn test_push_one_by_one() {
 
 #[test]
 fn test_push_slice() {
-    let (mut prod, _cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, _cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     let half_slice = (0..BUFFER_SIZE / 2).collect::<Vec<usize>>();
     let slice = (0..BUFFER_SIZE).collect::<Vec<usize>>();
@@ -39,7 +39,7 @@ fn test_push_slice() {
 #[test]
 #[allow(clippy::unnecessary_cast)]
 fn test_push_mut_ref_init() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     for i in 0..BUFFER_SIZE {
@@ -54,7 +54,7 @@ fn test_push_mut_ref_init() {
     assert!(prod.push(1).is_err());
 
     for i in 0..BUFFER_SIZE {
-        assert_eq!(cons.pop(), Some(i));
+        unsafe { assert_eq!(cons.pop(), Some(i)); }
     }
 }
 
@@ -77,6 +77,6 @@ fn test_push_mut_ref() {
     assert!(prod.push(1).is_err());
 
     for i in 0..BUFFER_SIZE {
-        assert_eq!(cons.pop(), Some(i));
+        unsafe { assert_eq!(cons.pop(), Some(i)); }
     }
 }

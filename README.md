@@ -40,6 +40,19 @@ To run it, jump [here](#tests-benchmarks-and-examples).
 
 ## Usage
 
+### A note about uninitialised items
+This buffer can handle uninitialised items.
+They are produced either when the buffer is created with `new_zeroed` methods, or when an initialised item
+is moved out of the buffer via [`ConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/cons_iter/struct.ConsIter.html#method.pop).
+
+As also stated in `ProdIter` doc page, there are two ways to push an item into the buffer:
+* normal methods can be used *only* when the location in which we are pushing the item is initialised;
+* `*_init` methods must be used when that location is not initialised.
+
+That's because normal methods implicitly drop the old value, which is a good thing if it is initialised, but
+it becomes a terrible one if it's not. To be more precise, dropping an uninitialised value results in UB,
+mostly in a SIGSEGV.
+
 ### Initialisation of buffer and iterators
 First, a buffer has to be created.
 
@@ -49,28 +62,34 @@ Local buffers should be faster, due to the use of plain integers as indices, but
 
 ```rust
 use mutringbuf::{ConcurrentStackRB, LocalStackRB};
+// buffers filled with default values
 let concurrent_buf = ConcurrentStackRB::<usize, 10>::default();
 let local_buf = LocalStackRB::<usize, 10>::default();
-```
-or:
-```rust
-use mutringbuf::{ConcurrentStackRB, LocalStackRB};
+// buffers built from existing arrays
 let concurrent_buf = ConcurrentStackRB::from([0; 10]);
 let local_buf = LocalStackRB::from([0; 10]);
+// buffers with uninitialised (zeroed) items
+unsafe {
+    let concurrent_buf = ConcurrentStackRB::< usize, 10 >::new_zeroed();
+    let local_buf = LocalStackRB::< usize, 10 >::new_zeroed();
+}
 ```
 
 #### Heap-allocated buffer
 
 ```rust
 use mutringbuf::{ConcurrentHeapRB, LocalHeapRB};
-let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::new(10);
-let local_buf: LocalHeapRB<usize> = LocalHeapRB::new(10);
-```
-or:
-```rust
-use mutringbuf::{ConcurrentHeapRB, LocalHeapRB};
+// buffers filled with default values
+let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::default(10);
+let local_buf: LocalHeapRB<usize> = LocalHeapRB::default(10);
+// buffers built from existing vec
 let concurrent_buf = ConcurrentHeapRB::from(vec![0; 10]);
 let local_buf = LocalHeapRB::from(vec![0; 10]);
+// buffers with uninitialised (zeroed) items
+unsafe {
+    let concurrent_buf: ConcurrentHeapRB < usize > = ConcurrentHeapRB::new_zeroed(10);
+    let local_buf: LocalHeapRB <usize > = LocalHeapRB::new_zeroed(10);
+}
 ```
 
 <br/>
@@ -104,16 +123,16 @@ let buf = LocalHeapRB::from(vec![0; 10]);
 let (mut prod, mut work, mut cons) = buf.split_mut();
 ```
 
-Worker iterator can also be wrapped in a [`DetachedWorkIter`], indirectly pausing the consumer, in
+Worker iterator can also be wrapped in a [`DetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/detached_work_iter/struct.DetachedWorkIter.html), indirectly pausing the consumer, in
 order to explore produced data back and forth.
 
 <br/>
 
 Each iterator can then be passed to a thread to do its job. More information can be found
 in the relative pages:
-- [`ProdIter`]
-- [`WorkIter`]
-- [`ConsIter`]
+- [`ProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/prod_iter/struct.ProdIter.html)
+- [`WorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/work_iter/struct.WorkIter.html)
+- [`ConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/impls/cons_iter/struct.ConsIter.html)
 
 Note that a buffer, no matter its type, lives until the last of the iterators does so.
 

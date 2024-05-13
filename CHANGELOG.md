@@ -1,3 +1,14 @@
+<a name="v0.3.0"></a>
+## v0.3.0 (13/05/2024)
+
+* `ConcurrentStackRB` and `LocalStackRB` now have a new `new_zeroed()` method, which creates a new buffer
+  with zeroed (uninitialised) elements.
+* `new` methods in `ConcurrentHeapRB` and `LocalHeapRB` are now called `new_zeroed`.
+* Methods in `ProdIter` have been split into `normal` and `*_init` ones, this in order to make possible
+  to work with uninitialised memory.
+* Some UBs have been fixed.
+* Solve memory leaks when dropping a buffer.
+
 <a name="v0.2.0"></a>
 ## v0.2.0 (06/05/2024)
 

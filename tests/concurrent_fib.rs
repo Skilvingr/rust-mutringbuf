@@ -72,7 +72,10 @@ fn rb_fibonacci() {
         while !prod_finished.load(Acquire) || cons.index() != prod_last_index.load(Acquire) {
 
             // Store consumed values to check them later
-            if let Some(value) = cons.pop() { consumed.push(value); }
+            if let Some(value) = cons.peek_ref() {
+                consumed.push(*value);
+                unsafe { cons.advance(1); }
+            }
         }
 
         // Iterator has to be returned here, as it was moved at the beginning of the thread

@@ -3,6 +3,8 @@ use core::slice;
 
 use crate::iterators::{private_impl, prod_alive, public_impl, work_alive};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
+#[allow(unused_imports)]
+use crate::ProdIter;
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
@@ -121,8 +123,11 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
     }
 
     /// Tries to pop an element, moving it.
+    /// # Safety
+    /// This items moves items, so locations from which they are moved out are left uninitialised.
+    /// These locations must be re-initialised used proper [`ProdIter`] methods (`*_init`) ones
     #[inline]
-    pub fn pop(&mut self) -> Option<T> {
+    pub unsafe fn pop(&mut self) -> Option<T> {
         self.next()
     }
 

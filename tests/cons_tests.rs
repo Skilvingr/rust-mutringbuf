@@ -20,28 +20,31 @@ fn test_pop_exact() {
     let buf = get_buf!(Concurrent, Stack);
     let (mut prod, mut cons) = buf.split();
 
-    assert!(cons.pop().is_none());
+    unsafe { assert!(cons.pop().is_none()); }
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        assert_eq!(cons.pop().unwrap(), i);
+        assert_eq!(*cons.peek_ref().unwrap(), i);
+        unsafe { cons.advance(1); }
     }
 
-    assert!(cons.pop().is_none());
+    assert!(cons.peek_ref().is_none());
+    unsafe { cons.advance(1); }
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        assert_eq!(cons.pop().unwrap(), i);
+        assert_eq!(*cons.peek_ref().unwrap(), i);
+        unsafe { cons.advance(1); }
     }
 
-    assert!(cons.pop().is_none());
+    unsafe { assert!(cons.pop().is_none()); }
 }
 
 #[test]
 fn test_pop_ref_exact() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
@@ -50,12 +53,12 @@ fn test_pop_ref_exact() {
         unsafe { cons.advance(1) };
     }
 
-    assert!(cons.pop().is_none());
+    unsafe { assert!(cons.pop().is_none()); }
 }
 
 #[test]
 fn test_pop_slice_exact() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
@@ -67,12 +70,12 @@ fn test_pop_slice_exact() {
     }
     unsafe { cons.advance(BUFFER_SIZE) };
 
-    assert!(cons.pop().is_none());
+    unsafe { assert!(cons.pop().is_none()); }
 }
 
 #[test]
 fn test_pop_avail_nw_exact() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
@@ -84,12 +87,12 @@ fn test_pop_avail_nw_exact() {
     }
     unsafe { cons.advance(BUFFER_SIZE) };
 
-    assert!(cons.pop().is_none());
+    unsafe { assert!(cons.pop().is_none()); }
 }
 
 #[test]
 fn test_pop_slice_seam() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE / 2);
 
@@ -109,12 +112,12 @@ fn test_pop_slice_seam() {
     }
     unsafe { cons.advance(BUFFER_SIZE) };
 
-    assert!(cons.pop().is_none());
+    unsafe { assert!(cons.pop().is_none()); }
 }
 
 #[test]
 fn test_pop_slice_copy() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::new(BUFFER_SIZE + 1).split();
+    let (mut prod, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE + 1).split();
 
     fill_buf(&mut prod, BUFFER_SIZE / 2);
 

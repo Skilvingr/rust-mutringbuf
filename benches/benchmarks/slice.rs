@@ -10,10 +10,10 @@ use mutringbuf::ConcurrentHeapRB;
 const RB_SIZE: usize = 1024;
 
 pub fn setup_slices(c: &mut Criterion) {
+    c.bench_function("slice_x1000_clone", slice_x1000_clone);
     c.bench_function("slice_x10", slice_x10);
     c.bench_function("slice_x100", slice_x100);
     c.bench_function("slice_x1000", slice_x1000);
-    c.bench_function("slice_x1000_clone", slice_x1000_clone);
 }
 
 fn slice_x10(b: &mut Bencher) {
