@@ -5,7 +5,7 @@ use core::slice;
 
 #[allow(unused_imports)]
 use crate::ConsIter;
-use crate::iterators::{cons_alive, private_impl, public_impl, work_alive};
+use crate::iterators::{cons_alive, cons_index, private_impl, public_impl, work_alive, work_index};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
@@ -105,6 +105,8 @@ impl<B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<B> {
 impl<B: MutRB<Item = T>, T> ProdIter<B> {
     work_alive!();
     cons_alive!();
+    work_index!();
+    cons_index!();
 
     pub(crate) fn new(value: BufRef<B>) -> Self {
         Self {

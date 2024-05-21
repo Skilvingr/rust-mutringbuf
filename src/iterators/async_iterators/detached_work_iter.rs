@@ -46,6 +46,8 @@ impl<B: MutRB<Item = T>, T> AsyncDetachedWorkIter<B> {
 
     delegate!(DetachedWorkIter, pub fn is_prod_alive(&self) -> bool);
     delegate!(DetachedWorkIter, pub fn is_cons_alive(&self) -> bool);
+    delegate!(DetachedWorkIter, pub fn prod_index(&self) -> usize);
+    delegate!(DetachedWorkIter, pub fn cons_index(&self) -> usize);
     delegate!(DetachedWorkIter, pub fn index(&self) -> usize);
     delegate!(DetachedWorkIter, pub fn available(&(mut) self) -> usize);
 

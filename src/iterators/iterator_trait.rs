@@ -68,6 +68,29 @@ pub(crate) mod iter_macros {
         }
     )}
 
+    macro_rules! prod_index { () => (
+        /// Returns the index of the producer.
+        #[inline]
+        pub fn prod_index(&self) -> usize {
+            self.buffer.work_index()
+        }
+    )}
+    macro_rules! work_index { () => (
+        /// Returns the index of the worker.
+        /// Note: when the buffer is used in non-mutable mode this will always return `0`.
+        #[inline]
+        pub fn work_index(&self) -> usize {
+            self.buffer.work_index()
+        }
+    )}
+    macro_rules! cons_index { () => (
+        /// Returns the index of the consumer.
+        #[inline]
+        pub fn cons_index(&self) -> usize {
+            self.buffer.cons_index()
+        }
+    )}
+
     macro_rules! public_impl { () => (
         #[inline]
         unsafe fn advance(&mut self, count: usize) {
@@ -173,5 +196,5 @@ pub(crate) mod iter_macros {
         }
     )}
 
-    pub(crate) use { public_impl, private_impl, prod_alive, work_alive, cons_alive };
+    pub(crate) use { public_impl, private_impl, prod_alive, work_alive, cons_alive, prod_index, work_index, cons_index };
 }

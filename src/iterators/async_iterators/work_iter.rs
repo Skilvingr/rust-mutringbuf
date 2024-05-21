@@ -93,6 +93,8 @@ impl<B: MutRB<Item = T>, T> AsyncWorkIter<B> {
     waker_registerer!();
     delegate!(WorkIter, pub fn is_prod_alive(&self) -> bool);
     delegate!(WorkIter, pub fn is_cons_alive(&self) -> bool);
+    delegate!(WorkIter, pub fn prod_index(&self) -> usize);
+    delegate!(WorkIter, pub fn cons_index(&self) -> usize);
     delegate!(WorkIter, pub fn index(&self) -> usize);
     delegate!(WorkIter, pub unsafe fn advance(&(mut) self, count: usize));
     delegate!(WorkIter, pub fn available(&(mut) self) -> usize);

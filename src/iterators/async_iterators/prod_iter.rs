@@ -157,6 +157,8 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
     waker_registerer!();
     delegate!(ProdIter, pub fn is_work_alive(&self) -> bool);
     delegate!(ProdIter, pub fn is_cons_alive(&self) -> bool);
+    delegate!(ProdIter, pub fn work_index(&self) -> usize);
+    delegate!(ProdIter, pub fn cons_index(&self) -> usize);
     delegate!(ProdIter, pub fn index(&self) -> usize);
     delegate!(ProdIter, pub fn available(&(mut) self) -> usize);
 

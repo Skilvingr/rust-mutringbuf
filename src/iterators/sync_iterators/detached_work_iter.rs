@@ -100,6 +100,8 @@ impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
 
     delegate!(WorkIter (inline), pub fn is_prod_alive(&self) -> bool);
     delegate!(WorkIter (inline), pub fn is_cons_alive(&self) -> bool);
+    delegate!(WorkIter (inline), pub fn prod_index(&self) -> usize);
+    delegate!(WorkIter (inline), pub fn cons_index(&self) -> usize);
     delegate!(WorkIter (inline), pub fn get_workable(&(mut) self) -> Option<&mut T>);
     delegate!(WorkIter (inline), pub fn get_workable_slice_exact(&(mut) self, count: usize) -> Option<WorkableSlice<'_, T>>);
     delegate!(WorkIter (inline), pub fn get_workable_slice_avail(&(mut) self) -> Option<WorkableSlice<'_, T>>);

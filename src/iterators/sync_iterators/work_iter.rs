@@ -1,7 +1,7 @@
 use core::mem::transmute;
 use core::slice;
 
-use crate::iterators::{cons_alive, private_impl, prod_alive, public_impl};
+use crate::iterators::{cons_alive, cons_index, private_impl, prod_alive, prod_index, public_impl};
 use crate::iterators::sync_iterators::detached_work_iter::DetachedWorkIter;
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
@@ -77,6 +77,8 @@ impl<B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<B> {
 impl<B: MutRB<Item = T>, T> WorkIter<B> {
     prod_alive!();
     cons_alive!();
+    prod_index!();
+    cons_index!();
 
     pub(crate) fn new(value: BufRef<B>) -> WorkIter<B> {
         Self {

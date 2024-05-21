@@ -151,6 +151,8 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<B, W> {
     waker_registerer!();
     delegate!(ConsIter, pub fn is_prod_alive(&self) -> bool);
     delegate!(ConsIter, pub fn is_work_alive(&self) -> bool);
+    delegate!(ConsIter, pub fn prod_index(&self) -> usize);
+    delegate!(ConsIter, pub fn work_index(&self) -> usize);
     delegate!(ConsIter, pub fn index(&self) -> usize);
     delegate!(ConsIter, pub unsafe fn advance(&(mut) self, count: usize));
     delegate!(ConsIter, pub fn available(&(mut) self) -> usize);
