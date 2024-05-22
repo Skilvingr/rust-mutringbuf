@@ -141,6 +141,21 @@ gen_fut!{
     }
 }
 
+gen_fut!{
+    GetNextSlicesMutFuture<'a, B: MutRB<Item = T>, T: 'a>,
+    &'a mut AsyncProdIter<B>,
+    usize,
+    (&'a mut [T], &'a mut [T]),
+    self {
+        let count = self._item;
+        let push_result = unsafe { self.iter.inner.get_next_slices_mut(count) };
+
+        if let Some(res) = push_result {
+            break Poll::Ready(res);
+        }
+    }
+}
+
 
 impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
     pub fn from_sync(iter: ProdIter<B>) -> Self {
@@ -208,6 +223,14 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
         GetNextItemMutInitFuture {
             iter: self,
             _item: ()
+        }
+    }
+
+    /// Async version of [`ProdIter::get_next_slices_mut`].
+    pub fn get_next_slices_mut(&mut self, count: usize) -> GetNextSlicesMutFuture<'_, B, T> {
+        GetNextSlicesMutFuture {
+            iter: self,
+            _item: count
         }
     }
 }

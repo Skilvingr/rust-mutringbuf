@@ -241,7 +241,7 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
     }
 
     #[inline]
-    pub fn _push_slice_clone(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()>
+    fn _push_slice_clone(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()>
         where T: Clone
     {
         let count = slice.len();
@@ -358,5 +358,23 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
     /// </div>
     pub fn get_next_item_mut_init(&mut self) -> Option<*mut T> {
         self.next_ref_mut_init()
+    }
+
+    /// If available, returns two mutable slices with a total count equal to `count`.
+    /// These references can be used to write data into *initialised* items.
+    ///
+    /// Items can be initialised by calling [`Self::get_next_item_mut_init`] or by creating a buffer
+    /// using `default` constructor. E.g.: `ConcurrentHeapRB::default` or `LocalStackRB::default`.
+    ///
+    /// <div class="warning">
+    ///
+    /// Being this a reference, [`Self::advance`] has to be called when done with the mutation
+    /// in order to move the iterator.
+    /// </div>
+    ///
+    /// # Safety
+    /// The retrieved items must be initialised! For more info, refer to [`MaybeUninit::assume_init_mut`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#method.assume_init_mut).
+    pub unsafe fn get_next_slices_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])> {
+        self.next_chunk_mut(count)
     }
 }

@@ -72,7 +72,7 @@ pub(crate) mod iter_macros {
         /// Returns the index of the producer.
         #[inline]
         pub fn prod_index(&self) -> usize {
-            self.buffer.work_index()
+            self.buffer.prod_index()
         }
     )}
     macro_rules! work_index { () => (
