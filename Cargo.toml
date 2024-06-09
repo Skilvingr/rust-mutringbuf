@@ -4,7 +4,7 @@ version = "0.3.0"
 edition = "2021"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
-description = "A very simple lock-free SPSC ring buffer, with in-place mutability."
+description = "A simple lock-free SPSC ring buffer, with in-place mutability."
 repository = "https://github.com/Skilvingr/rust-mutringbuf"
 license = "MIT OR Apache-2.0"
 keywords = ["lock-free", "async", "ring", "circular", "buffer"]
@@ -17,7 +17,7 @@ alloc = []
 async = []
 
 [dependencies]
-crossbeam-utils = { version = "0.8.19", default-features = false }
+crossbeam-utils = { version = "0.8.20", default-features = false }
 
 [dev-dependencies]
 tokio-test = { version = "0.4.4" }
