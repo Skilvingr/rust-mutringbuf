@@ -1,3 +1,11 @@
+<a name="v0.3.1"></a>
+## v0.3.1 (Unreleased)
+
+* Every iterator can now retrieve indices of other iterators.
+* Prod iterators have now a method to fetch a tuple of mutable slices; useful to directly
+  write data without the need to use copy or clone methods.
+* A convenience method to busy-wait for a certain amount of items has been added.
+
 <a name="v0.3.0"></a>
 ## v0.3.0 (13/05/2024)
 

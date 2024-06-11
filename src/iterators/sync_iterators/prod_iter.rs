@@ -363,12 +363,12 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
     /// If available, returns two mutable slices with a total count equal to `count`.
     /// These references can be used to write data into *initialised* items.
     ///
-    /// Items can be initialised by calling [`Self::get_next_item_mut_init`] or by creating a buffer
+    /// Items can be initialised (one by one) by calling [`Self::get_next_item_mut_init`] or by creating a buffer
     /// using `default` constructor. E.g.: `ConcurrentHeapRB::default` or `LocalStackRB::default`.
     ///
     /// <div class="warning">
     ///
-    /// Being this a reference, [`Self::advance`] has to be called when done with the mutation
+    /// Being these reference, [`Self::advance`] has to be called when done with the mutation
     /// in order to move the iterator.
     /// </div>
     ///

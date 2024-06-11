@@ -54,6 +54,7 @@ impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
 
 
     delegate!(WorkIter (inline), pub fn available(&(mut) self) -> usize);
+    delegate!(WorkIter (inline), pub fn wait_for(&(mut) self, count: usize));
     delegate!(WorkIter (inline), pub fn index(&self) -> usize);
     delegate!(WorkIter (inline), pub fn buf_len(&self) -> usize);
 
