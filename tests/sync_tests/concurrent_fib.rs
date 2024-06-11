@@ -49,7 +49,7 @@ fn rb_fibonacci() {
         let mut acc = (1, 0);
 
         while !prod_finished_clone.load(Acquire) || work.index() != prod_last_index_clone.load(Acquire) {
-
+            
             if let Some(value) = work.get_workable() {
                 let (bt_h, bt_t) = &mut acc;
 

@@ -9,6 +9,12 @@ pub trait MRBIterator<T> {
     /// Returns the number of items available for an iterator.
     fn available(&mut self) -> usize;
 
+    /// Waits, blocking the thread, until there are at least `count` available items.
+    #[inline(always)]
+    fn wait_for(&mut self, count: usize) {
+        while self.available() < count {}
+    }
+
     /// Returns the index of the iterator.
     fn index(&self) -> usize;
 
