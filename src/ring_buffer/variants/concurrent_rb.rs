@@ -176,17 +176,17 @@ impl<S: Storage<Item = T>, T> StorageManager for ConcurrentMutRingBuf<S> {
     type StoredType = T;
     type S = S;
 
-    #[inline]
+    #[inline(always)]
     fn inner(&self) -> &S {
         unsafe { &(*self.inner.get()) }
     }
 
-    #[inline]
+    #[inline(always)]
     fn inner_mut(&mut self) -> &mut S {
         unsafe { &mut (*self.inner.get()) }
     }
 
-    #[inline]
+    #[inline(always)]
     fn inner_len(&self) -> usize {
         self.inner_len
     }

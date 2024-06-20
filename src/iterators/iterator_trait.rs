@@ -9,7 +9,7 @@ pub trait MRBIterator<T> {
     /// Returns the number of items available for an iterator.
     fn available(&mut self) -> usize;
 
-    /// Waits, blocking the thread, until there are at least `count` available items.
+    /// Waits, blocking the thread in a loop, until there are at least `count` available items.
     #[inline(always)]
     fn wait_for(&mut self, count: usize) {
         while self.available() < count {}
@@ -108,19 +108,19 @@ pub(crate) mod iter_macros {
             self.set_atomic_index(self.index);
         }
 
-        #[inline]
+        #[inline(always)]
         fn index(&self) -> usize {
             self.index
         }
 
-        #[inline]
+        #[inline(always)]
         fn buf_len(&self) -> usize {
             self.buf_len
         }
     )}
 
     macro_rules! private_impl { () => (
-        #[inline]
+        #[inline(always)]
         fn check(&mut self, count: usize) -> bool {
             if self.cached_avail >= count || self.available() >= count {
                 self.cached_avail -= count;
@@ -159,21 +159,27 @@ pub(crate) mod iter_macros {
         #[inline]
         fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])> {
             self.check(count).then(|| {
-                let inner = unsafe {
-                    transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                        slice::from_raw_parts(self.buffer.inner().as_ptr(), self.buf_len)
-                    )
-                };
-
-                if self.index + count >= self.buf_len {
-                    let (left, right) = inner.split_at(self.index);
-
-                    (
-                        right,
-                        &left[.. self.index + count - self.buf_len]
-                    )
-                } else {
-                    (&inner[self.index .. self.index + count], &[] as &[T])
+                
+                unsafe {
+                    let ptr = self.buffer.inner_mut().as_ptr();
+                    
+                    if self.index + count >= self.buf_len {
+                        (
+                            transmute::<&[UnsafeSyncCell<T>], &[T]>(
+                                slice::from_raw_parts(ptr.add(self.index), self.buf_len - self.index)
+                            ),
+                            transmute::<&[UnsafeSyncCell<T>], &[T]>(
+                                slice::from_raw_parts(ptr, self.index + count - self.buf_len)
+                            )
+                        )
+                    } else {
+                        (
+                            transmute::<&[UnsafeSyncCell<T>], &[T]>(
+                                slice::from_raw_parts(ptr.add(self.index), count)
+                            ),
+                            &mut [] as &[T]
+                        )
+                    }
                 }
             })
         }
@@ -181,22 +187,27 @@ pub(crate) mod iter_macros {
         #[inline]
         fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])> {
             self.check(count).then(|| {
-
-                let inner = unsafe {
-                    transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                        slice::from_raw_parts_mut(self.buffer.inner_mut().as_mut_ptr(), self.buf_len)
-                    )
-                };
-
-                if self.index + count >= self.buf_len {
-                    let (left, right) = inner.split_at_mut(self.index);
-
-                    (
-                        right,
-                        &mut left[.. self.index + count - self.buf_len]
-                    )
-                } else {
-                    (&mut inner[self.index .. self.index + count], &mut [] as &mut [T])
+                
+                unsafe {
+                    let ptr = self.buffer.inner_mut().as_mut_ptr();
+                    
+                    if self.index + count >= self.buf_len {
+                        (
+                            transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
+                                slice::from_raw_parts_mut(ptr.add(self.index), self.buf_len - self.index)
+                            ),
+                            transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
+                                slice::from_raw_parts_mut(ptr, self.index + count - self.buf_len)
+                            )
+                        )
+                    } else {
+                        (
+                            transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
+                                slice::from_raw_parts_mut(ptr.add(self.index), count)
+                            ),
+                            &mut [] as &mut [T]
+                        )
+                    }
                 }
             })
         }

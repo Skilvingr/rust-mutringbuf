@@ -29,21 +29,21 @@ impl<T, const N: usize> From<[UnsafeSyncCell<T>; N]> for StackStorage<T, N> {
 impl<T, const N: usize> Index<usize> for StackStorage<T, N> {
     type Output = UnsafeSyncCell<T>;
 
-    #[inline]
+    #[inline(always)]
     fn index(&self, index: usize) -> &Self::Output {
-        &self.inner[index]
+        unsafe { self.inner.get_unchecked(index) }
     }
 }
 
 impl<T, const N: usize> Storage for StackStorage<T, N> {
     type Item = T;
 
-    #[inline]
+    #[inline(always)]
     fn as_ptr(&self) -> *const Self::Output {
         self.inner.as_ptr()
     }
 
-    #[inline]
+    #[inline(always)]
     fn as_mut_ptr(&mut self) -> *mut Self::Output {
         self.inner.as_mut_ptr()
     }

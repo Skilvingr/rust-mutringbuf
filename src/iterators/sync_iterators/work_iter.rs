@@ -46,12 +46,12 @@ impl<B: MutRB + IterManager> Drop for WorkIter<B> {
 }
 
 impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<B> {
-    #[inline]
+    #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);
     }
 
-    #[inline]
+    #[inline(always)]
     fn succ_index(&self) -> usize {
         self.buffer.prod_index()
     }

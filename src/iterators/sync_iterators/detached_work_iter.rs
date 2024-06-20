@@ -62,7 +62,7 @@ impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
     ///
     /// # Safety
     /// Index must always be between consumer and producer.
-    #[inline]
+    #[inline(always)]
     pub unsafe fn set_index(&mut self, index: usize) {
         self.inner.index = index;
     }
@@ -110,7 +110,7 @@ impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
 
     /// Synchronises the underlying atomic index with the local index. I.e. let the consumer iterator
     /// advance.
-    #[inline]
+    #[inline(always)]
     pub fn sync_index(&self) {
         self.inner.set_atomic_index(self.inner.index);
     }

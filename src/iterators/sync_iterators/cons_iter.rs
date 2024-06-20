@@ -34,12 +34,12 @@ impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<B, W> {
 }
 
 impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B, W> {
-    #[inline]
+    #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
     }
 
-    #[inline]
+    #[inline(always)]
     fn succ_index(&self) -> usize {
         if W {
             self.buffer.work_index()
@@ -72,7 +72,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
     work_alive!();
     prod_index!();
     work_index!();
-
+    
     pub(crate) fn new(value: BufRef<B>) -> Self {
         Self {
             index: 0,
@@ -126,7 +126,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
 
     /// Tries to pop an element, moving it.
     /// # Safety
-    /// This items moves items, so locations from which they are moved out are left uninitialised.
+    /// This method moves items, so locations from which they are moved out are left uninitialised.
     /// These locations must be re-initialised used proper [`ProdIter`] methods (`*_init`) ones
     #[inline]
     pub unsafe fn pop(&mut self) -> Option<T> {

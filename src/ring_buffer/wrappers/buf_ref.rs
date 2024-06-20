@@ -46,31 +46,31 @@ impl<B> Clone for BufRef<B> {
 impl<B> Deref for BufRef<B> {
     type Target = B;
 
-    #[inline]
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         unsafe { self.inner.as_ref() }
     }
 }
 
 impl<B> DerefMut for BufRef<B> {
-    #[inline]
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe { self.inner.as_mut() }
     }
 }
 
 impl<B: IterManager> IterManager for BufRef<B> {
-    #[inline]
+    #[inline(always)]
     fn prod_index(&self) -> usize {
         unsafe { self.inner.as_ref().prod_index() }
     }
 
-    #[inline]
+    #[inline(always)]
     fn work_index(&self) -> usize {
         unsafe { self.inner.as_ref().work_index() }
     }
 
-    #[inline]
+    #[inline(always)]
     fn cons_index(&self) -> usize {
         unsafe { self.inner.as_ref().cons_index() }
     }
