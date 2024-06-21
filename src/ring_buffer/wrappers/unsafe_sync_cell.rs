@@ -45,18 +45,14 @@ impl<T> UnsafeSyncCell<T> {
     #[inline]
     pub fn check_zeroed(ptr: *const T) -> bool {
         unsafe {
-            (*slice_from_raw_parts(ptr as *const u8, core::mem::size_of::<T>())).iter().all(|x| x == &0)
+            (*slice_from_raw_parts(ptr as *const u8, core::mem::size_of::<T>())).iter().all(|x| *x == 0)
         }
     }
 
     /// Takes inner value, replacing its old location with zeros.
     #[inline]
     pub(crate) unsafe fn take_inner(&self) -> T {
-        let mut v = MaybeUninit::<T>::zeroed();
-
-        core::ptr::swap(&mut v, self.0.get());
-
-        v.assume_init()
+        core::mem::replace(&mut *self.0.get(), MaybeUninit::<T>::zeroed()).assume_init()
     }
 
 

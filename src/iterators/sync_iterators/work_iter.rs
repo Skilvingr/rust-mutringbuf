@@ -135,8 +135,10 @@ impl<B: MutRB<Item = T>, T> WorkIter<B> {
     /// </div>
     #[inline]
     pub fn get_workable_slice_avail<'a>(&mut self) -> Option<WorkableSlice<'a, T>> {
-        let avail = self.available();
-        if avail > 0 { self.get_workable_slice_exact(avail) } else { None }
+        match self.available() {
+            0 => None,
+            avail => self.get_workable_slice_exact(avail)
+        }
     }
 
     /// Returns a tuple of mutable slice references, the sum of which with len equal to the
@@ -149,7 +151,10 @@ impl<B: MutRB<Item = T>, T> WorkIter<B> {
     #[inline]
     pub fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, T>> {
         let avail = self.available();
-        let avail = avail - avail % rhs;
-        if avail > 0 { self.get_workable_slice_exact(avail) } else { None }
+        
+        match avail - avail % rhs {
+            0 => None,
+            avail => self.get_workable_slice_exact(avail)
+        }
     }
 }

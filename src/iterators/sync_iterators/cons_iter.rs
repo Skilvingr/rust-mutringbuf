@@ -184,9 +184,11 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
         where T: Copy
     {
         if let Some((h, t)) = self.next_chunk(dst.len()) {
-            dst[.. h.len()].copy_from_slice(h);
-            dst[h.len() ..].copy_from_slice(t);
-
+            unsafe {
+                dst.get_unchecked_mut(..h.len()).copy_from_slice(h);
+                dst.get_unchecked_mut(h.len()..).copy_from_slice(t);
+            }
+                
             unsafe { self.advance(dst.len()) };
             Some(())
         } else { None }
@@ -202,8 +204,10 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
         where T: Clone
     {
         if let Some((h, t)) = self.next_chunk(dst.len()) {
-            dst[.. h.len()].clone_from_slice(h);
-            dst[h.len() ..].clone_from_slice(t);
+            unsafe {
+                dst.get_unchecked_mut(..h.len()).clone_from_slice(h);
+                dst.get_unchecked_mut(h.len()..).clone_from_slice(t);
+            }
 
             unsafe { self.advance(dst.len()) };
             Some(())

@@ -11,19 +11,10 @@ const RB_SIZE: usize = 256;
 const BATCH_SIZE: usize = 100;
 
 pub fn setup(c: &mut Criterion) {
-    c.bench_function("push_slice", push_slice);
     c.bench_function("push_pop_shared", push_pop_shared);
     c.bench_function("pop_x100", pop_x100);
     c.bench_function("push_pop_x100", push_pop_x100);
     c.bench_function("push_pop_work", push_pop_work);
-}
-
-fn push_slice(b: &mut Bencher) {
-    let buf = ConcurrentHeapRB::from(vec![0u64; RB_SIZE + 1]);
-    let (mut prod, _) = buf.split();
-    b.iter(|| {
-        black_box(prod.push_slice(&[1; RB_SIZE / 2]));
-    });
 }
 
 fn push_pop_shared(b: &mut Bencher) {
@@ -54,7 +45,7 @@ fn pop_x100(b: &mut Bencher) {
 }
 
 fn push_pop_x100(b: &mut Bencher) {
-    let buf = ConcurrentStackRB::<u64, {RB_SIZE + 1}>::default();
+    let buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
 
     let (mut prod, mut cons) = buf.split();
 

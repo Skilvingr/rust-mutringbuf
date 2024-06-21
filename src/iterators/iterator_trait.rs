@@ -162,7 +162,7 @@ pub(crate) mod iter_macros {
             self.check(count).then(|| {
                 
                 unsafe {
-                    let ptr = self.buffer.inner_mut().as_ptr();
+                    let ptr = self.buffer.inner().as_ptr();
                     
                     if self.index + count >= self.buf_len.get() {
                         (

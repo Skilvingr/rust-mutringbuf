@@ -182,8 +182,10 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
             if mid == slice.len() {
                 f(binding_h, slice);
             } else {
-                f(binding_h, &slice[..mid]);
-                f(binding_t, &slice[mid..]);
+                unsafe {
+                    f(binding_h, slice.get_unchecked(..mid));
+                    f(binding_t, slice.get_unchecked(mid..));
+                }
             }
 
             unsafe { self.advance(count) };
@@ -253,8 +255,10 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
             if mid == count {
                 f(binding_h, slice);
             } else {
-                f(binding_h, &slice[..mid]);
-                f(binding_t, &slice[mid..]);
+                unsafe {
+                    f(binding_h, slice.get_unchecked(..mid));
+                    f(binding_t, slice.get_unchecked(mid..));
+                }
             }
 
             unsafe { self.advance(count) };
