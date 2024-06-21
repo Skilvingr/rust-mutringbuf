@@ -82,8 +82,8 @@ impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
     /// See [`WorkIter::advance`].
     #[inline]
     pub unsafe fn advance(&mut self, count: usize) {
-        self.inner.index = match self.inner.index + count >= self.inner.buf_len {
-            true => self.inner.index + count - self.inner.buf_len,
+        self.inner.index = match self.inner.index + count >= self.inner.buf_len.get() {
+            true => self.inner.index + count - self.inner.buf_len.get(),
             false => self.inner.index + count
         };
     }
@@ -94,7 +94,7 @@ impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
     /// Index must always be between consumer and producer.
     pub unsafe fn go_back(&mut self, count: usize) {
         self.inner.index = match self.inner.index < count {
-            true => self.inner.buf_len - (count - self.inner.index),
+            true => self.inner.buf_len.get() - (count - self.inner.index),
             false => self.inner.index - count
         };
     }

@@ -100,10 +100,11 @@ pub(crate) mod iter_macros {
     macro_rules! public_impl { () => (
         #[inline]
         unsafe fn advance(&mut self, count: usize) {
-            self.index = match self.index >= self.buf_len - count {
-                true => self.index + count - self.buf_len,
-                false => self.index + count
-            };
+            self.index += count;
+            
+            if self.index >= self.buf_len.get() {
+                self.index -= self.buf_len.get();
+            }
 
             self.set_atomic_index(self.index);
         }
@@ -115,7 +116,7 @@ pub(crate) mod iter_macros {
 
         #[inline(always)]
         fn buf_len(&self) -> usize {
-            self.buf_len
+            self.buf_len.get()
         }
     )}
 
@@ -163,13 +164,13 @@ pub(crate) mod iter_macros {
                 unsafe {
                     let ptr = self.buffer.inner_mut().as_ptr();
                     
-                    if self.index + count >= self.buf_len {
+                    if self.index + count >= self.buf_len.get() {
                         (
                             transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                                slice::from_raw_parts(ptr.add(self.index), self.buf_len - self.index)
+                                slice::from_raw_parts(ptr.add(self.index), self.buf_len.get() - self.index)
                             ),
                             transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                                slice::from_raw_parts(ptr, self.index + count - self.buf_len)
+                                slice::from_raw_parts(ptr, self.index + count - self.buf_len.get())
                             )
                         )
                     } else {
@@ -191,13 +192,13 @@ pub(crate) mod iter_macros {
                 unsafe {
                     let ptr = self.buffer.inner_mut().as_mut_ptr();
                     
-                    if self.index + count >= self.buf_len {
+                    if self.index + count >= self.buf_len.get() {
                         (
                             transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                                slice::from_raw_parts_mut(ptr.add(self.index), self.buf_len - self.index)
+                                slice::from_raw_parts_mut(ptr.add(self.index), self.buf_len.get() - self.index)
                             ),
                             transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                                slice::from_raw_parts_mut(ptr, self.index + count - self.buf_len)
+                                slice::from_raw_parts_mut(ptr, self.index + count - self.buf_len.get())
                             )
                         )
                     } else {

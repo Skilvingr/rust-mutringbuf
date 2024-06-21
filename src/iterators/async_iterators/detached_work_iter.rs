@@ -66,8 +66,8 @@ impl<B: MutRB<Item = T>, T> AsyncDetachedWorkIter<B> {
     /// # Safety
     /// Same as [`DetachedWorkIter::advance`].
     pub unsafe fn advance(&mut self, count: usize) {
-        self.inner.inner.index = match self.inner.inner.index + count >= self.inner.inner.buf_len {
-            true => self.inner.inner.index + count - self.inner.inner.buf_len,
+        self.inner.inner.index = match self.inner.inner.index + count >= self.inner.inner.buf_len.get() {
+            true => self.inner.inner.index + count - self.inner.inner.buf_len.get(),
             false => self.inner.inner.index + count
         };
     }
@@ -78,7 +78,7 @@ impl<B: MutRB<Item = T>, T> AsyncDetachedWorkIter<B> {
     /// Same as [`DetachedWorkIter::go_back`].
     pub unsafe fn go_back(&mut self, count: usize) {
         self.inner.inner.index = match self.inner.inner.index < count {
-            true => self.inner.inner.buf_len - (count - self.inner.inner.index),
+            true => self.inner.inner.buf_len.get() - (count - self.inner.inner.index),
             false => self.inner.inner.index - count
         };
     }

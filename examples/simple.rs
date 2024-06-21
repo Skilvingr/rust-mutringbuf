@@ -72,7 +72,7 @@ fn f() {
 }
 
 fn main() {
-   for _ in 0 .. 100 {
+   for _ in 0 .. 500 {
        f();
    }
 }

@@ -1,6 +1,7 @@
 use core::mem::transmute;
 #[allow(unused_imports)]
 use core::mem::MaybeUninit;
+use core::num::NonZeroUsize;
 use core::slice;
 
 #[allow(unused_imports)]
@@ -58,7 +59,7 @@ write it. So they are safe to use upon a possibly uninitialised block.
 
 pub struct ProdIter<B: MutRB> {
     index: usize,
-    buf_len: usize,
+    buf_len: NonZeroUsize,
     buffer: BufRef<B>,
 
     cached_avail: usize,
@@ -93,7 +94,7 @@ impl<B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<B> {
 
         self.cached_avail = match self.index < succ_idx {
             true => succ_idx - self.index - 1,
-            false => self.buf_len - self.index + succ_idx - 1
+            false => self.buf_len.get() - self.index + succ_idx - 1
         };
 
         self.cached_avail
@@ -111,7 +112,7 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
     pub(crate) fn new(value: BufRef<B>) -> Self {
         Self {
             index: 0,
-            buf_len: value.inner_len(),
+            buf_len: NonZeroUsize::new(value.inner_len()).unwrap(),
             buffer: value,
             cached_avail: 0
         }

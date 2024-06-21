@@ -1,4 +1,5 @@
 use core::cell::{Cell, UnsafeCell};
+use core::num::NonZeroUsize;
 
 use crate::{ConsIter, LocalStackRB, ProdIter, WorkIter};
 use crate::ring_buffer::storage::stack::StackStorage;
@@ -7,7 +8,7 @@ use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, MutRB, Storag
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
 pub struct LocalMutRingBuf<S: Storage> {
-    pub(crate) inner_len: usize,
+    pub(crate) inner_len: NonZeroUsize,
     pub(crate) inner: UnsafeCell<S>,
 
     pub(crate) prod_idx: Cell<usize>,
@@ -56,10 +57,8 @@ impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
     }
 
     pub(crate) fn _from(value: S) -> LocalMutRingBuf<S> {
-        assert!(value.len() > 1);
-
         LocalMutRingBuf {
-            inner_len: value.len(),
+            inner_len: NonZeroUsize::new(value.len()).unwrap(),
             inner: value.into(),
 
             prod_idx: 0.into(),
@@ -145,7 +144,7 @@ impl<S: Storage<Item = T>, T> StorageManager for LocalMutRingBuf<S> {
 
     #[inline(always)]
     fn inner_len(&self) -> usize {
-        self.inner_len
+        self.inner_len.get()
     }
 }
 

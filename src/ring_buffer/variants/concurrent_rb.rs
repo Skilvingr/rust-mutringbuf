@@ -1,4 +1,5 @@
 use core::cell::UnsafeCell;
+use core::num::NonZeroUsize;
 use core::sync::atomic::{AtomicBool, AtomicUsize};
 use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
 
@@ -15,7 +16,7 @@ use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::{AsyncWorkIter, AsyncConsIter, AsyncProdIter};
 
 pub struct ConcurrentMutRingBuf<S: Storage> {
-    inner_len: usize,
+    inner_len: NonZeroUsize,
     inner: UnsafeCell<S>,
 
     prod_idx: CachePadded<AtomicUsize>,
@@ -99,10 +100,8 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     }
 
     pub(crate) fn _from(value: S) -> ConcurrentMutRingBuf<S> {
-        assert!(value.len() > 1);
-
         ConcurrentMutRingBuf {
-            inner_len: value.len(),
+            inner_len: NonZeroUsize::new(value.len()).unwrap(),
             inner: value.into(),
 
             prod_idx: CachePadded::new(0.into()),
@@ -188,7 +187,7 @@ impl<S: Storage<Item = T>, T> StorageManager for ConcurrentMutRingBuf<S> {
 
     #[inline(always)]
     fn inner_len(&self) -> usize {
-        self.inner_len
+        self.inner_len.get()
     }
 }
 
