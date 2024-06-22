@@ -105,6 +105,8 @@ pub(crate) mod iter_macros {
             if self.index >= self.buf_len.get() {
                 self.index -= self.buf_len.get();
             }
+            
+            self.cached_avail = self.cached_avail.saturating_sub(count);
 
             self.set_atomic_index(self.index);
         }
@@ -123,12 +125,7 @@ pub(crate) mod iter_macros {
     macro_rules! private_impl { () => (
         #[inline(always)]
         fn check(&mut self, count: usize) -> bool {
-            if self.cached_avail >= count || self.available() >= count {
-                self.cached_avail -= count;
-                true
-            } else {
-                false
-            }
+            self.cached_avail >= count || self.available() >= count
         }
 
         #[inline]

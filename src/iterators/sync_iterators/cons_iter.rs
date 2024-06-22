@@ -214,3 +214,29 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
         } else { None }
     }
 }
+
+mod test {
+    #[test]
+    fn cached_avail() {
+        use crate::ConcurrentHeapRB;
+        use super::*;
+
+        const BUFFER_SIZE: usize = 100;
+        
+        let (mut prod, mut cons) = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1).split();
+
+        assert_eq!(cons.cached_avail, 0);
+        
+        unsafe { prod.advance(10); }
+
+        assert_eq!(cons.cached_avail, 0);
+        
+        cons.check(1);
+
+        assert_eq!(cons.cached_avail, 10);
+        
+        unsafe { cons.advance(9); }
+
+        assert_eq!(cons.cached_avail, 1);
+    }
+}

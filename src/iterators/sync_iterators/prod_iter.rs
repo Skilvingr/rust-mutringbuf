@@ -383,3 +383,33 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
         self.next_chunk_mut(count)
     }
 }
+
+pub mod test {
+    #[test]
+    fn cached_avail() {
+        use crate::ConcurrentHeapRB;
+        use super::*;
+
+        const BUFFER_SIZE: usize = 10;
+        
+        let (mut prod, mut cons) = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1).split();
+
+        assert_eq!(prod.cached_avail, 0);
+        
+        prod.check(1);
+
+        assert_eq!(prod.cached_avail, BUFFER_SIZE);
+
+        unsafe { prod.advance(2); }
+
+        assert_eq!(prod.cached_avail, 8);
+
+        unsafe { cons.advance(1); }
+
+        assert_eq!(prod.cached_avail, 8);
+
+        prod.check(10);
+
+        assert_eq!(prod.cached_avail, 9);
+    }
+}
