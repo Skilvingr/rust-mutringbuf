@@ -1,4 +1,4 @@
-use crate::{ConcurrentMutRingBuf, LocalMutRingBuf, StackStorage, UnsafeSyncCell};
+use crate::{ConcurrentMutRingBuf, ConsIter, LocalMutRingBuf, MutRB, StackStorage, UnsafeSyncCell, WorkIter};
 #[allow(unused_imports)]
 use crate::ProdIter;
 
@@ -35,4 +35,91 @@ impl<T, const N: usize> LocalStackRB<T, N> {
 
         Self::_from(StackStorage::from(v))
     }
+}
+
+#[cfg(feature = "alloc")]
+pub trait HeapSplit<B: MutRB> {
+    /// Consumes the buffer, yielding two iterators. See:
+    /// - [`ProdIter`];
+    /// - [`ConsIter`].
+    fn split<'buf>(self) -> (ProdIter<'buf, B>, ConsIter<'buf, B, false>);
+
+    /// Consumes the buffer, yielding three iterators. See:
+    /// - [`ProdIter`];
+    /// - [`WorkIter`];
+    /// - [`ConsIter`].
+    fn split_mut<'buf>(self) -> (ProdIter<'buf, B>, WorkIter<'buf, B>, ConsIter<'buf, B, true>);
+}
+
+pub trait StackSplit<B: MutRB> {
+    /// Borrows the buffer, yielding two iterators. See:
+    /// - [`ProdIter`];
+    /// - [`ConsIter`].
+    fn split(&mut self) -> (ProdIter<B>, ConsIter<B, false>);
+
+    /// Borrows the buffer, yielding three iterators. See:
+    /// - [`ProdIter`];
+    /// - [`WorkIter`];
+    /// - [`ConsIter`].
+    fn split_mut(&mut self) -> (ProdIter<B>, WorkIter<B>, ConsIter<B, true>);
+}
+
+pub(crate) mod impl_splits {
+    macro_rules! impl_splits { ($Struct: tt) => {
+
+        #[cfg(feature = "alloc")]
+        impl<T> HeapSplit<$Struct<HeapStorage<T>>> for $Struct<HeapStorage<T>> {
+            fn split<'buf>(self) -> (ProdIter<'buf, $Struct<HeapStorage<T>>>, ConsIter<'buf, $Struct<HeapStorage<T>>, false>) {
+                self.set_prod_alive(true);
+                self.set_cons_alive(true);
+
+                let r = BufRef::new(self);
+                (
+                    ProdIter::new(r.clone()),
+                    ConsIter::new(r),
+                )
+            }
+
+            fn split_mut<'buf>(self) -> (ProdIter<'buf, $Struct<HeapStorage<T>>>, WorkIter<'buf, $Struct<HeapStorage<T>>>, ConsIter<'buf, $Struct<HeapStorage<T>>, true>) {
+                self.set_prod_alive(true);
+                self.set_work_alive(true);
+                self.set_cons_alive(true);
+
+                let r = BufRef::new(self);
+                (
+                    ProdIter::new(r.clone()),
+                    WorkIter::new(r.clone()),
+                    ConsIter::new(r),
+                )
+            }
+        }
+
+        impl<T, const N: usize> StackSplit<$Struct<StackStorage<T, N>>> for $Struct<StackStorage<T, N>> {
+            fn split(&mut self) -> (ProdIter<$Struct<StackStorage<T, N>>>, ConsIter<$Struct<StackStorage<T, N>>, false>) {
+                self.set_prod_alive(true);
+                self.set_cons_alive(true);
+
+                let r = BufRef::from_ref(self);
+                (
+                    ProdIter::new(r.clone()),
+                    ConsIter::new(r),
+                )
+            }
+
+            fn split_mut(&mut self) -> (ProdIter<$Struct<StackStorage<T, N>>>, WorkIter<$Struct<StackStorage<T, N>>>, ConsIter<$Struct<StackStorage<T, N>>, true>) {
+                self.set_prod_alive(true);
+                self.set_work_alive(true);
+                self.set_cons_alive(true);
+
+                let r = BufRef::from_ref(self);
+                (
+                    ProdIter::new(r.clone()),
+                    WorkIter::new(r.clone()),
+                    ConsIter::new(r),
+                )
+            }
+        }
+    }}
+
+    pub(crate) use impl_splits;
 }

@@ -1,23 +1,19 @@
 #![allow(dead_code)]
 
-extern crate alloc;
-
-use alloc::vec;
-
 use criterion::{Bencher, black_box, Criterion};
-use mutringbuf::ConcurrentHeapRB;
+use mutringbuf::{ConcurrentStackRB, StackSplit};
 
 const RB_SIZE: usize = 1024;
 
 pub fn setup_slices(c: &mut Criterion) {
-    c.bench_function("slice_x1000_clone", slice_x1000_clone);
     c.bench_function("slice_x10", slice_x10);
     c.bench_function("slice_x100", slice_x100);
     c.bench_function("slice_x1000", slice_x1000);
+    c.bench_function("slice_x1000_clone", slice_x1000_clone);
 }
 
 fn slice_x10(b: &mut Bencher) {
-    let buf = ConcurrentHeapRB::from(vec![0u64; RB_SIZE + 1]);
+    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; RB_SIZE / 2]);
@@ -31,7 +27,7 @@ fn slice_x10(b: &mut Bencher) {
 }
 
 fn slice_x100(b: &mut Bencher) {
-    let buf = ConcurrentHeapRB::from(vec![0u64; RB_SIZE + 1]);
+    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; RB_SIZE / 2]);
@@ -45,7 +41,7 @@ fn slice_x100(b: &mut Bencher) {
 }
 
 fn slice_x1000(b: &mut Bencher) {
-    let buf = ConcurrentHeapRB::from(vec![0u64; RB_SIZE + 1]);
+    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; 12]);
@@ -60,7 +56,7 @@ fn slice_x1000(b: &mut Bencher) {
 }
 
 fn slice_x1000_clone(b: &mut Bencher) {
-    let buf = ConcurrentHeapRB::from(vec![0u64; RB_SIZE + 1]);
+    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice_clone(&[1; 12]);

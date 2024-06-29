@@ -1,3 +1,4 @@
+
 #[cfg(cpal)]
 fn main() {
     use std::sync::Arc;
@@ -7,6 +8,8 @@ fn main() {
     use cpal::{InputCallbackInfo, OutputCallbackInfo, StreamConfig};
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
     use mutringbuf::{ConcurrentHeapRB, MRBIterator};
+    use mutringbuf::HeapSplit;
+
 
     const BUF_SIZE: usize = 1000000;
     const DELAY_MS: usize = 500;

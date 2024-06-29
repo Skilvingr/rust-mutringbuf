@@ -2,10 +2,16 @@ use core::cell::{Cell, UnsafeCell};
 use core::num::NonZeroUsize;
 
 use crate::{ConsIter, LocalStackRB, ProdIter, WorkIter};
+#[cfg(feature = "alloc")]
+use crate::HeapSplit;
+#[cfg(feature = "alloc")]
+use crate::HeapStorage;
 use crate::ring_buffer::storage::stack::StackStorage;
 use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::variants::impl_splits::impl_splits;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
+use crate::StackSplit;
 
 pub struct LocalMutRingBuf<S: Storage> {
     pub(crate) inner_len: NonZeroUsize,
@@ -24,38 +30,9 @@ impl<S: Storage<Item = T>, T> MutRB for LocalMutRingBuf<S> {
     type Item = T;
 }
 
+impl_splits!(LocalMutRingBuf);
+
 impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
-    /// Consumes the buffer, yielding three iterators. See:
-    /// - [`ProdIter`];
-    /// - [`WorkIter`];
-    /// - [`ConsIter`].
-    pub fn split_mut(self) -> (ProdIter<LocalMutRingBuf<S>>, WorkIter<LocalMutRingBuf<S>>, ConsIter<LocalMutRingBuf<S>, true>) {
-        self.prod_alive.set(true);
-        self.work_alive.set(true);
-        self.cons_alive.set(true);
-
-        let r = BufRef::new(self);
-        (
-            ProdIter::new(r.clone()),
-            WorkIter::new(r.clone()),
-            ConsIter::new(r),
-        )
-    }
-
-    /// Consumes the buffer, yielding two iterators. See:
-    /// - [`ProdIter`];
-    /// - [`ConsIter`].
-    pub fn split(self) -> (ProdIter<LocalMutRingBuf<S>>, ConsIter<LocalMutRingBuf<S>, false>) {
-        self.prod_alive.set(true);
-        self.cons_alive.set(true);
-
-        let r = BufRef::new(self);
-        (
-            ProdIter::new(r.clone()),
-            ConsIter::new(r),
-        )
-    }
-
     pub(crate) fn _from(value: S) -> LocalMutRingBuf<S> {
         LocalMutRingBuf {
             inner_len: NonZeroUsize::new(value.len()).unwrap(),
@@ -138,7 +115,7 @@ impl<S: Storage<Item = T>, T> StorageManager for LocalMutRingBuf<S> {
     }
 
     #[inline(always)]
-    fn inner_mut(&mut self) -> &mut S {
+    fn inner_mut(&self) -> &mut S {
         unsafe { &mut (*self.inner.get()) }
     }
 

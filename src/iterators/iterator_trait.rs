@@ -10,7 +10,6 @@ pub trait MRBIterator<T> {
     fn available(&mut self) -> usize;
 
     /// Waits, blocking the thread in a loop, until there are at least `count` available items.
-    #[inline(always)]
     fn wait_for(&mut self, count: usize) {
         while self.available() < count {}
     }

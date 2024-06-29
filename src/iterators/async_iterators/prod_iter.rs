@@ -11,16 +11,16 @@ futures_import!();
 Async version of [`ProdIter`].
 "##]
 
-pub struct AsyncProdIter<B: MutRB> {
-    inner: ProdIter<B>,
+pub struct AsyncProdIter<'buf, B: MutRB> {
+    inner: ProdIter<'buf, B>,
     waker: Option<Waker>
 }
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncProdIter<B> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncProdIter<'buf, B> {}
 
 
 gen_fut!{
     PushFuture<'a, B: MutRB<Item = T>, T>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     Option<T>,
     (),
     self {
@@ -37,7 +37,7 @@ gen_fut!{
 
 gen_fut!{
     PushInitFuture<'a, B: MutRB<Item = T>, T>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     Option<T>,
     (),
     self {
@@ -54,7 +54,7 @@ gen_fut!{
 
 gen_fut!{
     PushSliceFuture<'a, 'b, B: MutRB<Item = T>, T: Copy>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     &'b [T],
     (),
     self {
@@ -69,7 +69,7 @@ gen_fut!{
 
 gen_fut!{
     PushSliceInitFuture<'a, 'b, B: MutRB<Item = T>, T: Copy>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     &'b [T],
     (),
     self {
@@ -84,7 +84,7 @@ gen_fut!{
 
 gen_fut!{
     PushSliceCloneFuture<'a, 'b, B: MutRB<Item = T>, T: Clone>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     &'b [T],
     (),
     self {
@@ -99,7 +99,7 @@ gen_fut!{
 
 gen_fut!{
     PushSliceCloneInitFuture<'a, 'b, B: MutRB<Item = T>, T: Clone>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     &'b [T],
     (),
     self {
@@ -114,7 +114,7 @@ gen_fut!{
 
 gen_fut!{
     GetNextItemMutFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     (),
     &'a mut T,
     self {
@@ -129,7 +129,7 @@ gen_fut!{
 
 gen_fut!{
     GetNextItemMutInitFuture<'a, B: MutRB<Item = T>, T>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     (),
     *mut T,
     self {
@@ -143,7 +143,7 @@ gen_fut!{
 
 gen_fut!{
     GetNextSlicesMutFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncProdIter<B>,
+    &'a mut AsyncProdIter<'buf, B>,
     usize,
     (&'a mut [T], &'a mut [T]),
     self {
@@ -157,15 +157,15 @@ gen_fut!{
 }
 
 
-impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
-    pub fn from_sync(iter: ProdIter<B>) -> Self {
+impl<'buf, B: MutRB<Item = T>, T> AsyncProdIter<'buf, B> {
+    pub fn from_sync(iter: ProdIter<'buf, B>) -> Self {
         Self {
             inner: iter,
             waker: None,
         }
     }
 
-    pub fn into_sync(self) -> ProdIter<B> {
+    pub fn into_sync(self) -> ProdIter<'buf, B> {
         self.inner
     }
 
@@ -179,7 +179,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
 
     /// Async version of [`ProdIter::push`].
     #[inline]
-    pub fn push(&mut self, value: T) -> PushFuture<'_, B, T> {
+    pub fn push(&mut self, value: T) -> PushFuture<'buf, '_, B, T> {
         PushFuture {
             iter: self,
             _item: Some(value),
@@ -188,7 +188,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
 
     /// Async version of [`ProdIter::push_slice`].
     #[inline]
-    pub fn push_slice<'b>(&mut self, slice: &'b [T]) -> PushSliceFuture<'_, 'b, B, T>
+    pub fn push_slice<'b>(&mut self, slice: &'b [T]) -> PushSliceFuture<'buf, '_, 'b, B, T>
         where T: Copy
     {
         PushSliceFuture {
@@ -199,7 +199,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
 
     /// Async version of [`ProdIter::push_slice_clone`].
     #[inline]
-    pub fn push_slice_clone<'b>(&mut self, slice: &'b [T]) -> PushSliceCloneFuture<'_, 'b, B, T>
+    pub fn push_slice_clone<'b>(&mut self, slice: &'b [T]) -> PushSliceCloneFuture<'buf, '_, 'b, B, T>
         where T: Clone
     {
        PushSliceCloneFuture {
@@ -211,7 +211,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
     /// Async version of [`ProdIter::get_next_item_mut`].
     /// # Safety
     /// Same as [`ProdIter::get_next_item_mut`].
-    pub unsafe fn get_next_item_mut(&mut self) -> GetNextItemMutFuture<'_, B, T> {
+    pub unsafe fn get_next_item_mut(&mut self) -> GetNextItemMutFuture<'buf, '_, B, T> {
         GetNextItemMutFuture {
             iter: self,
             _item: ()
@@ -219,7 +219,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
     }
 
     /// Async version of [`ProdIter::get_next_item_mut_init`].
-    pub fn get_next_item_mut_init(&mut self) -> GetNextItemMutInitFuture<'_, B, T> {
+    pub fn get_next_item_mut_init(&mut self) -> GetNextItemMutInitFuture<'buf, '_, B, T> {
         GetNextItemMutInitFuture {
             iter: self,
             _item: ()
@@ -227,7 +227,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<B> {
     }
 
     /// Async version of [`ProdIter::get_next_slices_mut`].
-    pub fn get_next_slices_mut(&mut self, count: usize) -> GetNextSlicesMutFuture<'_, B, T> {
+    pub fn get_next_slices_mut(&mut self, count: usize) -> GetNextSlicesMutFuture<'buf, '_, B, T> {
         GetNextSlicesMutFuture {
             iter: self,
             _item: count

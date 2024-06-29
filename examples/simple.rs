@@ -3,7 +3,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::{Acquire, Release};
 use std::thread;
 use std::time::Duration;
-use mutringbuf::{ConcurrentHeapRB, MRBIterator};
+use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator};
 
 const RB_SIZE: usize = 10;
 

@@ -1,6 +1,6 @@
-use core::mem::transmute;
 #[allow(unused_imports)]
 use core::mem::MaybeUninit;
+use core::mem::transmute;
 use core::num::NonZeroUsize;
 use core::slice;
 
@@ -57,23 +57,22 @@ On the other hand, `*_init methods` always perform a check over the memory they 
 write it. So they are safe to use upon a possibly uninitialised block.
 "##]
 
-pub struct ProdIter<B: MutRB> {
+pub struct ProdIter<'buf, B: MutRB> {
     index: usize,
-    buf_len: NonZeroUsize,
-    buffer: BufRef<B>,
-
     cached_avail: usize,
+    buf_len: NonZeroUsize,
+    buffer: BufRef<'buf, B>,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for ProdIter<B> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for ProdIter<'buf, B> {}
 
-impl<B: MutRB + IterManager> Drop for ProdIter<B> {
+impl<'buf, B: MutRB + IterManager> Drop for ProdIter<'buf, B> {
     fn drop(&mut self) {
         self.buffer.set_prod_alive(false);
     }
 }
 
-impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'buf, B> {
     #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_prod_index(index);
@@ -87,7 +86,7 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<B> {
     private_impl!();
 }
 
-impl<B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<'buf, B> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -103,18 +102,18 @@ impl<B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<B> {
     public_impl!();
 }
 
-impl<B: MutRB<Item = T>, T> ProdIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     work_alive!();
     cons_alive!();
     work_index!();
     cons_index!();
 
-    pub(crate) fn new(value: BufRef<B>) -> Self {
+    pub(crate) fn new(value: BufRef<'buf, B>) -> Self {
         Self {
             index: 0,
             buf_len: NonZeroUsize::new(value.inner_len()).unwrap(),
             buffer: value,
-            cached_avail: 0
+            cached_avail: 0,
         }
     }
 
@@ -385,14 +384,16 @@ impl<B: MutRB<Item = T>, T> ProdIter<B> {
 }
 
 pub mod test {
+
     #[test]
     fn cached_avail() {
-        use crate::ConcurrentHeapRB;
+        use crate::{ConcurrentStackRB, StackSplit};
         use super::*;
 
         const BUFFER_SIZE: usize = 10;
         
-        let (mut prod, mut cons) = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1).split();
+        let mut buf = ConcurrentStackRB::<u32, { BUFFER_SIZE + 1 }>::default();
+        let (mut prod, mut cons) = buf.split();
 
         assert_eq!(prod.cached_avail, 0);
         

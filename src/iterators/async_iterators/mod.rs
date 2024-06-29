@@ -28,14 +28,14 @@ pub(crate) mod async_macros {
             $output: ty, // output of the future
             $self: ident $f: block // block of code to be executed inside `poll()`
         ) => {
-            pub struct $name<$($lt),*, $($G $(:$gen $(<Item = $IT>)?)?),*, $(const $CG: $CT),*> {
+            pub struct $name<'buf, $($lt),*, $($G $(:$gen $(<Item = $IT>)?)?),*, $(const $CG: $CT),*> {
                 iter: $iter,
                 _item: $item
             }
 
-            impl<$($lt),*, $($G $(:$gen $(<Item = $IT>)?)?),*, $(const $CG: $CT),*> Unpin for $name<$($lt),*, $($G),*, $($CG),*> {}
+            impl<'buf, $($lt),*, $($G $(:$gen $(<Item = $IT>)?)?),*, $(const $CG: $CT),*> Unpin for $name<'buf, $($lt),*, $($G),*, $($CG),*> {}
 
-            impl<$($lt),*, $($G $(:$gen $(<Item = $IT>)?)?),*, $(const $CG: $CT),*> Future for $name<$($lt),*, $($G),*, $($CG),*> {
+            impl<'buf, $($lt),*, $($G $(:$gen $(<Item = $IT>)?)?),*, $(const $CG: $CT),*> Future for $name<'buf, $($lt),*, $($G),*, $($CG),*> {
                 type Output = $output;
 
                 fn poll(mut $self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {

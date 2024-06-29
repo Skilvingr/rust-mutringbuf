@@ -28,17 +28,17 @@ in order to move the iterator.
 </div>
 "##]
 
-pub struct DetachedWorkIter<B: MutRB> {
-    inner: WorkIter<B>
+pub struct DetachedWorkIter<'buf, B: MutRB> {
+    inner: WorkIter<'buf, B>
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for DetachedWorkIter<B> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for DetachedWorkIter<'buf, B> {}
 
 
-impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> DetachedWorkIter<'buf, B> {
     /// Creates a [`Self`] from a [`WorkIter`].
     #[inline]
-    pub(crate) fn from_work(work: WorkIter<B>) -> DetachedWorkIter<B> {
+    pub(crate) fn from_work(work: WorkIter<'buf, B>) -> DetachedWorkIter<'buf, B> {
         Self {
             inner: work
         }
@@ -46,7 +46,7 @@ impl<B: MutRB<Item = T>, T> DetachedWorkIter<B> {
 
     /// Attaches the iterator, yielding a [`WorkIter`].
     #[inline]
-    pub fn attach(self) -> WorkIter<B> {
+    pub fn attach(self) -> WorkIter<'buf, B> {
         self.sync_index();
 
         self.inner

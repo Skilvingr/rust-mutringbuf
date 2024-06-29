@@ -1,19 +1,23 @@
 use core::cell::UnsafeCell;
 use core::num::NonZeroUsize;
 use core::sync::atomic::{AtomicBool, AtomicUsize};
-use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
+use core::sync::atomic::Ordering::{Acquire, Release};
 
 use crossbeam_utils::CachePadded;
 
 use crate::{ConcurrentStackRB, ConsIter, ProdIter, WorkIter};
-
+#[cfg(any(feature = "async", doc))]
+use crate::{AsyncConsIter, AsyncProdIter, AsyncWorkIter};
+#[cfg(feature = "alloc")]
+use crate::HeapStorage;
 use crate::ring_buffer::storage::stack::StackStorage;
 use crate::ring_buffer::storage::storage_trait::Storage;
+#[cfg(feature = "alloc")]
+use crate::ring_buffer::variants::HeapSplit;
+use crate::ring_buffer::variants::impl_splits::impl_splits;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB, StorageManager};
+use crate::ring_buffer::variants::StackSplit;
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
-
-#[cfg(any(feature = "async", doc))]
-use crate::{AsyncWorkIter, AsyncConsIter, AsyncProdIter};
 
 pub struct ConcurrentMutRingBuf<S: Storage> {
     inner_len: NonZeroUsize,
@@ -34,47 +38,18 @@ impl<S: Storage<Item = T>, T> MutRB for ConcurrentMutRingBuf<S> {
 
 impl<S: Storage<Item = T>, T> ConcurrentRB for ConcurrentMutRingBuf<S> {}
 
+impl_splits!(ConcurrentMutRingBuf);
+
 impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
-    /// Consumes the buffer, yielding three iterators. See:
-    /// - [`ProdIter`];
-    /// - [`WorkIter`];
-    /// - [`ConsIter`].
-    pub fn split_mut(self) -> (ProdIter<ConcurrentMutRingBuf<S>>, WorkIter<ConcurrentMutRingBuf<S>>, ConsIter<ConcurrentMutRingBuf<S>, true>) {
-        self.prod_alive.store(true, Relaxed);
-        self.work_alive.store(true, Relaxed);
-        self.cons_alive.store(true, Relaxed);
-
-        let r = BufRef::new(self);
-        (
-            ProdIter::new(r.clone()),
-            WorkIter::new(r.clone()),
-            ConsIter::new(r),
-        )
-    }
-
-    /// Consumes the buffer, yielding two iterators. See:
-    /// - [`ProdIter`];
-    /// - [`ConsIter`].
-    pub fn split(self) -> (ProdIter<ConcurrentMutRingBuf<S>>, ConsIter<ConcurrentMutRingBuf<S>, false>) {
-        self.prod_alive.store(true, Relaxed);
-        self.cons_alive.store(true, Relaxed);
-
-        let r = BufRef::new(self);
-        (
-            ProdIter::new(r.clone()),
-            ConsIter::new(r),
-        )
-    }
-
     /// Consumes the buffer, yielding three async iterators. See:
     /// - [`AsyncProdIter`];
     /// - [`AsyncWorkIter`];
     /// - [`AsyncConsIter`].
     #[cfg(any(feature = "async", doc))]
-    pub fn split_mut_async(self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncWorkIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, true>) {
-        self.prod_alive.store(true, Relaxed);
-        self.work_alive.store(true, Relaxed);
-        self.cons_alive.store(true, Relaxed);
+    pub fn split_mut_async<'buf>(self) -> (AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>, AsyncWorkIter<'buf, ConcurrentMutRingBuf<S>>, AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, true>) {
+        self.set_prod_alive(true);
+        self.set_work_alive(true);
+        self.set_cons_alive(true);
 
         let r = BufRef::new(self);
         (
@@ -88,9 +63,9 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// - [`AsyncProdIter`];
     /// - [`AsyncConsIter`].
     #[cfg(any(feature = "async", doc))]
-    pub fn split_async(self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, false>) {
-        self.prod_alive.store(true, Relaxed);
-        self.cons_alive.store(true, Relaxed);
+    pub fn split_async<'buf>(self) -> (AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>, AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, false>) {
+        self.set_prod_alive(true);
+        self.set_cons_alive(true);
 
         let r = BufRef::new(self);
         (
@@ -181,7 +156,7 @@ impl<S: Storage<Item = T>, T> StorageManager for ConcurrentMutRingBuf<S> {
     }
 
     #[inline(always)]
-    fn inner_mut(&mut self) -> &mut S {
+    fn inner_mut(&self) -> &mut S {
         unsafe { &mut (*self.inner.get()) }
     }
 

@@ -3,14 +3,14 @@ use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::sync::atomic::Ordering::{Acquire, Release};
 use std::thread;
 use std::time::Duration;
-use mutringbuf::{ConcurrentStackRB, MRBIterator as MRBIt, LocalStackRB};
+use mutringbuf::{ConcurrentStackRB, MRBIterator as MRBIt, LocalStackRB, StackSplit};
 
 const BUFFER_SIZE: usize = 300;
 
 #[test]
 fn test_local_stack() {
-    let (mut prod, mut work, mut cons) = LocalStackRB::<usize, { BUFFER_SIZE + 1 }>::default()
-        .split_mut();
+    let mut buf = LocalStackRB::<usize, { BUFFER_SIZE + 1 }>::default();
+    let (mut prod, mut work, mut cons) = buf.split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);
@@ -47,7 +47,7 @@ fn test_local_stack() {
 const RB_SIZE: usize = 30;
 
 fn rb_fibonacci() {
-    let buf = ConcurrentStackRB::<usize, RB_SIZE>::default();
+    let mut buf = ConcurrentStackRB::<usize, RB_SIZE>::default();
     let (mut prod, mut work, mut cons) = buf.split_mut();
 
     // Flag variable to stop threads
@@ -58,8 +58,13 @@ fn rb_fibonacci() {
     let stop_clone = stop_prod.clone();
     let prod_last_index_clone = prod_last_index.clone();
     let prod_finished_clone = prod_finished.clone();
+    
+    thread::scope(|s| {
+        
+    
+    
     // An infinite stream of data
-    let producer = thread::spawn(move || {
+    let producer = s.spawn(move || {
         let mut produced = vec![];
         let mut counter = 1usize;
 
@@ -82,7 +87,7 @@ fn rb_fibonacci() {
 
     let prod_last_index_clone = prod_last_index.clone();
     let prod_finished_clone = prod_finished.clone();
-    let worker = thread::spawn(move || {
+    let worker = s.spawn(move || {
 
         let mut acc = (1, 0);
 
@@ -104,7 +109,7 @@ fn rb_fibonacci() {
         work
     });
 
-    let consumer = thread::spawn(move || {
+    let consumer = s.spawn(move || {
         let mut consumed = vec![];
 
         while !prod_finished.load(Acquire) || cons.index() != prod_last_index.load(Acquire) {
@@ -134,6 +139,7 @@ fn rb_fibonacci() {
     assert_eq!(cons.available(), 0);
     assert_eq!(consumed, produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>());
 
+    })
     // println!("{:?}", produced);
     // println!("{:?}", consumed);
     // println!("{:?}", produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>())

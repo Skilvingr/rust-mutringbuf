@@ -1,4 +1,4 @@
-use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, MRBIterator, MutRB, ProdIter};
+use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB, HeapSplit, MRBIterator, MutRB, ProdIter, StackSplit};
 
 const BUFFER_SIZE: usize = 100;
 
@@ -9,7 +9,7 @@ macro_rules! get_buf {
     (Concurrent, Heap) => { ConcurrentHeapRB::from(vec![0; BUFFER_SIZE + 1]) };
 }
 
-fn fill_buf<B: MutRB<Item = usize>>(prod: &mut ProdIter<B>, count: usize) {
+fn fill_buf<B: MutRB<Item=usize>>(prod: &mut ProdIter<B>, count: usize) {
     for i in 0..count {
         let _ = prod.push(i);
     }
@@ -17,7 +17,7 @@ fn fill_buf<B: MutRB<Item = usize>>(prod: &mut ProdIter<B>, count: usize) {
 
 #[test]
 fn test_pop_exact() {
-    let buf = get_buf!(Concurrent, Stack);
+    let mut buf = get_buf!(Concurrent, Stack);
     let (mut prod, mut cons) = buf.split();
 
     unsafe { assert!(cons.pop().is_none()); }

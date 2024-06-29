@@ -72,8 +72,8 @@ let concurrent_buf = ConcurrentStackRB::from([0; 10]);
 let local_buf = LocalStackRB::from([0; 10]);
 // buffers with uninitialised (zeroed) items
 unsafe {
-    let concurrent_buf = ConcurrentStackRB::< usize, 10 >::new_zeroed();
-    let local_buf = LocalStackRB::< usize, 10 >::new_zeroed();
+    let concurrent_buf = ConcurrentStackRB::<usize, 10>::new_zeroed();
+    let local_buf = LocalStackRB::<usize, 10>::new_zeroed();
 }
 ```
 
@@ -89,8 +89,8 @@ let concurrent_buf = ConcurrentHeapRB::from(vec![0; 10]);
 let local_buf = LocalHeapRB::from(vec![0; 10]);
 // buffers with uninitialised (zeroed) items
 unsafe {
-    let concurrent_buf: ConcurrentHeapRB < usize > = ConcurrentHeapRB::new_zeroed(10);
-    let local_buf: LocalHeapRB <usize > = LocalHeapRB::new_zeroed(10);
+    let concurrent_buf: ConcurrentHeapRB <usize> = ConcurrentHeapRB::new_zeroed(10);
+    let local_buf: LocalHeapRB <usize> = LocalHeapRB::new_zeroed(10);
 }
 ```
 
@@ -104,12 +104,12 @@ Thus, a buffer of size `SIZE` can keep a max amount of `SIZE - 1` values!
 
 Then such buffer can be used in two ways:
 
-#### Sync immutable
+##### Sync immutable
 The normal way to make use of a ring buffer: a producer inserts values that will eventually be taken
 by a consumer.
 
 ```rust
-use mutringbuf::LocalHeapRB;
+use mutringbuf::{LocalHeapRB, HeapSplit};
 let buf = LocalHeapRB::from(vec![0; 10]);
 let (mut prod, mut cons) = buf.split();
 ```
@@ -120,15 +120,12 @@ As in the immutable case, but a third iterator `work` stands between `prod` and 
 This iterator mutates elements in place.
 
 ```rust
-use mutringbuf::LocalHeapRB;
+use mutringbuf::{LocalHeapRB, HeapSplit};
 let buf = LocalHeapRB::from(vec![0; 10]);
 let (mut prod, mut work, mut cons) = buf.split_mut();
 ```
 
 #### Async immutable
-The normal way to make use of a ring buffer: a producer inserts values that will eventually be taken
-by a consumer.
-
 ```rust ignore
 use mutringbuf::LocalHeapRB;
 let buf = LocalHeapRB::from(vec![0; 10]);
@@ -136,10 +133,6 @@ let (mut as_prod, mut as_cons) = buf.split_async();
 ```
 
 #### Async mutable
-As in the immutable case, but a third iterator `work` stands between `prod` and `cons`.
-
-This iterator mutates elements in place.
-
 ```rust ignore
 use mutringbuf::LocalHeapRB;
 let buf = LocalHeapRB::from(vec![0; 10]);

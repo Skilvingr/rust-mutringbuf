@@ -1,8 +1,8 @@
-use mutringbuf::{ConsIter, ConcurrentHeapRB, ProdIter, WorkIter};
+use mutringbuf::{ConsIter, ConcurrentHeapRB, ProdIter, WorkIter, HeapSplit};
 
 const BUF_LEN: usize = 100;
 
-fn prepare() -> (ProdIter<ConcurrentHeapRB<usize>>, WorkIter<ConcurrentHeapRB<usize>>, ConsIter<ConcurrentHeapRB<usize>, true>) {
+fn prepare<'buf>() -> (ProdIter<'buf, ConcurrentHeapRB<usize>>, WorkIter<'buf, ConcurrentHeapRB<usize>>, ConsIter<'buf, ConcurrentHeapRB<usize>, true>) {
     let buf = ConcurrentHeapRB::from(vec![0; BUF_LEN + 1]);
     buf.split_mut()
 }

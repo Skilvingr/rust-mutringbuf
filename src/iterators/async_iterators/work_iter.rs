@@ -13,16 +13,16 @@ futures_import!();
 Async version of [`WorkIter`].
 "##]
 
-pub struct AsyncWorkIter<B: MutRB> {
-    pub(crate) inner: WorkIter<B>,
+pub struct AsyncWorkIter<'buf, B: MutRB> {
+    pub(crate) inner: WorkIter<'buf, B>,
     waker: Option<Waker>
 }
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncWorkIter<B> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncWorkIter<'buf, B> {}
 
 
 gen_fut!{
     GetWorkableFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<B>,
+    &'a mut AsyncWorkIter<'buf, B>,
     (),
     Option<&'a mut T>,
     self {
@@ -36,7 +36,7 @@ gen_fut!{
 
 gen_fut!{
     GetWorkableSliceExactFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<B>,
+    &'a mut AsyncWorkIter<'buf, B>,
     usize,
     Option<WorkableSlice<'a, T>>,
     self {
@@ -51,7 +51,7 @@ gen_fut!{
 
 gen_fut!{
     GetWorkableSliceAvailFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<B>,
+    &'a mut AsyncWorkIter<'buf, B>,
     (),
     Option<WorkableSlice<'a, T>>,
     self {
@@ -65,7 +65,7 @@ gen_fut!{
 
 gen_fut!{
     GetWorkableSliceMultipleOfFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<B>,
+    &'a mut AsyncWorkIter<'buf, B>,
     usize,
     Option<WorkableSlice<'a, T>>,
     self {
@@ -78,15 +78,15 @@ gen_fut!{
     }
 }
 
-impl<B: MutRB<Item = T>, T> AsyncWorkIter<B> {
-    pub fn from_sync(iter: WorkIter<B>) -> Self {
+impl<'buf, B: MutRB<Item = T>, T> AsyncWorkIter<'buf, B> {
+    pub fn from_sync(iter: WorkIter<'buf, B>) -> Self {
         Self {
             inner: iter,
             waker: None,
         }
     }
 
-    pub fn into_sync(self) -> WorkIter<B> {
+    pub fn into_sync(self) -> WorkIter<'buf, B> {
         self.inner
     }
 
@@ -103,7 +103,7 @@ impl<B: MutRB<Item = T>, T> AsyncWorkIter<B> {
 
     /// Detaches the iterator yielding a [`DetachedWorkIter`].
     #[inline]
-    pub fn detach(self) -> AsyncDetachedWorkIter<B> {
+    pub fn detach(self) -> AsyncDetachedWorkIter<'buf, B> {
         AsyncDetachedWorkIter::from_work(self)
     }
 
@@ -115,7 +115,7 @@ impl<B: MutRB<Item = T>, T> AsyncWorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable(&mut self) -> GetWorkableFuture<'_, B, T> {
+    pub fn get_workable(&mut self) -> GetWorkableFuture<'buf, '_, B, T> {
         GetWorkableFuture {
             iter: self,
             _item: (),
@@ -129,7 +129,7 @@ impl<B: MutRB<Item = T>, T> AsyncWorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_exact(&mut self, count: usize) -> GetWorkableSliceExactFuture<'_, B, T> {
+    pub fn get_workable_slice_exact(&mut self, count: usize) -> GetWorkableSliceExactFuture<'buf, '_, B, T> {
         GetWorkableSliceExactFuture {
             iter: self,
             _item: count,
@@ -143,7 +143,7 @@ impl<B: MutRB<Item = T>, T> AsyncWorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_avail(&mut self) -> GetWorkableSliceAvailFuture<'_, B, T> {
+    pub fn get_workable_slice_avail(&mut self) -> GetWorkableSliceAvailFuture<'buf, '_, B, T> {
         GetWorkableSliceAvailFuture {
             iter: self,
             _item: (),
@@ -158,7 +158,7 @@ impl<B: MutRB<Item = T>, T> AsyncWorkIter<B> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> GetWorkableSliceMultipleOfFuture<'_, B, T> {
+    pub fn get_workable_slice_multiple_of(&mut self, rhs: usize) -> GetWorkableSliceMultipleOfFuture<'buf, '_, B, T> {
         GetWorkableSliceMultipleOfFuture {
             iter: self,
             _item: rhs,

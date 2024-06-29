@@ -48,6 +48,7 @@ impl<T, const N: usize> Storage for StackStorage<T, N> {
         self.inner.as_mut_ptr()
     }
 
+    #[inline(always)]
     fn len(&self) -> usize {
         self.inner.len()
     }

@@ -18,23 +18,22 @@ When working with types which implement both [`Copy`] and [`Clone`] traits, `cop
 preferred over `clone` methods.
 "##]
 
-pub struct ConsIter<B: MutRB, const W: bool> {
+pub struct ConsIter<'buf, B: MutRB, const W: bool> {
     index: usize,
-    buf_len: NonZeroUsize,
-    buffer: BufRef<B>,
-
     cached_avail: usize,
+    buf_len: NonZeroUsize,
+    buffer: BufRef<'buf, B>,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for ConsIter<B, W> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for ConsIter<'buf, B, W> {}
 
-impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<B, W> {
+impl<'buf, B: MutRB + IterManager, const W: bool> Drop for ConsIter<'buf, B, W> {
     fn drop(&mut self) {
         self.buffer.set_cons_alive(false);
     }
 }
 
-impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B, W> {
+impl<'buf, B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<'buf, B, W> {
     #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -52,7 +51,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<B,
     private_impl!();
 }
 
-impl<B: MutRB<Item = T>, T, const W: bool> MRBIterator<T> for ConsIter<B, W> {
+impl<'buf, B: MutRB<Item = T>, T, const W: bool> MRBIterator<T> for ConsIter<'buf, B, W> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -68,18 +67,18 @@ impl<B: MutRB<Item = T>, T, const W: bool> MRBIterator<T> for ConsIter<B, W> {
     public_impl!();
 }
 
-impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
+impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     prod_alive!();
     work_alive!();
     prod_index!();
     work_index!();
     
-    pub(crate) fn new(value: BufRef<B>) -> Self {
+    pub(crate) fn new(value: BufRef<'buf, B>) -> Self {
         Self {
             index: 0,
             buf_len: NonZeroUsize::new(value.inner_len()).unwrap(),
             buffer: value,
-            cached_avail: 0
+            cached_avail: 0,
         }
     }
 
@@ -216,15 +215,17 @@ impl<B: MutRB<Item = T>, T, const W: bool> ConsIter<B, W> {
 }
 
 mod test {
+
     #[test]
     fn cached_avail() {
-        use crate::ConcurrentHeapRB;
         use super::*;
+        use crate::{ConcurrentStackRB, StackSplit};
 
         const BUFFER_SIZE: usize = 100;
         
-        let (mut prod, mut cons) = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1).split();
-
+        let mut buf = ConcurrentStackRB::<u32, { BUFFER_SIZE + 1 }>::default();
+        let (mut prod, mut cons) = buf.split();
+        
         assert_eq!(cons.cached_avail, 0);
         
         unsafe { prod.advance(10); }

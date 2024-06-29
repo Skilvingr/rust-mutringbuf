@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use mutringbuf::{ConcurrentHeapRB, MRBIterator};
+use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator};
 
 const RB_SIZE: usize = 5;
 

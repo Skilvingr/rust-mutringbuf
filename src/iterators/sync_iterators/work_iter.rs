@@ -3,8 +3,8 @@ use core::num::NonZeroUsize;
 use core::slice;
 
 use crate::iterators::{cons_alive, cons_index, private_impl, prod_alive, prod_index, public_impl};
-use crate::iterators::sync_iterators::detached_work_iter::DetachedWorkIter;
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
+use crate::iterators::sync_iterators::detached_work_iter::DetachedWorkIter;
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
@@ -30,23 +30,22 @@ in order to move the iterator.
 To avoid this [`DetachedWorkIter`] can be obtained by calling [`Self::detach`].
 "##]
 
-pub struct WorkIter<B: MutRB> {
+pub struct WorkIter<'buf, B: MutRB> {
     pub(crate) index: usize,
+    cached_avail: usize,
     pub(crate) buf_len: NonZeroUsize,
-    pub(crate) buffer: BufRef<B>,
-
-    cached_avail: usize
+    pub(crate) buffer: BufRef<'buf, B>,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for WorkIter<B> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for WorkIter<'buf, B> {}
 
-impl<B: MutRB + IterManager> Drop for WorkIter<B> {
+impl<'buf, B: MutRB + IterManager> Drop for WorkIter<'buf, B> {
     fn drop(&mut self) {
         self.buffer.set_work_alive(false);
     }
 }
 
-impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'buf, B> {
     #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);
@@ -59,7 +58,7 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<B> {
 
     private_impl!(); }
 
-impl<B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<'buf, B> {
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -75,24 +74,24 @@ impl<B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<B> {
     public_impl!();
 }
 
-impl<B: MutRB<Item = T>, T> WorkIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {
     prod_alive!();
     cons_alive!();
     prod_index!();
     cons_index!();
 
-    pub(crate) fn new(value: BufRef<B>) -> WorkIter<B> {
+    pub(crate) fn new(value: BufRef<'buf, B>) -> WorkIter<'buf, B> {
         Self {
             index: 0,
             buf_len: NonZeroUsize::new(value.inner_len()).unwrap(),
             buffer: value,
-            cached_avail: 0
+            cached_avail: 0,
         }
     }
 
     /// Detaches the iterator yielding a [`DetachedWorkIter`].
     #[inline]
-    pub fn detach(self) -> DetachedWorkIter<B> {
+    pub fn detach(self) -> DetachedWorkIter<'buf, B> {
         DetachedWorkIter::from_work(self)
     }
 

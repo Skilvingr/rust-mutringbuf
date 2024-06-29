@@ -32,6 +32,6 @@ pub(crate) trait StorageManager {
     type S: Storage<Item = Self::StoredType>;
 
     fn inner(&self) -> &Self::S;
-    fn inner_mut(&mut self) -> &mut Self::S;
+    fn inner_mut(&self) -> &mut Self::S;
     fn inner_len(&self) -> usize;
 }

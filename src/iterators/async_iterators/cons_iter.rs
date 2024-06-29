@@ -11,16 +11,16 @@ futures_import!();
 Async version of [`ConsIter`].
 "##]
 
-pub struct AsyncConsIter<B: MutRB, const W: bool> {
-    inner: ConsIter<B, W>,
+pub struct AsyncConsIter<'buf, B: MutRB, const W: bool> {
+    inner: ConsIter<'buf, B, W>,
     waker: Option<Waker>
 }
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for AsyncConsIter<B, W> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for AsyncConsIter<'buf, B, W> {}
 
 
 gen_fut!{
     PeekRefFuture<'a, B: MutRB<Item = T>, T: 'a, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     (),
     Option<&'a T>,
     self {
@@ -34,7 +34,7 @@ gen_fut!{
 
 gen_fut!{
     PeekSliceFuture<'a, B: MutRB<Item = T>, T: 'a, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     usize,
     Option<(&'a [T], &'a [T])>,
     self {
@@ -49,7 +49,7 @@ gen_fut!{
 
 gen_fut!{
     PeekAvailableFuture<'a, B: MutRB<Item = T>, T: 'a, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     (),
     Option<(&'a [T], &'a [T])>,
     self {
@@ -63,7 +63,7 @@ gen_fut!{
 
 gen_fut!{
     PopFuture<'a, B: MutRB<Item = T>, T: 'a, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     (),
     Option<T>,
     self {
@@ -77,7 +77,7 @@ gen_fut!{
 
 gen_fut!{
     CopyItemFuture<'a, 'b, B: MutRB<Item = T>, T: Copy, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     Option<&'b mut T>,
     (),
     self {
@@ -92,7 +92,7 @@ gen_fut!{
 
 gen_fut!{
     CloneItemFuture<'a, 'b, B: MutRB<Item = T>, T: Clone, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     Option<&'b mut T>,
     (),
     self {
@@ -107,7 +107,7 @@ gen_fut!{
 
 gen_fut!{
     CopySliceFuture<'a, 'b, B: MutRB<Item = T>, T: Copy, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     Option<&'b mut [T]>,
     (),
     self {
@@ -122,7 +122,7 @@ gen_fut!{
 
 gen_fut!{
     CloneSliceFuture<'a, 'b, B: MutRB<Item = T>, T: Clone, (const W: bool)>,
-    &'a mut AsyncConsIter<B, W>,
+    &'a mut AsyncConsIter<'buf, B, W>,
     Option<&'b mut [T]>,
     (),
     self {
@@ -136,15 +136,15 @@ gen_fut!{
 }
 
 
-impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<B, W> {
-    pub fn from_sync(iter: ConsIter<B, W>) -> Self {
+impl<'buf, B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<'buf, B, W> {
+    pub fn from_sync(iter: ConsIter<'buf, B, W>) -> Self {
         Self {
             inner: iter,
             waker: None,
         }
     }
 
-    pub fn into_sync(self) -> ConsIter<B, W> {
+    pub fn into_sync(self) -> ConsIter<'buf, B, W> {
         self.inner
     }
 
@@ -159,21 +159,21 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<B, W> {
     delegate!(ConsIter, pub fn reset_index(&(mut) self));
 
 
-    pub fn peek_ref(&mut self) -> PeekRefFuture<'_, B, T, W> {
+    pub fn peek_ref(&mut self) -> PeekRefFuture<'buf, '_, B, T, W> {
         PeekRefFuture {
             iter: self,
             _item: (),
         }
     }
 
-    pub fn peek_slice(&mut self, count: usize) -> PeekSliceFuture<'_, B, T, W> {
+    pub fn peek_slice(&mut self, count: usize) -> PeekSliceFuture<'buf, '_, B, T, W> {
         PeekSliceFuture {
             iter: self,
             _item: count,
         }
     }
 
-    pub fn peek_available(&mut self) -> PeekAvailableFuture<'_, B, T, W> {
+    pub fn peek_available(&mut self) -> PeekAvailableFuture<'buf, '_, B, T, W> {
         PeekAvailableFuture {
             iter: self,
             _item: (),
@@ -183,14 +183,14 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<B, W> {
     /// Tries to pop an element, moving it.
     /// # Safety
     /// Same as [`ConsIter::pop`]
-    pub unsafe fn pop(&mut self) -> PopFuture<'_, B, T, W> {
+    pub unsafe fn pop(&mut self) -> PopFuture<'buf, '_, B, T, W> {
         PopFuture {
             iter: self,
             _item: (),
         }
     }
 
-    pub fn copy_item<'b>(&mut self, dst: &'b mut T) -> CopyItemFuture<'_, 'b, B, T, W>
+    pub fn copy_item<'b>(&mut self, dst: &'b mut T) -> CopyItemFuture<'buf, '_, 'b, B, T, W>
         where T: Copy
     {
         CopyItemFuture {
@@ -200,7 +200,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<B, W> {
     }
 
     #[inline]
-    pub fn clone_item<'b>(&mut self, dst: &'b mut T) -> CloneItemFuture<'_, 'b, B, T, W>
+    pub fn clone_item<'b>(&mut self, dst: &'b mut T) -> CloneItemFuture<'buf, '_, 'b, B, T, W>
         where T: Clone
     {
         CloneItemFuture {
@@ -209,7 +209,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<B, W> {
         }
     }
 
-    pub fn copy_slice<'b>(&mut self, dst: &'b mut [T]) -> CopySliceFuture<'_, 'b, B, T, W>
+    pub fn copy_slice<'b>(&mut self, dst: &'b mut [T]) -> CopySliceFuture<'buf, '_, 'b, B, T, W>
         where T: Copy
     {
         CopySliceFuture {
@@ -218,7 +218,7 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<B, W> {
         }
     }
 
-    pub fn clone_slice<'b>(&mut self, dst: &'b mut [T]) -> CloneSliceFuture<'_, 'b, B, T, W>
+    pub fn clone_slice<'b>(&mut self, dst: &'b mut [T]) -> CloneSliceFuture<'buf, '_, 'b, B, T, W>
         where T: Clone
     {
         CloneSliceFuture {

@@ -14,32 +14,32 @@ use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
 Async version of [`DetachedWorkIter`].
 "##]
 
-pub struct AsyncDetachedWorkIter<B: MutRB> {
-    inner: AsyncWorkIter<B>,
+pub struct AsyncDetachedWorkIter<'buf, B: MutRB> {
+    inner: AsyncWorkIter<'buf, B>,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncDetachedWorkIter<B> {}
+unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncDetachedWorkIter<'buf, B> {}
 
-impl<B: MutRB<Item = T>, T> AsyncDetachedWorkIter<B> {
+impl<'buf, B: MutRB<Item = T>, T> AsyncDetachedWorkIter<'buf, B> {
     /// Creates [`Self`] from an [`AsyncWorkIter`].
-    pub(crate) fn from_work(work: AsyncWorkIter<B>) -> AsyncDetachedWorkIter<B> {
+    pub(crate) fn from_work(work: AsyncWorkIter<'buf, B>) -> AsyncDetachedWorkIter<'buf, B> {
         Self {
             inner: work,
         }
     }
 
-    pub fn from_sync(work: DetachedWorkIter<B>) -> AsyncDetachedWorkIter<B> {
+    pub fn from_sync(work: DetachedWorkIter<'buf, B>) -> AsyncDetachedWorkIter<'buf, B> {
         Self {
             inner: AsyncWorkIter::from_sync(work.attach()),
         }
     }
 
-    pub fn into_sync(self) -> DetachedWorkIter<B> {
+    pub fn into_sync(self) -> DetachedWorkIter<'buf, B> {
         self.inner.inner.detach()
     }
 
     /// Same as [`DetachedWorkIter::attach`].
-    pub fn attach(self) -> AsyncWorkIter<B> {
+    pub fn attach(self) -> AsyncWorkIter<'buf, B> {
         self.sync_index();
         self.inner
     }
@@ -51,10 +51,10 @@ impl<B: MutRB<Item = T>, T> AsyncDetachedWorkIter<B> {
     delegate!(DetachedWorkIter, pub fn index(&self) -> usize);
     delegate!(DetachedWorkIter, pub fn available(&(mut) self) -> usize);
 
-    delegate!(DetachedWorkIter, pub fn get_workable(&(mut) self) -> GetWorkableFuture<'_, B, T>);
-    delegate!(DetachedWorkIter, pub fn get_workable_slice_exact(&(mut) self, count: usize) -> GetWorkableSliceExactFuture<'_, B, T>);
-    delegate!(DetachedWorkIter, pub fn get_workable_slice_avail(&(mut) self) -> GetWorkableSliceAvailFuture<'_, B, T>);
-    delegate!(DetachedWorkIter, pub fn get_workable_slice_multiple_of(&(mut) self, rhs: usize) -> GetWorkableSliceMultipleOfFuture<'_, B, T>);
+    delegate!(DetachedWorkIter, pub fn get_workable(&(mut) self) -> GetWorkableFuture<'buf, '_, B, T>);
+    delegate!(DetachedWorkIter, pub fn get_workable_slice_exact(&(mut) self, count: usize) -> GetWorkableSliceExactFuture<'buf, '_, B, T>);
+    delegate!(DetachedWorkIter, pub fn get_workable_slice_avail(&(mut) self) -> GetWorkableSliceAvailFuture<'buf, '_, B, T>);
+    delegate!(DetachedWorkIter, pub fn get_workable_slice_multiple_of(&(mut) self, rhs: usize) -> GetWorkableSliceMultipleOfFuture<'buf, '_, B, T>);
 
     /// Same as [`DetachedWorkIter::sync_index`].
     pub fn sync_index(&self) {
