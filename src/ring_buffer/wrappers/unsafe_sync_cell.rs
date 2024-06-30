@@ -4,6 +4,7 @@ use core::ptr::slice_from_raw_parts;
 
 /// Sync version of `UnsafeCell<MaybeUninit<T>>`.
 /// While it should not be used outside of this crate, it might result useful in certain cases.
+#[repr(transparent)]
 pub struct UnsafeSyncCell<T>(UnsafeCell<MaybeUninit<T>>);
 
 impl<T> Drop for UnsafeSyncCell<T> {
