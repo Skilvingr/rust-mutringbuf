@@ -39,6 +39,26 @@ pub fn push_pop_shared(value: u64) {
 }
 
 #[library_benchmark]
+#[bench::long(1000)]
+pub fn push_pop_x100_local(value: u64) {
+    let mut buf = LocalStackRB::<u64, {RB_SIZE}>::default();
+
+    let (mut prod, mut cons) = buf.split();
+
+    prod.push_slice(&[1; RB_SIZE / 2]).unwrap();
+
+    for _ in 0..value {
+        for _ in 0..BATCH_SIZE {
+            prod.push(1).unwrap();
+        }
+        for _ in 0..BATCH_SIZE {
+            black_box(cons.peek_ref().unwrap());
+            unsafe { cons.advance(1); }
+        }
+    }
+}
+
+#[library_benchmark]
 #[bench::long(100)]
 pub fn push_pop_x100(value: u64) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
@@ -93,7 +113,7 @@ fn slice_x100(value: u64) {
 
 library_benchmark_group!(
     name = bench_iai_base;
-    benchmarks = push_pop_local, push_pop_shared, push_pop_x100, slice_x10, slice_x100
+    benchmarks = push_pop_local, push_pop_shared, push_pop_x100_local, push_pop_x100, slice_x10, slice_x100
 );
 
 #[cfg(not(bench))]
