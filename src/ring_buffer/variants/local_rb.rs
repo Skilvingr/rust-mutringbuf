@@ -1,4 +1,4 @@
-use core::cell::{Cell, UnsafeCell};
+use core::cell::UnsafeCell;
 use core::num::NonZeroUsize;
 
 use crate::{ConsIter, LocalStackRB, ProdIter, WorkIter};
@@ -17,13 +17,13 @@ pub struct LocalMutRingBuf<S: Storage> {
     pub(crate) inner_len: NonZeroUsize,
     pub(crate) inner: UnsafeCell<S>,
 
-    pub(crate) prod_idx: Cell<usize>,
-    pub(crate) work_idx: Cell<usize>,
-    pub(crate) cons_idx: Cell<usize>,
+    pub(crate) prod_idx: UnsafeCell<usize>,
+    pub(crate) work_idx: UnsafeCell<usize>,
+    pub(crate) cons_idx: UnsafeCell<usize>,
 
-    pub(crate) prod_alive: Cell<bool>,
-    pub(crate) work_alive: Cell<bool>,
-    pub(crate) cons_alive: Cell<bool>,
+    pub(crate) prod_alive: UnsafeCell<bool>,
+    pub(crate) work_alive: UnsafeCell<bool>,
+    pub(crate) cons_alive: UnsafeCell<bool>,
 }
 
 impl<S: Storage<Item = T>, T> MutRB for LocalMutRingBuf<S> {
@@ -52,56 +52,56 @@ impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
 impl<S: Storage> IterManager for LocalMutRingBuf<S> {
     #[inline(always)]
     fn prod_index(&self) -> usize {
-        self.prod_idx.get()
+        unsafe { *self.prod_idx.get() }
     }
 
     #[inline(always)]
     fn work_index(&self) -> usize {
-        self.work_idx.get()
+        unsafe { *self.work_idx.get() }
     }
 
     #[inline(always)]
     fn cons_index(&self) -> usize {
-        self.cons_idx.get()
+        unsafe { *self.cons_idx.get() }
     }
 
     #[inline(always)]
     fn set_prod_index(&self, index: usize) {
-        self.prod_idx.set(index);
+        unsafe { *self.prod_idx.get() = index; }
     }
 
     #[inline(always)]
     fn set_work_index(&self, index: usize) {
-        self.work_idx.set(index);
+        unsafe { *self.work_idx.get() = index; }
     }
 
     #[inline(always)]
     fn set_cons_index(&self, index: usize) {
-        self.cons_idx.set(index);
+        unsafe { *self.cons_idx.get() = index; }
     }
 
     fn prod_alive(&self) -> bool {
-        self.prod_alive.get()
+        unsafe { *self.prod_alive.get() }
     }
 
     fn work_alive(&self) -> bool {
-        self.work_alive.get()
+        unsafe { *self.work_alive.get() }
     }
 
     fn cons_alive(&self) -> bool {
-        self.cons_alive.get()
+        unsafe { *self.cons_alive.get() }
     }
 
     fn set_prod_alive(&self, alive: bool) {
-        self.prod_alive.set(alive);
+        unsafe { *self.prod_alive.get() = alive; }
     }
 
     fn set_work_alive(&self, alive: bool) {
-        self.work_alive.set(alive);
+        unsafe { *self.work_alive.get() = alive; }
     }
 
     fn set_cons_alive(&self, alive: bool) {
-        self.cons_alive.set(alive);
+        unsafe { *self.cons_alive.get() = alive; }
     }
 }
 
