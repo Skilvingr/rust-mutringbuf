@@ -21,6 +21,7 @@ crossbeam-utils = { version = "0.8.20", default-features = false }
 
 [dev-dependencies]
 tokio-test = { version = "0.4.4" }
+iai-callgrind = "0.11.0"
 
 [target.'cfg(bench)'.dev-dependencies]
 criterion = { version = "0.5.1" }
@@ -30,8 +31,15 @@ cpal = { version = "0.15.3" }
 
 [[bench]]
 name = "bench_main"
+path = "benches/criterion/bench_main.rs"
 harness = false
 
 [[bench]]
 name = "bench_slices"
+path = "benches/criterion/bench_slices.rs"
+harness = false
+
+[[bench]]
+name = "iai_bench_base"
+path = "benches/iai_benches/iai_base.rs"
 harness = false
