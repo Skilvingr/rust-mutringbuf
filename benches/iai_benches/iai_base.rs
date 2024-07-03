@@ -9,7 +9,7 @@ const BATCH_SIZE: usize = 100;
 
 
 #[library_benchmark]
-#[bench::long(100)]
+#[bench::long(1000)]
 pub fn push_pop_local(value: u64) {
     let mut buf = LocalStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
@@ -24,7 +24,7 @@ pub fn push_pop_local(value: u64) {
 }
 
 #[library_benchmark]
-#[bench::long(100)]
+#[bench::long(1000)]
 pub fn push_pop_shared(value: u64) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
@@ -59,7 +59,7 @@ pub fn push_pop_x100_local(value: u64) {
 }
 
 #[library_benchmark]
-#[bench::long(100)]
+#[bench::long(1000)]
 pub fn push_pop_x100(value: u64) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
 
@@ -79,7 +79,7 @@ pub fn push_pop_x100(value: u64) {
 }
 
 #[library_benchmark]
-#[bench::long(100)]
+#[bench::long(1000)]
 fn slice_x10(value: u64) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
@@ -95,7 +95,7 @@ fn slice_x10(value: u64) {
 }
 
 #[library_benchmark]
-#[bench::long(100)]
+#[bench::long(1000)]
 fn slice_x100(value: u64) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
