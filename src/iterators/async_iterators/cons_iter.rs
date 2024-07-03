@@ -67,7 +67,21 @@ gen_fut!{
     (),
     Option<T>,
     self {
-        let result = unsafe { self.iter.inner.pop() };
+        let result = self.iter.inner.pop();
+
+        if let Some(res) = result {
+            break Poll::Ready(Some(res));
+        }
+    }
+}
+
+gen_fut!{
+    PopMoveFuture<'a, B: MutRB<Item = T>, T: 'a, (const W: bool)>,
+    &'a mut AsyncConsIter<'buf, B, W>,
+    (),
+    Option<T>,
+    self {
+        let result = unsafe { self.iter.inner.pop_move() };
 
         if let Some(res) = result {
             break Poll::Ready(Some(res));
@@ -183,8 +197,18 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<'buf, B, W> {
     /// Tries to pop an element, moving it.
     /// # Safety
     /// Same as [`ConsIter::pop`]
-    pub unsafe fn pop(&mut self) -> PopFuture<'buf, '_, B, T, W> {
+    pub fn pop(&mut self) -> PopFuture<'buf, '_, B, T, W> {
         PopFuture {
+            iter: self,
+            _item: (),
+        }
+    }
+
+    /// Tries to pop an element, moving it.
+    /// # Safety
+    /// Same as [`ConsIter::pop`]
+    pub unsafe fn pop_move(&mut self) -> PopMoveFuture<'buf, '_, B, T, W> {
+        PopMoveFuture {
             iter: self,
             _item: (),
         }

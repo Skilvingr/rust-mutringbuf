@@ -1,12 +1,18 @@
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize};
-use std::sync::atomic::Ordering::{Acquire, Release};
-use std::thread;
-use std::time::Duration;
+#[cfg(not(feature = "alloc"))]
+use std::{
+    sync::Arc,
+    sync::atomic::{AtomicBool, AtomicUsize},
+    sync::atomic::Ordering::{Acquire, Release},
+    thread,
+    time::Duration
+};
+#[cfg(not(feature = "alloc"))]
 use mutringbuf::{ConcurrentStackRB, MRBIterator as MRBIt, LocalStackRB, StackSplit};
 
+#[cfg(not(feature = "alloc"))]
 const BUFFER_SIZE: usize = 300;
 
+#[cfg(not(feature = "alloc"))]
 #[test]
 fn test_local_stack() {
     let mut buf = LocalStackRB::<usize, { BUFFER_SIZE + 1 }>::default();
@@ -34,7 +40,7 @@ fn test_local_stack() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -43,9 +49,10 @@ fn test_local_stack() {
 }
 
 
-
+#[cfg(not(feature = "alloc"))]
 const RB_SIZE: usize = 30;
 
+#[cfg(not(feature = "alloc"))]
 fn rb_fibonacci() {
     let mut buf = ConcurrentStackRB::<usize, RB_SIZE>::default();
     let (mut prod, mut work, mut cons) = buf.split_mut();
@@ -145,6 +152,7 @@ fn rb_fibonacci() {
     // println!("{:?}", produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>())
 }
 
+#[cfg(not(feature = "alloc"))]
 #[test]
 fn fibonacci_test_stack() {
     for _ in 0 .. 100 {
@@ -152,6 +160,7 @@ fn fibonacci_test_stack() {
     }
 }
 
+#[cfg(not(feature = "alloc"))]
 pub fn fib(n: usize) -> usize {
     match n {
         1 | 2 => 1,

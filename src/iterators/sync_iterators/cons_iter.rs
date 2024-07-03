@@ -129,8 +129,17 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// This method moves items, so locations from which they are moved out are left uninitialised.
     /// These locations must be re-initialised used proper [`ProdIter`] methods (`*_init`) ones
     #[inline]
-    pub unsafe fn pop(&mut self) -> Option<T> {
+    pub unsafe fn pop_move(&mut self) -> Option<T> {
         self.next()
+    }
+
+    /// Tries to pop an element, duplicating it.
+    /// # Safety
+    /// This method acts like `ptr::read`: it duplicates the item by making a bitwise copy, ignoring whether it is `Copy`/`Clone` or not.
+    /// So it is your responsibility to ensure that the data may indeed be duplicated.
+    #[inline]
+    pub fn pop(&mut self) -> Option<T> {
+        self.next_duplicate()
     }
 
     /// - Returns `Some(())`, copying next item into `dst`, if available.

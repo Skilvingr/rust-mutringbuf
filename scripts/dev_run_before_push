@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ./miri_test &&
+cargo bench --no-run &&
 RUSTFLAGS="--cfg bench" cargo bench --no-run &&
 RUSTFLAGS="--cfg cpal" cargo build --example cpal &&
 MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}" cargo +nightly miri run --example simple &&

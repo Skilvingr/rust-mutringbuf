@@ -36,7 +36,7 @@ fn test_work_single() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -97,7 +97,7 @@ fn test_work_mul() {
     assert_eq!(cons.available(), 16);
 
     for i in 84..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -134,7 +134,7 @@ fn test_work_exact() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);

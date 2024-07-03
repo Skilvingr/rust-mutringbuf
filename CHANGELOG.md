@@ -1,3 +1,9 @@
+<a name="v0.4.0"></a>
+## v0.3.1 (Unreleased)
+
+* `pop()` in `ConsIter` acts now as `ptr::read`, copying bitwise the content of the cell.
+  Old `pop()` method is now called `pop_move()`.
+
 <a name="v0.3.1"></a>
 ## v0.3.1 (27/06/2024)
 

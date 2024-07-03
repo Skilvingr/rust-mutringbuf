@@ -54,7 +54,7 @@ fn test_push_mut_ref_init() {
     assert!(prod.push(1).is_err());
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop(), Some(i)); }
+        assert_eq!(cons.pop(), Some(i));
     }
 }
 
@@ -77,6 +77,6 @@ fn test_push_mut_ref() {
     assert!(prod.push(1).is_err());
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop(), Some(i)); }
+        assert_eq!(cons.pop(), Some(i));
     }
 }

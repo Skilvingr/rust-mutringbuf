@@ -30,7 +30,7 @@ fn test_push_work_pop_single() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);

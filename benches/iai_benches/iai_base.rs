@@ -1,8 +1,12 @@
 #![allow(dead_code)]
 
 use std::hint::black_box;
-use iai_callgrind::{library_benchmark, library_benchmark_group, main};
-use mutringbuf::{ConcurrentStackRB, LocalStackRB, MRBIterator, StackSplit};
+use iai_callgrind::{library_benchmark, library_benchmark_group};
+use mutringbuf::{ConcurrentStackRB, LocalStackRB, StackSplit};
+#[cfg(not(bench))]
+use iai_callgrind::main;
+
+
 
 const RB_SIZE: usize = 256;
 const BATCH_SIZE: usize = 100;
@@ -18,8 +22,7 @@ pub fn push_pop_local(value: u64) {
 
     for _ in 0..value {
         prod.push(1).unwrap();
-        black_box(cons.peek_ref().unwrap());
-        unsafe { cons.advance(1); }
+        black_box(cons.pop().unwrap());
     }
 }
 
@@ -33,8 +36,7 @@ pub fn push_pop_shared(value: u64) {
 
     for _ in 0..value {
         prod.push(1).unwrap();
-        black_box(cons.peek_ref().unwrap());
-        unsafe { cons.advance(1); }
+        black_box(cons.pop().unwrap());
     }
 }
 
@@ -52,8 +54,7 @@ pub fn push_pop_x100_local(value: u64) {
             prod.push(1).unwrap();
         }
         for _ in 0..BATCH_SIZE {
-            black_box(cons.peek_ref().unwrap());
-            unsafe { cons.advance(1); }
+            black_box(cons.pop().unwrap());
         }
     }
 }
@@ -72,8 +73,7 @@ pub fn push_pop_x100(value: u64) {
             prod.push(1).unwrap();
         }
         for _ in 0..BATCH_SIZE {
-            black_box(cons.peek_ref().unwrap());
-            unsafe { cons.advance(1); }
+            black_box(cons.pop().unwrap());
         }
     }
 }

@@ -34,6 +34,9 @@ pub(crate) trait PrivateMRBIterator<T> {
     /// Returns Some(current element), if `check()` returns `true`, else None
     fn next(&mut self) -> Option<T>;
 
+    /// Returns Some(current element), if `check()` returns `true`, else None. The value is duplicated.
+    fn next_duplicate(&mut self) -> Option<T>;
+
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
     fn next_ref<'a>(&mut self) -> Option<&'a T>;
 
@@ -131,6 +134,17 @@ pub(crate) mod iter_macros {
         fn next(&mut self) -> Option<T> {
             self.check(1).then(|| {
                 let ret = unsafe { self.buffer.inner()[self.index].take_inner() };
+
+                unsafe { self.advance(1) };
+
+                ret
+            })
+        }
+        
+        #[inline]
+        fn next_duplicate(&mut self) -> Option<T> {
+            self.check(1).then(|| {
+                let ret = unsafe { self.buffer.inner()[self.index].inner_duplicate() };
 
                 unsafe { self.advance(1) };
 

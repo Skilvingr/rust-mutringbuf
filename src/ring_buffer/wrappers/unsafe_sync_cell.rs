@@ -56,6 +56,14 @@ impl<T> UnsafeSyncCell<T> {
         core::mem::replace(&mut *self.0.get(), MaybeUninit::<T>::zeroed()).assume_init()
     }
 
+    /// Reads and duplicates the value.
+    /// For more info, refer to [docs](https://doc.rust-lang.org/core/mem/union.MaybeUninit.html#method.assume_init_read).
+    /// # Safety
+    /// Inner value must be initialised.
+    #[inline(always)]
+    pub unsafe fn inner_duplicate(&self) -> T {
+        (*self.0.get()).assume_init_read()
+    }
 
     /// Returns a reference to inner value.
     /// # Safety

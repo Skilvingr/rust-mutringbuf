@@ -20,7 +20,7 @@ fn test_pop_exact() {
     let mut buf = get_buf!(Concurrent, Stack);
     let (mut prod, mut cons) = buf.split();
 
-    unsafe { assert!(cons.pop().is_none()); }
+    assert!(cons.pop().is_none());
 
     fill_buf(&mut prod, BUFFER_SIZE);
 
@@ -39,7 +39,7 @@ fn test_pop_exact() {
         unsafe { cons.advance(1); }
     }
 
-    unsafe { assert!(cons.pop().is_none()); }
+    assert!(cons.pop().is_none());
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn test_pop_ref_exact() {
         unsafe { cons.advance(1) };
     }
 
-    unsafe { assert!(cons.pop().is_none()); }
+    assert!(cons.pop().is_none());
 }
 
 #[test]
@@ -70,7 +70,7 @@ fn test_pop_slice_exact() {
     }
     unsafe { cons.advance(BUFFER_SIZE) };
 
-    unsafe { assert!(cons.pop().is_none()); }
+    assert!(cons.pop().is_none());
 }
 
 #[test]
@@ -87,7 +87,7 @@ fn test_pop_avail_nw_exact() {
     }
     unsafe { cons.advance(BUFFER_SIZE) };
 
-    unsafe { assert!(cons.pop().is_none()); }
+    assert!(cons.pop().is_none());
 }
 
 #[test]
@@ -112,7 +112,7 @@ fn test_pop_slice_seam() {
     }
     unsafe { cons.advance(BUFFER_SIZE) };
 
-    unsafe { assert!(cons.pop().is_none()); }
+    assert!(cons.pop().is_none());
 }
 
 #[test]

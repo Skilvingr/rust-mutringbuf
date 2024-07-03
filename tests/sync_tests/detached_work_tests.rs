@@ -51,7 +51,7 @@ fn test_work_detached_sync_index() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -72,7 +72,7 @@ fn test_work_detached() {
     assert_eq!(cons.available(), BUFFER_SIZE);
 
     for i in 0..BUFFER_SIZE {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE);
@@ -99,7 +99,7 @@ fn test_work_detached_set_index() {
     assert_eq!(cons.available(), BUFFER_SIZE - 1);
 
     for i in 0..BUFFER_SIZE - 1 {
-        unsafe { assert_eq!(cons.pop().unwrap(), i + 1); }
+        assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE - 1);

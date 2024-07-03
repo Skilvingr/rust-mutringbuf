@@ -22,7 +22,7 @@ fn main() {
     } // All indices are now initialised. It would be now safe to use normal methods from prod instead of `*_init` ones.
 
     for _ in &slice {
-        unsafe { cons.pop().unwrap(); }
+        unsafe { cons.pop_move().unwrap(); }
     } // 1 index out of RB_SIZE+1 is initialised. `*_init` methods must be used.
 
     for x in &slice {
@@ -38,7 +38,7 @@ fn main() {
     prod.push_slice_clone(&slice).unwrap();
 
     for _ in &slice {
-        unsafe { cons.pop().unwrap(); }
+        unsafe { cons.pop_move().unwrap(); }
     }
 
     drop(prod);
