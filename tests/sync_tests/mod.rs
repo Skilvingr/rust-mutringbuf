@@ -4,5 +4,4 @@ pub mod detached_work_tests;
 pub mod drop;
 pub mod integration_tests;
 pub mod prod_tests;
-pub mod stack;
 pub mod work_tests;
