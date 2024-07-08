@@ -14,16 +14,16 @@ use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::StackSplit;
 
 pub struct LocalMutRingBuf<S: Storage> {
-    pub(crate) inner_len: NonZeroUsize,
-    pub(crate) inner: UnsafeCell<S>,
+    inner_len: NonZeroUsize,
+    inner: UnsafeCell<S>,
 
-    pub(crate) prod_idx: UnsafeCell<usize>,
-    pub(crate) work_idx: UnsafeCell<usize>,
-    pub(crate) cons_idx: UnsafeCell<usize>,
+    prod_idx: UnsafeCell<usize>,
+    work_idx: UnsafeCell<usize>,
+    cons_idx: UnsafeCell<usize>,
 
-    pub(crate) prod_alive: UnsafeCell<bool>,
-    pub(crate) work_alive: UnsafeCell<bool>,
-    pub(crate) cons_alive: UnsafeCell<bool>,
+    prod_alive: UnsafeCell<bool>,
+    work_alive: UnsafeCell<bool>,
+    cons_alive: UnsafeCell<bool>,
 }
 
 impl<S: Storage<Item = T>, T> MutRB for LocalMutRingBuf<S> {

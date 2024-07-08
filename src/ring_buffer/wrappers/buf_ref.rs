@@ -64,7 +64,6 @@ impl<'buf, B> Deref for BufRef<'buf, B> {
 
 
 impl<'buf, B: IterManager> BufRef<'buf, B> {
-    #[inline]
     pub(crate) fn set_prod_alive(&self, alive: bool) {
         unsafe {
             self.inner.as_ref().set_prod_alive(alive);
@@ -75,7 +74,6 @@ impl<'buf, B: IterManager> BufRef<'buf, B> {
         }
     }
 
-    #[inline]
     pub(crate) fn set_work_alive(&self, alive: bool) {
         unsafe {
             self.inner.as_ref().set_work_alive(alive);
@@ -86,7 +84,6 @@ impl<'buf, B: IterManager> BufRef<'buf, B> {
         }
     }
 
-    #[inline]
     pub(crate) fn set_cons_alive(&self, alive: bool) {
         unsafe {
             self.inner.as_ref().set_cons_alive(alive);
