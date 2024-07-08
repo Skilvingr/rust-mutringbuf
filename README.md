@@ -173,7 +173,7 @@ cargo test
 Benchmarks can be run with:
 
 ```shell
-RUSTFLAGS="--cfg bench" cargo bench
+RUSTFLAGS="--cfg bench" cargo +nightly bench
 ```
 
 CPAL example can be run with:

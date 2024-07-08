@@ -21,13 +21,16 @@ crossbeam-utils = { version = "0.8.20", default-features = false }
 
 [dev-dependencies]
 tokio-test = { version = "0.4.4" }
-iai-callgrind = "0.11.0"
+iai-callgrind = "0.11.1"
 
 [target.'cfg(bench)'.dev-dependencies]
-criterion = { version = "0.5.1" }
+criterion = { version = "0.5.1", features = ["real_blackbox"] }
 
 [target.'cfg(cpal)'.dev-dependencies]
 cpal = { version = "0.15.3" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(bench)', 'cfg(cpal)'] }
 
 [[bench]]
 name = "bench_main"
