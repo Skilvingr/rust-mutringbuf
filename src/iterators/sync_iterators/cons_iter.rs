@@ -56,10 +56,12 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> MRBIterator<T> for ConsIter<'bu
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
 
-        self.cached_avail = match self.index <= succ_idx {
-            true => succ_idx - self.index,
-            false => self.buf_len.get() - self.index + succ_idx
-        };
+        unsafe {
+            self.cached_avail = match self.index <= succ_idx {
+                true => succ_idx.unchecked_sub(self.index),
+                false => self.buf_len.get().unchecked_sub(self.index).unchecked_add(succ_idx)
+            };
+        }
 
         self.cached_avail
     }

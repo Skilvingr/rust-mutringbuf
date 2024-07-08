@@ -82,21 +82,20 @@ impl<'buf, B: MutRB<Item = T>, T> DetachedWorkIter<'buf, B> {
     /// See [`WorkIter::advance`].
     #[inline]
     pub unsafe fn advance(&mut self, count: usize) {
-        self.inner.index = match self.inner.index + count >= self.inner.buf_len.get() {
-            true => self.inner.index + count - self.inner.buf_len.get(),
-            false => self.inner.index + count
-        };
+        self.inner.advance_local(count);
     }
 
     /// Goes back, wrapping if necessary.
     ///
     /// # Safety
     /// Index must always be between consumer and producer.
-    pub unsafe fn go_back(&mut self, count: usize) {
+    pub unsafe fn go_back(&mut self, count: usize) {        
         self.inner.index = match self.inner.index < count {
             true => self.inner.buf_len.get() - (count - self.inner.index),
             false => self.inner.index - count
         };
+
+        self.inner.cached_avail = self.inner.cached_avail.unchecked_add(count);
     }
 
     delegate!(WorkIter (inline), pub fn is_prod_alive(&self) -> bool);

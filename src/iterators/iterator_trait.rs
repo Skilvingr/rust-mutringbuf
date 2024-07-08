@@ -22,6 +22,8 @@ pub trait MRBIterator<T> {
 }
 
 pub(crate) trait PrivateMRBIterator<T> {
+    unsafe fn advance_local(&mut self, count: usize);
+    
     /// Sets the global index of this iterator.
     fn set_atomic_index(&self, index: usize);
 
@@ -102,13 +104,7 @@ pub(crate) mod iter_macros {
     macro_rules! public_impl { () => (
         #[inline]
         unsafe fn advance(&mut self, count: usize) {
-            self.index += count;
-            
-            if self.index >= self.buf_len.get() {
-                self.index -= self.buf_len.get();
-            }
-            
-            self.cached_avail = self.cached_avail.saturating_sub(count);
+            self.advance_local(count);
 
             self.set_atomic_index(self.index);
         }
@@ -125,6 +121,17 @@ pub(crate) mod iter_macros {
     )}
 
     macro_rules! private_impl { () => (
+        #[inline]
+        unsafe fn advance_local(&mut self, count: usize) {
+            self.index += count;
+            
+            if self.index >= self.buf_len.get() {
+                self.index -= self.buf_len.get();
+            }
+            
+            self.cached_avail = self.cached_avail.saturating_sub(count);
+        }
+        
         #[inline(always)]
         fn check(&mut self, count: usize) -> bool {
             self.cached_avail >= count || self.available() >= count

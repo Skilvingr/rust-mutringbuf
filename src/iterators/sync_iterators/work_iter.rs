@@ -32,7 +32,7 @@ To avoid this [`DetachedWorkIter`] can be obtained by calling [`Self::detach`].
 
 pub struct WorkIter<'buf, B: MutRB> {
     pub(crate) index: usize,
-    cached_avail: usize,
+    pub(crate) cached_avail: usize,
     pub(crate) buf_len: NonZeroUsize,
     pub(crate) buffer: BufRef<'buf, B>,
 }
@@ -63,10 +63,12 @@ impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<'buf, B> {
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
 
-        self.cached_avail = match self.index <= succ_idx {
-            true => succ_idx - self.index,
-            false => self.buf_len.get() - self.index + succ_idx
-        };
+        unsafe {
+            self.cached_avail = match self.index <= succ_idx {
+                true => succ_idx.unchecked_sub(self.index),
+                false => self.buf_len.get().unchecked_sub(self.index).unchecked_add(succ_idx)
+            };
+        }
 
         self.cached_avail
     }
