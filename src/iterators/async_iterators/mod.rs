@@ -1,9 +1,54 @@
 #![cfg(any(feature = "async", doc))]
 
+use crate::iterators::async_iterators::detached_work_iter::AsyncDetachedIter;
+use crate::MRBIterator;
+
 pub mod prod_iter;
 pub mod work_iter;
 pub mod cons_iter;
 pub mod detached_work_iter;
+
+
+pub trait AsyncIterator {
+    type I: MRBIterator;
+
+    fn inner(&self) -> &Self::I;
+    fn inner_mut(&mut self) -> &mut Self::I;
+
+    fn into_sync(self) -> Self::I;
+
+    fn from_sync(iter: Self::I) -> Self;
+
+    fn detach(self) -> AsyncDetachedIter<Self> where Self: Sized {
+        AsyncDetachedIter::from_iter(self)
+    }
+
+    fn is_prod_alive(&self) -> bool {
+        self.inner().is_prod_alive()
+    }
+    fn is_work_alive(&self) -> bool {
+        self.inner().is_work_alive()
+    }
+    fn is_cons_alive(&self) -> bool {
+        self.inner().is_cons_alive()
+    }
+    fn prod_index(&self) -> usize {
+        self.inner().prod_index()
+    }
+    fn work_index(&self) -> usize {
+        self.inner().work_index()
+    }
+    fn cons_index(&self) -> usize {
+        self.inner().cons_index()
+    }
+    fn index(&self) -> usize {
+        self.inner().index()
+    }
+    fn available(&mut self) -> usize {
+        self.inner_mut().available()
+    }
+}
+
 
 pub(crate) mod async_macros {
     macro_rules! futures_import { () => {

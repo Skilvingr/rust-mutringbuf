@@ -1,8 +1,6 @@
-use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator, WorkableSlice};
+use crate::iterators::iterator_trait::{MRBIterator, WorkableSlice};
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
-use crate::WorkIter;
 
 #[doc = r##"
 Same as [`WorkIter`], but does not update the atomic index when advancing.
@@ -27,17 +25,17 @@ in order to move the iterator.
 </div>
 "##]
 
-pub struct DetachedWorkIter<'buf, B: MutRB> {
-    inner: WorkIter<'buf, B>
+pub struct Detached<I: MRBIterator> {
+    inner: I,
 }
 
-unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for DetachedWorkIter<'buf, B> {}
+unsafe impl<I: MRBIterator> Send for Detached<I> {}
 
 
-impl<'buf, B: MutRB<Item = T>, T> DetachedWorkIter<'buf, B> {
+impl<T, I: MRBIterator<Item = T>> Detached<I> {
     /// Creates a [`Self`] from a [`WorkIter`].
     #[inline]
-    pub(crate) fn from_work(work: WorkIter<'buf, B>) -> DetachedWorkIter<'buf, B> {
+    pub(crate) fn from_iter(work: I) -> Detached<I> {
         Self {
             inner: work
         }
@@ -45,17 +43,23 @@ impl<'buf, B: MutRB<Item = T>, T> DetachedWorkIter<'buf, B> {
 
     /// Attaches the iterator, yielding a [`WorkIter`].
     #[inline]
-    pub fn attach(self) -> WorkIter<'buf, B> {
+    pub fn attach(self) -> I {
         self.sync_index();
-
         self.inner
+    }
+    
+    fn inner(&self) -> &I {
+        &self.inner
+    }
+    fn inner_mut(&mut self) -> &mut I {
+        &mut self.inner
     }
 
 
-    delegate!(WorkIter (inline), pub fn available(&(mut) self) -> usize);
-    delegate!(WorkIter (inline), pub fn wait_for(&(mut) self, count: usize));
-    delegate!(WorkIter (inline), pub fn index(&self) -> usize);
-    delegate!(WorkIter (inline), pub fn buf_len(&self) -> usize);
+    delegate!(I (inline), pub fn available(&(mut) self) -> usize);
+    delegate!(I (inline), pub fn wait_for(&(mut) self, count: usize));
+    delegate!(I (inline), pub fn index(&self) -> usize);
+    delegate!(I (inline), pub fn buf_len(&self) -> usize);
 
     /// Sets local index.
     ///
@@ -63,7 +67,7 @@ impl<'buf, B: MutRB<Item = T>, T> DetachedWorkIter<'buf, B> {
     /// Index must always be between consumer and producer.
     #[inline(always)]
     pub unsafe fn set_index(&mut self, index: usize) {
-        self.inner.index = index;
+        self.inner.set_local_index(index);
     }
 
     /// Resets the *local* index of the iterator. I.e., moves the iterator to the location occupied by its successor.
@@ -71,7 +75,7 @@ impl<'buf, B: MutRB<Item = T>, T> DetachedWorkIter<'buf, B> {
     #[inline]
     pub fn reset_index(&mut self) {
         let new_idx = self.inner.succ_index();
-        self.inner.index = new_idx;
+        unsafe { self.inner.set_local_index(new_idx); }
     }
 
     /// Advances the iterator as in [`WorkIter::available()`], but does not modify the atomic counter,
@@ -88,28 +92,36 @@ impl<'buf, B: MutRB<Item = T>, T> DetachedWorkIter<'buf, B> {
     ///
     /// # Safety
     /// Index must always be between consumer and producer.
-    pub unsafe fn go_back(&mut self, count: usize) {        
-        self.inner.index = match self.inner.index < count {
-            true => self.inner.buf_len.get() - (count - self.inner.index),
-            false => self.inner.index - count
-        };
+    pub unsafe fn go_back(&mut self, count: usize) {
+        let idx = self.inner.index();
+        
+        self.inner.set_local_index(
+            match idx < count {
+                true => self.inner.buf_len() - (count - idx),
+                false => idx - count
+            }
+        );
 
-        self.inner.cached_avail = self.inner.cached_avail.unchecked_add(count);
+        let cached_avail = self.inner.cached_avail();
+        self.inner.set_cached_avail(cached_avail.unchecked_add(count));
     }
 
-    delegate!(WorkIter (inline), pub fn is_prod_alive(&self) -> bool);
-    delegate!(WorkIter (inline), pub fn is_cons_alive(&self) -> bool);
-    delegate!(WorkIter (inline), pub fn prod_index(&self) -> usize);
-    delegate!(WorkIter (inline), pub fn cons_index(&self) -> usize);
-    delegate!(WorkIter (inline), pub fn get_workable(&(mut) self) -> Option<&mut T>);
-    delegate!(WorkIter (inline), pub fn get_workable_slice_exact(&(mut) self, count: usize) -> Option<WorkableSlice<'_, T>>);
-    delegate!(WorkIter (inline), pub fn get_workable_slice_avail(&(mut) self) -> Option<WorkableSlice<'_, T>>);
-    delegate!(WorkIter (inline), pub fn get_workable_slice_multiple_of(&(mut) self, rhs: usize) -> Option<WorkableSlice<'_, T>>);
+    delegate!(I (inline), pub fn is_prod_alive(&self) -> bool);
+    delegate!(I (inline), pub fn is_work_alive(&self) -> bool);
+    delegate!(I (inline), pub fn is_cons_alive(&self) -> bool);
+    delegate!(I (inline), pub fn prod_index(&self) -> usize);
+    delegate!(I (inline), pub fn work_index(&self) -> usize);
+    delegate!(I (inline), pub fn cons_index(&self) -> usize);
+    
+    delegate!(I (inline), pub fn get_workable(&(mut) self) -> Option<&mut T>);
+    delegate!(I (inline), pub fn get_workable_slice_exact(&(mut) self, count: usize) -> Option<WorkableSlice<'_, T>>);
+    delegate!(I (inline), pub fn get_workable_slice_avail(&(mut) self) -> Option<WorkableSlice<'_, T>>);
+    delegate!(I (inline), pub fn get_workable_slice_multiple_of(&(mut) self, rhs: usize) -> Option<WorkableSlice<'_, T>>);
 
     /// Synchronises the underlying atomic index with the local index. I.e. let the consumer iterator
     /// advance.
     #[inline(always)]
     pub fn sync_index(&self) {
-        self.inner.set_atomic_index(self.inner.index);
+        self.inner.set_atomic_index(self.inner.index());
     }
 }

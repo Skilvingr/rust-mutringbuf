@@ -181,6 +181,9 @@ CPAL example can be run with:
 ```shell
 RUSTFLAGS="--cfg cpal" cargo run --example cpal
 ```
+If you run into something like:
+`ALSA lib pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`,
+please, take a look [here](https://github.com/Uberi/speech_recognition/issues/526#issuecomment-1670900376).
 
 Async example can be run with:
 

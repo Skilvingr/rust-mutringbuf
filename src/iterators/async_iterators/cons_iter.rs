@@ -1,5 +1,6 @@
 use crate::ConsIter;
 use crate::iterators::async_iterators::async_macros::{futures_import, gen_common_futs, gen_fut, waker_registerer};
+use crate::iterators::async_iterators::AsyncIterator;
 use crate::iterators::iterator_trait::MRBIterator;
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
@@ -16,6 +17,30 @@ pub struct AsyncConsIter<'buf, B: MutRB, const W: bool> {
     waker: Option<Waker>
 }
 unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for AsyncConsIter<'buf, B, W> {}
+
+impl<'buf, B: MutRB<Item = T>, T, const W: bool> AsyncIterator for AsyncConsIter<'buf, B, W> {
+    type I = ConsIter<'buf, B, W>;
+
+    #[inline]
+    fn inner(&self) -> &Self::I {
+        &self.inner
+    }
+    #[inline]
+    fn inner_mut(&mut self) -> &mut Self::I {
+        &mut self.inner
+    }
+    
+    fn into_sync(self) -> Self::I {
+        self.inner
+    }
+
+    fn from_sync(iter: Self::I) -> Self {
+        Self {
+            inner: iter,
+            waker: None,
+        }
+    }
+}
 
 gen_common_futs!(&'a mut AsyncConsIter<'buf, B, W>, (const W: bool));
 
@@ -152,17 +177,6 @@ gen_fut!{
 
 
 impl<'buf, B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<'buf, B, W> {
-    pub fn from_sync(iter: ConsIter<'buf, B, W>) -> Self {
-        Self {
-            inner: iter,
-            waker: None,
-        }
-    }
-
-    pub fn into_sync(self) -> ConsIter<'buf, B, W> {
-        self.inner
-    }
-
     waker_registerer!();
     delegate!(ConsIter, pub fn is_prod_alive(&self) -> bool);
     delegate!(ConsIter, pub fn is_work_alive(&self) -> bool);

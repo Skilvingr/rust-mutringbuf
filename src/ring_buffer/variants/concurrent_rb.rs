@@ -7,7 +7,7 @@ use crossbeam_utils::CachePadded;
 
 use crate::{ConcurrentStackRB, ConsIter, ProdIter, WorkIter};
 #[cfg(any(feature = "async", doc))]
-use crate::{AsyncConsIter, AsyncProdIter, AsyncWorkIter};
+use crate::{AsyncConsIter, AsyncProdIter, AsyncWorkIter, iterators::async_iterators::AsyncIterator};
 #[cfg(feature = "alloc")]
 use crate::HeapStorage;
 use crate::ring_buffer::storage::stack::StackStorage;

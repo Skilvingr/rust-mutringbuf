@@ -2,7 +2,7 @@ use core::mem::transmute;
 use core::num::NonZeroUsize;
 use core::slice;
 
-use crate::iterators::{private_impl, prod_alive, prod_index, public_impl, work_alive, work_index};
+use crate::iterators::{private_impl, public_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::ProdIter;
@@ -33,7 +33,9 @@ impl<'buf, B: MutRB + IterManager, const W: bool> Drop for ConsIter<'buf, B, W> 
     }
 }
 
-impl<'buf, B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<'buf, B, W> {
+impl<'buf, B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator for ConsIter<'buf, B, W> {
+    type PItem = T;
+
     #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -51,7 +53,9 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsI
     private_impl!();
 }
 
-impl<'buf, B: MutRB<Item = T>, T, const W: bool> MRBIterator<T> for ConsIter<'buf, B, W> {
+impl<'buf, B: MutRB<Item = T>, T, const W: bool> MRBIterator for ConsIter<'buf, B, W> {
+    type Item = T;
+
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -70,11 +74,6 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> MRBIterator<T> for ConsIter<'bu
 }
 
 impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
-    prod_alive!();
-    work_alive!();
-    prod_index!();
-    work_index!();
-    
     pub(crate) fn new(value: BufRef<'buf, B>) -> Self {
         Self {
             index: 0,

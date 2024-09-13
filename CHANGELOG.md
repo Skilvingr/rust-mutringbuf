@@ -11,6 +11,7 @@
   * `get_workable_slice_multiple_of`
 
   can now be used by all the iterators, sync and async.
+* All kinds of iterators can now be detached, yielding a `Detached`.
 
 <a name="v0.3.1"></a>
 ## v0.3.1 (27/06/2024)

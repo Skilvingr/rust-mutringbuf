@@ -2,9 +2,8 @@ use core::mem::transmute;
 use core::num::NonZeroUsize;
 use core::slice;
 
-use crate::iterators::{cons_alive, cons_index, private_impl, prod_alive, prod_index, public_impl};
+use crate::iterators::{private_impl, public_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
-use crate::iterators::sync_iterators::detached_work_iter::DetachedWorkIter;
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
@@ -39,7 +38,9 @@ impl<'buf, B: MutRB + IterManager> Drop for WorkIter<'buf, B> {
     }
 }
 
-impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'buf, B> {
+impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator for WorkIter<'buf, B> {
+    type PItem = T;
+    
     #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);
@@ -53,7 +54,9 @@ impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'buf, B> {
     private_impl!();
 }
 
-impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<'buf, B> {
+impl<'buf, B: MutRB<Item = T>, T> MRBIterator for WorkIter<'buf, B> {
+    type Item = T;
+    
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -72,11 +75,6 @@ impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<'buf, B> {
 }
 
 impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {
-    prod_alive!();
-    cons_alive!();
-    prod_index!();
-    cons_index!();
-
     pub(crate) fn new(value: BufRef<'buf, B>) -> WorkIter<'buf, B> {
         Self {
             index: 0,
@@ -84,12 +82,6 @@ impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {
             buffer: value,
             cached_avail: 0,
         }
-    }
-
-    /// Detaches the iterator yielding a [`DetachedWorkIter`].
-    #[inline]
-    pub fn detach(self) -> DetachedWorkIter<'buf, B> {
-        DetachedWorkIter::from_work(self)
     }
 
     /// Resets the index of the iterator. I.e., moves the iterator to the location occupied by its successor.

@@ -1,6 +1,7 @@
 extern crate alloc;
 
-use mutringbuf::{ConsIter, DetachedWorkIter, ConcurrentHeapRB, MRBIterator, ProdIter, WorkIter, HeapSplit};
+use mutringbuf::{ConsIter, ConcurrentHeapRB, MRBIterator, ProdIter, WorkIter, HeapSplit};
+use mutringbuf::iterators::sync_iterators::detached::Detached;
 
 const BUFFER_SIZE: usize = 100;
 
@@ -11,7 +12,7 @@ fn fill_buf(prod: &mut ProdIter<ConcurrentHeapRB<usize>>) {
 
 #[allow(clippy::type_complexity)]
 fn prepare<'buf>(mut prod: ProdIter<'buf, ConcurrentHeapRB<usize>>, mut work: WorkIter<'buf, ConcurrentHeapRB<usize>>, mut cons: ConsIter<'buf, ConcurrentHeapRB<usize>, true>)
-           -> (ProdIter<'buf, ConcurrentHeapRB<usize>>, DetachedWorkIter<'buf, ConcurrentHeapRB<usize>>, ConsIter<'buf, ConcurrentHeapRB<usize>, true>) {
+           -> (ProdIter<'buf, ConcurrentHeapRB<usize>>, Detached<WorkIter<'buf, ConcurrentHeapRB<usize>>>, ConsIter<'buf, ConcurrentHeapRB<usize>, true>) {
 
     assert_eq!(prod.available(), BUFFER_SIZE);
     assert_eq!(work.available(), 0);

@@ -1,4 +1,5 @@
 use crate::iterators::async_iterators::async_macros::{futures_import, gen_common_futs, gen_fut, waker_registerer};
+use crate::iterators::async_iterators::AsyncIterator;
 use crate::iterators::iterator_trait::MRBIterator;
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
@@ -16,6 +17,30 @@ pub struct AsyncProdIter<'buf, B: MutRB> {
     waker: Option<Waker>
 }
 unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncProdIter<'buf, B> {}
+
+impl<'buf, B: MutRB<Item = T>, T> AsyncIterator for AsyncProdIter<'buf, B> {
+    type I = ProdIter<'buf, B>;
+
+    #[inline]
+    fn inner(&self) -> &Self::I {
+        &self.inner
+    }
+    #[inline]
+    fn inner_mut(&mut self) -> &mut Self::I {
+        &mut self.inner
+    }
+
+    fn into_sync(self) -> Self::I {
+        self.inner
+    }
+
+    fn from_sync(iter: Self::I) -> Self {
+        Self {
+            inner: iter,
+            waker: None,
+        }
+    }
+}
 
 gen_common_futs!(&'a mut AsyncProdIter<'buf, B>);
 
@@ -159,17 +184,6 @@ gen_fut!{
 
 
 impl<'buf, B: MutRB<Item = T>, T> AsyncProdIter<'buf, B> {
-    pub fn from_sync(iter: ProdIter<'buf, B>) -> Self {
-        Self {
-            inner: iter,
-            waker: None,
-        }
-    }
-
-    pub fn into_sync(self) -> ProdIter<'buf, B> {
-        self.inner
-    }
-
     waker_registerer!();
     delegate!(ProdIter, pub fn is_work_alive(&self) -> bool);
     delegate!(ProdIter, pub fn is_cons_alive(&self) -> bool);

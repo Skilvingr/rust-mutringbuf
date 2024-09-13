@@ -1,3 +1,5 @@
+use crate::iterators::sync_iterators::detached::Detached;
+
 /// Returned by slice-specialised functions.
 /// # Fields:
 /// - 1: head
@@ -7,7 +9,15 @@ pub type WorkableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
 
 /// Trait implemented by iterators.
 #[allow(private_bounds)]
-pub trait MRBIterator<T>: PrivateMRBIterator<T> {
+pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
+    type Item;
+
+    /// Detaches the iterator yielding a [`Detached`].
+    #[inline]
+    fn detach(self) -> Detached<Self> where Self: Sized {
+        Detached::from_iter(self)
+    }
+    
     /// Advances the iterator by `count`.
     ///
     /// # Safety
@@ -25,9 +35,25 @@ pub trait MRBIterator<T>: PrivateMRBIterator<T> {
     /// Returns the index of the iterator.
     fn index(&self) -> usize;
 
+    /// Sets the local index.
+    fn set_index(&mut self, index: usize);
+
     /// Returns the length of the buffer.
     fn buf_len(&self) -> usize;
 
+    /// Returns `true` if the producer iterator is still alive, `false` if it has been dropped.
+    fn is_prod_alive(&self) -> bool;
+    /// Returns `true` if the worker iterator is still alive, `false` if it has been dropped.
+    fn is_work_alive(&self) -> bool;
+    /// Returns `true` if the consumer iterator is still alive, `false` if it has been dropped.
+    fn is_cons_alive(&self) -> bool;
+    /// Returns the index of the producer.
+    fn prod_index(&self) -> usize;
+    /// Returns the index of the worker.
+    fn work_index(&self) -> usize;
+    /// Returns the index of the consumer.
+    fn cons_index(&self) -> usize;
+    
     /// Returns a mutable references to the current value.
     ///
     /// <div class="warning">
@@ -36,7 +62,7 @@ pub trait MRBIterator<T>: PrivateMRBIterator<T> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    fn get_workable<'a>(&mut self) -> Option<&'a mut T> {
+    fn get_workable<'a>(&mut self) -> Option<&'a mut Self::Item> {
         self.next_ref_mut()
     }
 
@@ -47,7 +73,7 @@ pub trait MRBIterator<T>: PrivateMRBIterator<T> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    fn get_workable_slice_exact<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
+    fn get_workable_slice_exact<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, <Self as MRBIterator>::Item>> {
         self.next_chunk_mut(count)
     }
 
@@ -58,7 +84,7 @@ pub trait MRBIterator<T>: PrivateMRBIterator<T> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    fn get_workable_slice_avail<'a>(&mut self) -> Option<WorkableSlice<'a, T>> {
+    fn get_workable_slice_avail<'a>(&mut self) -> Option<WorkableSlice<'a, <Self as MRBIterator>::Item>> {
         match self.available() {
             0 => None,
             avail => self.get_workable_slice_exact(avail)
@@ -73,7 +99,7 @@ pub trait MRBIterator<T>: PrivateMRBIterator<T> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, T>> {
+    fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, <Self as MRBIterator>::Item>> {
         let avail = self.available();
 
         match avail - avail % rhs {
@@ -83,7 +109,13 @@ pub trait MRBIterator<T>: PrivateMRBIterator<T> {
     }
 }
 
-pub(crate) trait PrivateMRBIterator<T> {
+pub(crate) trait PrivateMRBIterator {
+    type PItem;
+    
+    fn cached_avail(&mut self) -> usize;
+    fn set_cached_avail(&mut self, avail: usize);
+    unsafe fn set_local_index(&mut self, index: usize);
+    
     unsafe fn advance_local(&mut self, count: usize);
     
     /// Sets the global index of this iterator.
@@ -96,74 +128,57 @@ pub(crate) trait PrivateMRBIterator<T> {
     fn check(&mut self, count: usize) -> bool;
 
     /// Returns Some(current element), if `check()` returns `true`, else None
-    fn next(&mut self) -> Option<T>;
+    fn next(&mut self) -> Option<Self::PItem>;
 
     /// Returns Some(current element), if `check()` returns `true`, else None. The value is duplicated.
-    fn next_duplicate(&mut self) -> Option<T>;
+    fn next_duplicate(&mut self) -> Option<Self::PItem>;
 
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
-    fn next_ref<'a>(&mut self) -> Option<&'a T>;
+    fn next_ref<'a>(&mut self) -> Option<&'a Self::PItem>;
 
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
-    fn next_ref_mut<'a>(&mut self) -> Option<&'a mut T>;
+    fn next_ref_mut<'a>(&mut self) -> Option<&'a mut Self::PItem>;
 
     /// As next_ref_mut, but can be used for initialisation of inner MaybeUninit.
-    fn next_ref_mut_init(&mut self) -> Option<*mut T>;
+    fn next_ref_mut_init(&mut self) -> Option<*mut Self::PItem>;
 
-    fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])>;
+    fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [Self::PItem], &'a [Self::PItem])>;
 
-    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])>;
+    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [Self::PItem], &'a mut [Self::PItem])>;
 }
 
 pub(crate) mod iter_macros {
-    macro_rules! prod_alive { () => (
-        /// Returns `true` if the producer iterator is still alive, `false` if it has been dropped.
+    macro_rules! public_impl { () => (
         #[inline]
-        pub fn is_prod_alive(&self) -> bool {
+        fn is_prod_alive(&self) -> bool {
             self.buffer.prod_alive()
         }
-    )}
-    macro_rules! work_alive { () => (
-        /// Returns `true` if the worker iterator is still alive, `false` if it has been dropped.
-        ///
-        /// Note: when the buffer is used in non-mutable mode this will always return `false`.
+    
         #[inline]
-        pub fn is_work_alive(&self) -> bool {
+        fn is_work_alive(&self) -> bool {
             self.buffer.work_alive()
         }
-    )}
-    macro_rules! cons_alive { () => (
-        /// Returns `true` if the consumer iterator is still alive, `false` if it has been dropped.
+    
         #[inline]
-        pub fn is_cons_alive(&self) -> bool {
+        fn is_cons_alive(&self) -> bool {
             self.buffer.cons_alive()
         }
-    )}
-
-    macro_rules! prod_index { () => (
-        /// Returns the index of the producer.
+    
         #[inline]
-        pub fn prod_index(&self) -> usize {
+        fn prod_index(&self) -> usize {
             self.buffer.prod_index()
         }
-    )}
-    macro_rules! work_index { () => (
-        /// Returns the index of the worker.
-        /// Note: when the buffer is used in non-mutable mode this will always return `0`.
+    
         #[inline]
-        pub fn work_index(&self) -> usize {
+        fn work_index(&self) -> usize {
             self.buffer.work_index()
         }
-    )}
-    macro_rules! cons_index { () => (
-        /// Returns the index of the consumer.
+    
         #[inline]
-        pub fn cons_index(&self) -> usize {
+        fn cons_index(&self) -> usize {
             self.buffer.cons_index()
         }
-    )}
-
-    macro_rules! public_impl { () => (
+        
         #[inline]
         unsafe fn advance(&mut self, count: usize) {
             self.advance_local(count);
@@ -175,6 +190,11 @@ pub(crate) mod iter_macros {
         fn index(&self) -> usize {
             self.index
         }
+        
+        #[inline(always)]
+        fn set_index(&mut self, index: usize) {
+            self.index = index;
+        }
 
         #[inline(always)]
         fn buf_len(&self) -> usize {
@@ -183,6 +203,21 @@ pub(crate) mod iter_macros {
     )}
 
     macro_rules! private_impl { () => (
+        #[inline]
+        fn cached_avail(&mut self) -> usize {
+            self.cached_avail
+        }
+    
+        #[inline]
+        fn set_cached_avail(&mut self, avail: usize) {
+            self.cached_avail = avail;
+        }
+    
+        #[inline]
+        unsafe fn set_local_index(&mut self, index: usize) {
+            self.index = index;
+        }
+            
         #[inline]
         unsafe fn advance_local(&mut self, count: usize) {
             self.index += count;
@@ -293,5 +328,5 @@ pub(crate) mod iter_macros {
         }
     )}
 
-    pub(crate) use { public_impl, private_impl, prod_alive, work_alive, cons_alive, prod_index, work_index, cons_index };
+    pub(crate) use { public_impl, private_impl };
 }

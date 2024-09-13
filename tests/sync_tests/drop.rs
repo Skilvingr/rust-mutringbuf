@@ -1,4 +1,5 @@
-use mutringbuf::{ConsIter, ConcurrentHeapRB, ProdIter, WorkIter, HeapSplit};
+use mutringbuf::{ConcurrentHeapRB, ConsIter, HeapSplit, ProdIter, WorkIter};
+use mutringbuf::MRBIterator;
 
 const BUF_LEN: usize = 100;
 

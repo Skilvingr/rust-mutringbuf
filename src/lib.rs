@@ -7,7 +7,6 @@ extern crate alloc;
 
 pub use iterators::MRBIterator;
 pub use iterators::sync_iterators::cons_iter::ConsIter;
-pub use iterators::sync_iterators::detached_work_iter::DetachedWorkIter;
 pub use iterators::sync_iterators::prod_iter::ProdIter;
 pub use iterators::sync_iterators::work_iter::WorkIter;
 #[cfg(feature = "alloc")]
@@ -19,7 +18,6 @@ pub use ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 #[cfg(any(feature = "async", doc))]
 pub use crate::iterators::async_iterators::{
     cons_iter::AsyncConsIter,
-    detached_work_iter::AsyncDetachedWorkIter,
     prod_iter::AsyncProdIter,
     work_iter::AsyncWorkIter
 };

@@ -6,7 +6,7 @@ use core::slice;
 
 #[allow(unused_imports)]
 use crate::ConsIter;
-use crate::iterators::{cons_alive, cons_index, private_impl, public_impl, work_alive, work_index};
+use crate::iterators::{private_impl, public_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
@@ -72,7 +72,9 @@ impl<'buf, B: MutRB + IterManager> Drop for ProdIter<'buf, B> {
     }
 }
 
-impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'buf, B> {
+impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator for ProdIter<'buf, B> {
+    type PItem = T;
+
     #[inline(always)]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_prod_index(index);
@@ -86,7 +88,9 @@ impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'buf, B> {
     private_impl!();
 }
 
-impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<'buf, B> {
+impl<'buf, B: MutRB<Item = T>, T> MRBIterator for ProdIter<'buf, B> {
+    type Item = T;
+    
     #[inline]
     fn available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -105,11 +109,6 @@ impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for ProdIter<'buf, B> {
 }
 
 impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
-    work_alive!();
-    cons_alive!();
-    work_index!();
-    cons_index!();
-
     pub(crate) fn new(value: BufRef<'buf, B>) -> Self {
         Self {
             index: 0,
