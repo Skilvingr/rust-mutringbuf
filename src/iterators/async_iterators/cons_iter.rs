@@ -1,5 +1,5 @@
 use crate::ConsIter;
-use crate::iterators::async_iterators::async_macros::{futures_import, gen_fut, waker_registerer};
+use crate::iterators::async_iterators::async_macros::{futures_import, gen_common_futs, gen_fut, waker_registerer};
 use crate::iterators::iterator_trait::MRBIterator;
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
@@ -17,6 +17,7 @@ pub struct AsyncConsIter<'buf, B: MutRB, const W: bool> {
 }
 unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for AsyncConsIter<'buf, B, W> {}
 
+gen_common_futs!(&'a mut AsyncConsIter<'buf, B, W>, (const W: bool));
 
 gen_fut!{
     PeekRefFuture<'a, B: MutRB<Item = T>, T: 'a, (const W: bool)>,

@@ -55,5 +55,71 @@ pub(crate) mod async_macros {
         }
     }
 
-    pub(crate) use { gen_fut, futures_import, waker_registerer };
+    macro_rules! gen_common_futs {
+        (
+            $iter: ty $(,(const $CG: ident : $CT: ty))*
+        ) => {
+            use crate::iterators::iterator_trait::WorkableSlice;
+            
+            gen_fut!{
+                GetWorkableFuture<'a, B: MutRB<Item = T>, T: 'a, $((const $CG: $CT)),*>,
+                $iter,
+                (),
+                Option<&'a mut T>,
+                self {
+                    let result = self.iter.inner.get_workable();
+            
+                    if let Some(res) = result {
+                        break Poll::Ready(Some(res));
+                    }
+                }
+            }
+
+            gen_fut!{
+                GetWorkableSliceExactFuture<'a, B: MutRB<Item = T>, T: 'a, $((const $CG: $CT)),*>,
+                $iter,
+                usize,
+                Option<WorkableSlice<'a, T>>,
+                self {
+                    let count = self._item;
+                    let result = self.iter.inner.get_workable_slice_exact(count);
+            
+                    if let Some(res) = result {
+                        break Poll::Ready(Some(res));
+                    }
+                }
+            }
+            
+            gen_fut!{
+                GetWorkableSliceAvailFuture<'a, B: MutRB<Item = T>, T: 'a, $((const $CG: $CT)),*>,
+                $iter,
+                (),
+                Option<WorkableSlice<'a, T>>,
+                self {
+                    let result = self.iter.inner.get_workable_slice_avail();
+            
+                    if let Some(res) = result {
+                        break Poll::Ready(Some(res));
+                    }
+                }
+            }
+            
+            gen_fut!{
+                GetWorkableSliceMultipleOfFuture<'a, B: MutRB<Item = T>, T: 'a, $((const $CG: $CT)),*>,
+                $iter,
+                usize,
+                Option<WorkableSlice<'a, T>>,
+                self {
+                    let count = self._item;
+                    let result = self.iter.inner.get_workable_slice_multiple_of(count);
+            
+                    if let Some(res) = result {
+                        break Poll::Ready(Some(res));
+                    }
+                }
+            }
+        }
+    }
+
+    pub(crate) use { gen_fut, gen_common_futs, futures_import, waker_registerer };
 }

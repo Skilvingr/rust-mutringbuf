@@ -1,5 +1,4 @@
-use crate::iterators::sync_iterators::work_iter::WorkableSlice;
-use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
+use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator, WorkableSlice};
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};

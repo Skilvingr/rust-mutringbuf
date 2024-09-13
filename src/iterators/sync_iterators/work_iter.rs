@@ -10,12 +10,6 @@ use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager,
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
-/// Returned by slice-specialised functions.
-/// # Fields:
-/// - 1: head
-/// - 2: tail
-pub type WorkableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
-
 #[doc = r##"
 Iterator used to mutate elements in-place.
 
@@ -56,7 +50,8 @@ impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'buf, B> {
         self.buffer.prod_index()
     }
 
-    private_impl!(); }
+    private_impl!();
+}
 
 impl<'buf, B: MutRB<Item = T>, T> MRBIterator<T> for WorkIter<'buf, B> {
     #[inline]
@@ -103,59 +98,5 @@ impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {
         let new_idx = self.succ_index();
         self.index = new_idx;
         self.set_atomic_index(new_idx);
-    }
-
-    /// Returns a mutable references to the current value.
-    ///
-    /// <div class="warning">
-    ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
-    /// in order to move the iterator.
-    /// </div>
-    #[inline]
-    pub fn get_workable<'a>(&mut self) -> Option<&'a mut T> {
-        self.next_ref_mut()
-    }
-
-    /// Returns a tuple of mutable slice references, the sum of which with len equal to `count`.
-    /// <div class="warning">
-    ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
-    /// in order to move the iterator.
-    /// </div>
-    #[inline]
-    pub fn get_workable_slice_exact<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
-        self.next_chunk_mut(count)
-    }
-
-    /// Returns a tuple of mutable slice references, the sum of which with len equal to [`Self::available()`].
-    /// <div class="warning">
-    ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
-    /// in order to move the iterator.
-    /// </div>
-    #[inline]
-    pub fn get_workable_slice_avail<'a>(&mut self) -> Option<WorkableSlice<'a, T>> {
-        match self.available() {
-            0 => None,
-            avail => self.get_workable_slice_exact(avail)
-        }
-    }
-
-    /// Returns a tuple of mutable slice references, the sum of which with len equal to the
-    /// maximum multiple of `modulo`.
-    /// <div class="warning">
-    ///
-    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
-    /// in order to move the iterator.
-    /// </div>
-    #[inline]
-    pub fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, T>> {
-        let avail = self.available();
-        
-        match avail - avail % rhs {
-            0 => None,
-            avail => self.get_workable_slice_exact(avail)
-        }
     }
 }

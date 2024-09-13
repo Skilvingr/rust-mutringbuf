@@ -1,5 +1,13 @@
+/// Returned by slice-specialised functions.
+/// # Fields:
+/// - 1: head
+/// - 2: tail
+pub type WorkableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
+
+
 /// Trait implemented by iterators.
-pub trait MRBIterator<T> {
+#[allow(private_bounds)]
+pub trait MRBIterator<T>: PrivateMRBIterator<T> {
     /// Advances the iterator by `count`.
     ///
     /// # Safety
@@ -19,6 +27,60 @@ pub trait MRBIterator<T> {
 
     /// Returns the length of the buffer.
     fn buf_len(&self) -> usize;
+
+    /// Returns a mutable references to the current value.
+    ///
+    /// <div class="warning">
+    ///
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
+    /// </div>
+    #[inline]
+    fn get_workable<'a>(&mut self) -> Option<&'a mut T> {
+        self.next_ref_mut()
+    }
+
+    /// Returns a tuple of mutable slice references, the sum of which with len equal to `count`.
+    /// <div class="warning">
+    ///
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
+    /// </div>
+    #[inline]
+    fn get_workable_slice_exact<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
+        self.next_chunk_mut(count)
+    }
+
+    /// Returns a tuple of mutable slice references, the sum of which with len equal to [`Self::available()`].
+    /// <div class="warning">
+    ///
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
+    /// </div>
+    #[inline]
+    fn get_workable_slice_avail<'a>(&mut self) -> Option<WorkableSlice<'a, T>> {
+        match self.available() {
+            0 => None,
+            avail => self.get_workable_slice_exact(avail)
+        }
+    }
+
+    /// Returns a tuple of mutable slice references, the sum of which with len equal to the
+    /// higher multiple of `rhs`.
+    /// <div class="warning">
+    ///
+    /// Being these references, [`Self::advance()`] has to be called when done with the mutation
+    /// in order to move the iterator.
+    /// </div>
+    #[inline]
+    fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, T>> {
+        let avail = self.available();
+
+        match avail - avail % rhs {
+            0 => None,
+            avail => self.get_workable_slice_exact(avail)
+        }
+    }
 }
 
 pub(crate) trait PrivateMRBIterator<T> {

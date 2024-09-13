@@ -1,8 +1,7 @@
 #[allow(unused_imports)]
 use crate::{DetachedWorkIter, MRBIterator, WorkIter};
 use crate::AsyncDetachedWorkIter;
-use crate::iterators::async_iterators::async_macros::{futures_import, gen_fut, waker_registerer};
-use crate::iterators::sync_iterators::work_iter::WorkableSlice;
+use crate::iterators::async_iterators::async_macros::{futures_import, gen_common_futs, gen_fut, waker_registerer};
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
@@ -19,64 +18,7 @@ pub struct AsyncWorkIter<'buf, B: MutRB> {
 }
 unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncWorkIter<'buf, B> {}
 
-
-gen_fut!{
-    GetWorkableFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<'buf, B>,
-    (),
-    Option<&'a mut T>,
-    self {
-        let result = self.iter.inner.get_workable();
-
-        if let Some(res) = result {
-            break Poll::Ready(Some(res));
-        }
-    }
-}
-
-gen_fut!{
-    GetWorkableSliceExactFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<'buf, B>,
-    usize,
-    Option<WorkableSlice<'a, T>>,
-    self {
-        let count = self._item;
-        let result = self.iter.inner.get_workable_slice_exact(count);
-
-        if let Some(res) = result {
-            break Poll::Ready(Some(res));
-        }
-    }
-}
-
-gen_fut!{
-    GetWorkableSliceAvailFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<'buf, B>,
-    (),
-    Option<WorkableSlice<'a, T>>,
-    self {
-        let result = self.iter.inner.get_workable_slice_avail();
-
-        if let Some(res) = result {
-            break Poll::Ready(Some(res));
-        }
-    }
-}
-
-gen_fut!{
-    GetWorkableSliceMultipleOfFuture<'a, B: MutRB<Item = T>, T: 'a>,
-    &'a mut AsyncWorkIter<'buf, B>,
-    usize,
-    Option<WorkableSlice<'a, T>>,
-    self {
-        let count = self._item;
-        let result = self.iter.inner.get_workable_slice_multiple_of(count);
-
-        if let Some(res) = result {
-            break Poll::Ready(Some(res));
-        }
-    }
-}
+gen_common_futs! (&'a mut AsyncWorkIter<'buf, B>);
 
 impl<'buf, B: MutRB<Item = T>, T> AsyncWorkIter<'buf, B> {
     pub fn from_sync(iter: WorkIter<'buf, B>) -> Self {
