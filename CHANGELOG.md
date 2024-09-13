@@ -1,8 +1,16 @@
 <a name="v0.4.0"></a>
 ## v0.3.1 (Unreleased)
 
+* split methods are now part of traits: `HeapSplit` and `StackSplit`.
 * `pop()` in `ConsIter` acts now as `ptr::read`, copying bitwise the content of the cell.
   Old `pop()` method is now called `pop_move()`.
+* Some methods that were previously available only for `WorkIter`, namely:
+  * `get_workable`
+  * `get_workable_slice_exact`
+  * `get_workable_slice_avail`
+  * `get_workable_slice_multiple_of`
+
+  can now be used by all the iterators, sync and async.
 
 <a name="v0.3.1"></a>
 ## v0.3.1 (27/06/2024)
