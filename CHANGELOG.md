@@ -1,5 +1,5 @@
 <a name="v0.4.0"></a>
-## v0.4.0 (Unreleased)
+## v0.4.0 (15/11/2024)
 
 * split methods are now part of traits: `HeapSplit` and `StackSplit`.
 * `pop()` in `ConsIter` acts now as `ptr::read`, copying bitwise the content of the cell.
@@ -12,6 +12,8 @@
 
   can now be used by all the iterators, sync and async.
 * All kinds of iterators can now be detached, yielding a `Detached` or an `AsyncDetached`.
+* Async iterators can now be used in a no-std environment.
+* Some imports have changed.
 
 <a name="v0.3.1"></a>
 ## v0.3.1 (27/06/2024)
