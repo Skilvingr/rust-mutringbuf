@@ -45,7 +45,7 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// - [`AsyncProdIter`];
     /// - [`AsyncWorkIter`];
     /// - [`AsyncConsIter`].
-    #[cfg(any(feature = "async", doc))]
+    #[cfg(all(feature = "alloc", any(feature = "async", doc)))]
     pub fn split_mut_async<'buf>(self) -> (AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>, AsyncWorkIter<'buf, ConcurrentMutRingBuf<S>>, AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, true>) {
         self.set_prod_alive(true);
         self.set_work_alive(true);
@@ -62,7 +62,40 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// Consumes the buffer, yielding two async iterators. See:
     /// - [`AsyncProdIter`];
     /// - [`AsyncConsIter`].
-    #[cfg(any(feature = "async", doc))]
+    #[cfg(all(not(feature = "alloc"), any(feature = "async", doc)))]
+    pub fn split_async(&mut self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, false>) {
+        self.set_prod_alive(true);
+        self.set_cons_alive(true);
+
+        let r = BufRef::from_ref(self);
+        (
+            AsyncProdIter::from_sync(ProdIter::new(r.clone())),
+            AsyncConsIter::from_sync(ConsIter::new(r)),
+        )
+    }
+
+    /// Consumes the buffer, yielding three async iterators. See:
+    /// - [`AsyncProdIter`];
+    /// - [`AsyncWorkIter`];
+    /// - [`AsyncConsIter`].
+    #[cfg(all(not(feature = "alloc"), any(feature = "async", doc)))]
+    pub fn split_mut_async(&mut self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncWorkIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, true>) {
+        self.set_prod_alive(true);
+        self.set_work_alive(true);
+        self.set_cons_alive(true);
+
+        let r = BufRef::from_ref(self);
+        (
+            AsyncProdIter::from_sync(ProdIter::new(r.clone())),
+            AsyncWorkIter::from_sync(WorkIter::new(r.clone())),
+            AsyncConsIter::from_sync(ConsIter::new(r)),
+        )
+    }
+
+    /// Consumes the buffer, yielding two async iterators. See:
+    /// - [`AsyncProdIter`];
+    /// - [`AsyncConsIter`].
+    #[cfg(all(feature = "alloc", any(feature = "async", doc)))]
     pub fn split_async<'buf>(self) -> (AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>, AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, false>) {
         self.set_prod_alive(true);
         self.set_cons_alive(true);
@@ -73,7 +106,7 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
             AsyncConsIter::from_sync(ConsIter::new(r)),
         )
     }
-
+    
     pub(crate) fn _from(value: S) -> ConcurrentMutRingBuf<S> {
         ConcurrentMutRingBuf {
             inner_len: NonZeroUsize::new(value.len()).unwrap(),

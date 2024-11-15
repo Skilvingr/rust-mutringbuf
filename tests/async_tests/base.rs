@@ -1,6 +1,7 @@
 extern crate alloc;
 
 use mutringbuf::ConcurrentHeapRB;
+use mutringbuf::iterators::async_iterators::AsyncIterator;
 
 const BUFFER_SIZE: usize = 300;
 
@@ -12,8 +13,7 @@ fn test_push_work_pop_single_and_slice() {
         mut as_work,
         mut as_cons
     ) = buf.split_mut_async();
-
-
+    
     tokio_test::block_on(async {
         as_prod.push(1).await;
 

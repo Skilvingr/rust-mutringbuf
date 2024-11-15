@@ -2,11 +2,14 @@ extern crate alloc;
 
 #[cfg(feature = "async")]
 fn main() {
-    use mutringbuf::ConcurrentHeapRB;
+    use mutringbuf::ConcurrentStackRB;
+    use mutringbuf::iterators::async_iterators::AsyncIterator;
 
     const BUFFER_SIZE: usize = 300;
 
-    let buf = ConcurrentHeapRB::from(vec![0; BUFFER_SIZE + 1]);
+    // Heap buffer is also possible:
+    // let buf = ConcurrentHeapRB::from(vec![0; BUFFER_SIZE + 1]);
+    let mut buf = ConcurrentStackRB::from([0; BUFFER_SIZE + 1]);
     let (
         mut as_prod,
         mut as_work,

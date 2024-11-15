@@ -1,3 +1,5 @@
+#![cfg(feature = "alloc")]
+
 pub mod concurrent_fib;
 pub mod cons_tests;
 pub mod detached_work_tests;

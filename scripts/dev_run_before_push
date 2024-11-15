@@ -5,5 +5,5 @@ cargo bench --no-run &&
 RUSTFLAGS="--cfg bench" cargo +nightly bench --no-run &&
 RUSTFLAGS="--cfg cpal" cargo build --example cpal &&
 MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}" cargo +nightly miri run --example simple &&
-MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}" cargo +nightly miri run --example simple_async --features async &&
+MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}" cargo +nightly miri run --example simple_async --no-default-features --features async &&
 MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}" cargo +nightly miri run --example uninit_items

@@ -1,6 +1,4 @@
-use crate::{ConcurrentMutRingBuf, ConsIter, LocalMutRingBuf, MutRB, StackStorage, UnsafeSyncCell, WorkIter};
-#[allow(unused_imports)]
-use crate::ProdIter;
+use crate::{ConcurrentMutRingBuf, ConsIter, LocalMutRingBuf, MutRB, ProdIter, StackStorage, UnsafeSyncCell, WorkIter};
 
 pub mod concurrent_rb;
 pub mod local_rb;

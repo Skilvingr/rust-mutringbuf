@@ -139,23 +139,25 @@ let buf = LocalHeapRB::from(vec![0; 10]);
 let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
 ```
 
-Worker iterators can also be wrapped in a [`DetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached_work_iter/struct.DetachedWorkIter.html),
-as well as in an [`AsyncDetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached_work_iter/struct.AsyncDetachedWorkIter.html), indirectly pausing the consumer, in
+Iterators can also be wrapped in a [`Detached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached/struct.Detached.html),
+as well as in an [`AsyncDetached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached/struct.AsyncDetached.html), indirectly pausing the consumer, in
 order to explore produced data back and forth.
 
 <br/>
 
 Each iterator can then be passed to a thread to do its job. More information can be found
 in the relative pages:
-- [`ProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/prod_iter/struct.ProdIter.html)
-- [`WorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/work_iter/struct.WorkIter.html)
-- [`DetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached_work_iter/struct.DetachedWorkIter.html)
-- [`ConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/cons_iter/struct.ConsIter.html)
+- Sync
+  - [`ProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/prod_iter/struct.ProdIter.html)
+  - [`WorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/work_iter/struct.WorkIter.html)
+  - [`Detached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached/struct.Detached.html)
+  - [`ConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/cons_iter/struct.ConsIter.html)
 
-- [`AsyncProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/prod_iter/struct.AsyncProdIter.html)
-- [`AsyncWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/work_iter/struct.AsyncWorkIter.html)
-- [`AsyncDetachedWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached_work_iter/struct.AsyncDetachedWorkIter.html)
-- [`AsyncConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/cons_iter/struct.AsyncConsIter.html)
+- Async
+  - [`AsyncProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/prod_iter/struct.AsyncProdIter.html)
+  - [`AsyncWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/work_iter/struct.AsyncWorkIter.html)
+  - [`AsyncDetached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached/struct.AsyncDetached.html)
+  - [`AsyncConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/cons_iter/struct.AsyncConsIter.html)
 
 Note that a buffer, no matter its type, lives until the last of the iterators does so.
 

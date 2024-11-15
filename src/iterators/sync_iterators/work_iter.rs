@@ -4,6 +4,8 @@ use core::slice;
 
 use crate::iterators::{private_impl, public_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
+#[allow(unused_imports)]
+use crate::iterators::sync_iterators::detached::Detached;
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
@@ -15,12 +17,12 @@ Iterator used to mutate elements in-place.
 <div class="warning">
 
 This iterator returns mutable references to data stored within the buffer.
-Thuss stated in the docs below, [`Self::advance`] has to be called when done with the mutation
+Thus, as stated in the docs below, [`Self::advance`] has to be called when done with the mutation
 in order to move the iterator.
 </div>
 
 [`Self::advance`] updates a global iterator, which is read by the consumer to decide if it can move on.
-To avoid this [`DetachedWorkIter`] can be obtained by calling [`Self::detach`].
+To avoid this [`Detached`] can be obtained by calling [`Self::detach`].
 "##]
 
 pub struct WorkIter<'buf, B: MutRB> {

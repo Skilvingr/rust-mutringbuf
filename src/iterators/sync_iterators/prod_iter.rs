@@ -54,7 +54,7 @@ Normal methods are faster than `*_init` ones, and should be preferred over these
 initialised memory.
 
 On the other hand, `*_init methods` always perform a check over the memory they are going to write and choose the proper way to
-write it. So they are safe to use upon a possibly uninitialised block.
+deal it, even dropping the old value, if there is the need. So they are safe to use upon a possibly uninitialised block.
 "##]
 
 pub struct ProdIter<'buf, B: MutRB> {
