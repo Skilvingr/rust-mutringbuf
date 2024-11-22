@@ -2,7 +2,7 @@ use core::mem::transmute;
 use core::num::NonZeroUsize;
 use core::slice;
 
-use crate::iterators::{private_impl, public_impl};
+use crate::iterators::{copy_from_slice_unchecked, private_impl, public_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::ProdIter;
@@ -142,7 +142,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn pop(&mut self) -> Option<T> {
         self.next_duplicate()
     }
-
+    
     /// - Returns `Some(())`, copying next item into `dst`, if available.
     /// - Returns `None` doing nothing, otherwise.
     ///
@@ -180,6 +180,28 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
         } else { None }
     }
 
+    #[inline]
+    fn _extract_slice(&mut self, dst: &mut [T], f: fn(&[T], &mut[T])) -> Option<()> {
+        let count = dst.len();
+
+        if let Some((binding_h, binding_t)) = self.next_chunk_mut(count) {
+            let mid = binding_h.len();
+            if mid == dst.len() {
+                f(binding_h, dst);
+            } else {
+                unsafe {
+                    f(binding_h, dst.get_unchecked_mut(..mid));
+                    f(binding_t, dst.get_unchecked_mut(mid..));
+                }
+            }
+
+            unsafe { self.advance(count) };
+            Some(())
+        } else {
+            None
+        }
+    }
+
     /// - Returns `Some(())`, filling `dst` slice with the next `dst.len()` values, if available.
     /// - Returns `None` doing nothing, otherwise.
     ///
@@ -192,15 +214,12 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn copy_slice(&mut self, dst: &mut [T]) -> Option<()>
         where T: Copy
     {
-        if let Some((h, t)) = self.next_chunk(dst.len()) {
-            unsafe {
-                dst.get_unchecked_mut(..h.len()).copy_from_slice(h);
-                dst.get_unchecked_mut(h.len()..).copy_from_slice(t);
-            }
-                
-            unsafe { self.advance(dst.len()) };
-            Some(())
-        } else { None }
+        #[inline]
+        fn f<T: Copy>(binding: &[T], dst: &mut [T]) {
+            copy_from_slice_unchecked(binding, dst);
+        }
+        
+        self._extract_slice(dst, f)
     }
 
     /// Same as [`Self::copy_slice`], but uses `clone`, instead.
@@ -212,15 +231,12 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn clone_slice(&mut self, dst: &mut [T]) -> Option<()>
         where T: Clone
     {
-        if let Some((h, t)) = self.next_chunk(dst.len()) {
-            unsafe {
-                dst.get_unchecked_mut(..h.len()).clone_from_slice(h);
-                dst.get_unchecked_mut(h.len()..).clone_from_slice(t);
-            }
+        #[inline]
+        fn f<T: Clone>(binding: &[T], dst: &mut [T]) {
+            dst.clone_from_slice(binding);
+        }
 
-            unsafe { self.advance(dst.len()) };
-            Some(())
-        } else { None }
+        self._extract_slice(dst, f)
     }
 }
 

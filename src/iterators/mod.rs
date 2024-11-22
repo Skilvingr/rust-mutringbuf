@@ -2,9 +2,19 @@ mod iterator_trait;
 pub mod sync_iterators;
 pub mod async_iterators;
 
+use core::ptr;
 pub use iterator_trait::MRBIterator;
 
 pub(crate) use iterator_trait::iter_macros::*;
+
+#[inline(always)]
+pub(crate) fn copy_from_slice_unchecked<T: Copy>(src: &[T], dst: &mut [T]) {
+    unsafe {
+        ptr::copy_nonoverlapping(
+            src.as_ptr(), dst.as_mut_ptr(), src.len()
+        );
+    }
+}
 
 pub(crate) mod util_macros {
     macro_rules! muncher {

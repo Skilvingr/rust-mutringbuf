@@ -63,7 +63,7 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     delegate!(MRBIterator (inline), pub fn index(&self) -> usize);
     delegate!(MRBIterator (inline), pub fn buf_len(&self) -> usize);
 
-    /// Sets local index.
+    /// Sets the *local* index. To sync the atomic index, use [`Self::sync_index`].
     ///
     /// # Safety
     /// Index must always be between consumer and producer.
@@ -73,14 +73,14 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     }
 
     /// Resets the *local* index of the iterator. I.e., moves the iterator to the location occupied by its successor.
-    /// To sync with the atomic index, use [`Self::sync_index`].
+    /// To sync the atomic index, use [`Self::sync_index`].
     #[inline]
     pub fn reset_index(&mut self) {
         let new_idx = self.inner.succ_index();
         unsafe { self.inner.set_local_index(new_idx); }
     }
 
-    /// Advances the iterator as in [`MRBIterator::available()`], but does not modify the atomic counter,
+    /// Advances the iterator as in [`MRBIterator::advance()`], but does not modify the atomic counter,
     /// making the change local.
     ///
     /// # Safety

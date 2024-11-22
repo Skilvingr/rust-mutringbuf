@@ -6,7 +6,7 @@ use core::slice;
 
 #[allow(unused_imports)]
 use crate::ConsIter;
-use crate::iterators::{private_impl, public_impl};
+use crate::iterators::{copy_from_slice_unchecked, private_impl, public_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::ring_buffer::storage::storage_trait::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
@@ -211,8 +211,8 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
         where T: Copy
     {
         #[inline]
-        fn f<T: Copy>(binding_h: &mut [T], slice: &[T]) {
-            binding_h.copy_from_slice(slice);
+        fn f<T: Copy>(binding: &mut [T], slice: &[T]) {
+            copy_from_slice_unchecked(slice, binding);
         }
 
         self._push_slice(slice, f)
