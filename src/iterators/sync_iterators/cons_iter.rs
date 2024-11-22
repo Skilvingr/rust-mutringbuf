@@ -142,6 +142,16 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn pop(&mut self) -> Option<T> {
         self.next_duplicate()
     }
+
+    #[inline]
+    fn _extract_item(&mut self, dst: &mut T, f: fn(&T, &mut T)) -> Option<()> {
+        if let Some(v) = self.next_ref() {
+            f(v, dst);
+
+            unsafe { self.advance(1) };
+            Some(())
+        } else { None }
+    }
     
     /// - Returns `Some(())`, copying next item into `dst`, if available.
     /// - Returns `None` doing nothing, otherwise.
@@ -155,12 +165,9 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn copy_item(&mut self, dst: &mut T) -> Option<()>
         where T: Copy
     {
-        if let Some(v) = self.next_ref() {
-            *dst = *v;
-
-            unsafe { self.advance(1) };
-            Some(())
-        } else { None }
+        #[inline]
+        fn f<T: Copy>(src: &T, dst: &mut T) { *dst = *src; }
+        self._extract_item(dst, f)
     }
 
     /// Same as [`Self::copy_item`], but uses `clone`, instead.
@@ -172,12 +179,8 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn clone_item(&mut self, dst: &mut T) -> Option<()>
         where T: Clone
     {
-        if let Some(v) = self.next_ref() {
-            *dst = v.clone();
-
-            unsafe { self.advance(1) };
-            Some(())
-        } else { None }
+        fn f<T: Clone>(src: &T, dst: &mut T) { *dst = src.clone(); }
+        self._extract_item(dst, f)
     }
 
     #[inline]
@@ -214,7 +217,6 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn copy_slice(&mut self, dst: &mut [T]) -> Option<()>
         where T: Copy
     {
-        #[inline]
         fn f<T: Copy>(binding: &[T], dst: &mut [T]) {
             copy_from_slice_unchecked(binding, dst);
         }
@@ -231,7 +233,6 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn clone_slice(&mut self, dst: &mut [T]) -> Option<()>
         where T: Clone
     {
-        #[inline]
         fn f<T: Clone>(binding: &[T], dst: &mut [T]) {
             dst.clone_from_slice(binding);
         }

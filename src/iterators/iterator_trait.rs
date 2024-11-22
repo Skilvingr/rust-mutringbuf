@@ -221,11 +221,11 @@ pub(crate) mod iter_macros {
         #[inline]
         unsafe fn advance_local(&mut self, count: usize) {
             self.index += count;
-            
+
             if self.index >= self.buf_len.get() {
                 self.index -= self.buf_len.get();
             }
-            
+
             self.cached_avail = self.cached_avail.saturating_sub(count);
         }
         

@@ -118,7 +118,6 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
         }
     }
 
-
     #[inline]
     fn _push(&mut self, value: T, f: fn(*mut T, T)) -> Result<(), T> {
         if let Some(binding) = self.next_ref_mut_init() {
@@ -141,7 +140,6 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     /// * `Ok(())`, otherwise.
     #[inline]
     pub fn push(&mut self, value: T) -> Result<(), T> {
-        #[inline]
         fn f<T>(binding: *mut T, value: T) {
             unsafe { *binding = value; }
         }
@@ -157,7 +155,6 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     /// * `Ok(())`, otherwise.
     #[inline]
     pub fn push_init(&mut self, value: T) -> Result<(), T> {
-        #[inline]
         fn f<T>(binding: *mut T, value: T) {
             unsafe {
                 if UnsafeSyncCell::check_zeroed(binding) {
