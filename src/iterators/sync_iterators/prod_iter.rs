@@ -172,9 +172,7 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     }
 
     #[inline]
-    fn _push_slice(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()>
-        where T: Copy
-    {
+    fn _push_slice(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()> {
         let count = slice.len();
 
         if let Some((binding_h, binding_t)) = self.next_chunk_mut(count) {
@@ -243,31 +241,6 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
         self._push_slice(slice, f)
     }
 
-    #[inline]
-    fn _push_slice_clone(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()>
-        where T: Clone
-    {
-        let count = slice.len();
-
-        if let Some((binding_h, binding_t)) = self.next_chunk_mut(count) {
-
-            let mid = binding_h.len();
-            if mid == count {
-                f(binding_h, slice);
-            } else {
-                unsafe {
-                    f(binding_h, slice.get_unchecked(..mid));
-                    f(binding_t, slice.get_unchecked(mid..));
-                }
-            }
-
-            unsafe { self.advance(count) };
-            Some(())
-        } else {
-            None
-        }
-    }
-
     /// Tries to push a slice of items by cloning the elements.
     /// The elements must implement [`Clone`](https://doc.rust-lang.org/std/clone/trait.Clone.html) trait.
     ///
@@ -287,7 +260,7 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
             binding_h.clone_from_slice(slice);
         }
 
-        self._push_slice_clone(slice, f)
+        self._push_slice(slice, f)
     }
 
     /// Same as [`Self::push_slice_clone`], but can be used when dealing with possibly uninitialised
@@ -311,7 +284,7 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
             }
         }
 
-        self._push_slice_clone(slice, f)
+        self._push_slice(slice, f)
     }
 
     /// If available, returns a mutable reference to the next item.
