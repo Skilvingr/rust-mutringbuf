@@ -44,7 +44,7 @@ fn push_pop_x100(b: &mut Bencher) {
 
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]).unwrap();
+    prod.push_slice(&[1; RB_SIZE / 2]);
 
     b.iter(|| {
         for _ in 0..BATCH_SIZE {
@@ -61,7 +61,7 @@ fn push_pop_x100_local(b: &mut Bencher) {
 
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]).unwrap();
+    prod.push_slice(&[1; RB_SIZE / 2]);
 
     b.iter(|| {
         for _ in 0..BATCH_SIZE {

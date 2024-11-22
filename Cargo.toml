@@ -38,6 +38,11 @@ path = "benches/criterion/bench_main.rs"
 harness = false
 
 [[bench]]
+name = "bench_parts"
+path = "benches/criterion/bench_parts.rs"
+harness = false
+
+[[bench]]
 name = "bench_slices"
 path = "benches/criterion/bench_slices.rs"
 harness = false
