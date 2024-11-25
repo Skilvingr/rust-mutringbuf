@@ -34,6 +34,8 @@ impl_splits!(LocalMutRingBuf);
 
 impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
     pub(crate) fn _from(value: S) -> LocalMutRingBuf<S> {
+        assert!(value.len() > 0);
+        
         LocalMutRingBuf {
             inner_len: NonZeroUsize::new(value.len()).unwrap(),
             inner: value.into(),

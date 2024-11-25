@@ -108,6 +108,8 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     }
     
     pub(crate) fn _from(value: S) -> ConcurrentMutRingBuf<S> {
+        assert!(value.len() > 0);
+        
         ConcurrentMutRingBuf {
             inner_len: NonZeroUsize::new(value.len()).unwrap(),
             inner: value.into(),
