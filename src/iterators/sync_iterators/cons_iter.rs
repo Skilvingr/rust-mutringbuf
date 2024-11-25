@@ -1,5 +1,4 @@
 use core::mem::transmute;
-use core::num::NonZeroUsize;
 use core::slice;
 
 use crate::iterators::{copy_from_slice_unchecked, private_impl, public_impl};
@@ -21,7 +20,6 @@ preferred over `clone` methods.
 pub struct ConsIter<'buf, B: MutRB, const W: bool> {
     index: usize,
     cached_avail: usize,
-    buf_len: NonZeroUsize,
     buffer: BufRef<'buf, B>,
 }
 
@@ -63,7 +61,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> MRBIterator for ConsIter<'buf, 
         unsafe {
             self.cached_avail = match self.index <= succ_idx {
                 true => succ_idx.unchecked_sub(self.index),
-                false => self.buf_len.get().unchecked_sub(self.index).unchecked_add(succ_idx)
+                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
             };
         }
 
@@ -77,7 +75,6 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub(crate) fn new(value: BufRef<'buf, B>) -> Self {
         Self {
             index: 0,
-            buf_len: NonZeroUsize::new(value.inner_len()).unwrap(),
             buffer: value,
             cached_avail: 0,
         }

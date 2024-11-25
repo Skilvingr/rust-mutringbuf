@@ -1,5 +1,4 @@
 use core::mem::transmute;
-use core::num::NonZeroUsize;
 use core::slice;
 
 use crate::iterators::{private_impl, public_impl};
@@ -28,7 +27,6 @@ To avoid this [`Detached`] can be obtained by calling [`Self::detach`].
 pub struct WorkIter<'buf, B: MutRB> {
     pub(crate) index: usize,
     pub(crate) cached_avail: usize,
-    pub(crate) buf_len: NonZeroUsize,
     pub(crate) buffer: BufRef<'buf, B>,
 }
 
@@ -66,7 +64,7 @@ impl<'buf, B: MutRB<Item = T>, T> MRBIterator for WorkIter<'buf, B> {
         unsafe {
             self.cached_avail = match self.index <= succ_idx {
                 true => succ_idx.unchecked_sub(self.index),
-                false => self.buf_len.get().unchecked_sub(self.index).unchecked_add(succ_idx)
+                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
             };
         }
 
@@ -80,7 +78,6 @@ impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {
     pub(crate) fn new(value: BufRef<'buf, B>) -> WorkIter<'buf, B> {
         Self {
             index: 0,
-            buf_len: NonZeroUsize::new(value.inner_len()).unwrap(),
             buffer: value,
             cached_avail: 0,
         }
