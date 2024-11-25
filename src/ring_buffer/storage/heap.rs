@@ -44,7 +44,7 @@ impl<T> From<Vec<UnsafeSyncCell<T>>> for HeapStorage<T> {
 impl<T> Index<usize> for HeapStorage<T> {
     type Output = UnsafeSyncCell<T>;
 
-    #[inline(always)]
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         unsafe { self.inner.get_unchecked(index) }
     }
@@ -53,12 +53,12 @@ impl<T> Index<usize> for HeapStorage<T> {
 impl<T> Storage for HeapStorage<T> {
     type Item = T;
 
-    #[inline(always)]
+    #[inline]
     fn as_ptr(&self) -> *const Self::Output {
         self.inner.as_ptr()
     }
 
-    #[inline(always)]
+    #[inline]
     fn as_mut_ptr(&mut self) -> *mut Self::Output {
         self.inner.as_mut_ptr()
     }

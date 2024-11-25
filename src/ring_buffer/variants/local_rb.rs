@@ -50,32 +50,32 @@ impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
 }
 
 impl<S: Storage> IterManager for LocalMutRingBuf<S> {
-    #[inline(always)]
+    #[inline]
     fn prod_index(&self) -> usize {
         unsafe { *self.prod_idx.get() }
     }
 
-    #[inline(always)]
+    #[inline]
     fn work_index(&self) -> usize {
         unsafe { *self.work_idx.get() }
     }
 
-    #[inline(always)]
+    #[inline]
     fn cons_index(&self) -> usize {
         unsafe { *self.cons_idx.get() }
     }
 
-    #[inline(always)]
+    #[inline]
     fn set_prod_index(&self, index: usize) {
         unsafe { *self.prod_idx.get() = index; }
     }
 
-    #[inline(always)]
+    #[inline]
     fn set_work_index(&self, index: usize) {
         unsafe { *self.work_idx.get() = index; }
     }
 
-    #[inline(always)]
+    #[inline]
     fn set_cons_index(&self, index: usize) {
         unsafe { *self.cons_idx.get() = index; }
     }
@@ -109,17 +109,17 @@ impl<S: Storage<Item = T>, T> StorageManager for LocalMutRingBuf<S> {
     type StoredType = T;
     type S = S;
 
-    #[inline(always)]
+    #[inline]
     fn inner(&self) -> &S {
         unsafe { &(*self.inner.get()) }
     }
 
-    #[inline(always)]
+    #[inline]
     fn inner_mut(&self) -> &mut S {
         unsafe { &mut (*self.inner.get()) }
     }
 
-    #[inline(always)]
+    #[inline]
     fn inner_len(&self) -> usize {
         self.inner_len.get()
     }

@@ -124,32 +124,32 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
 }
 
 impl<S: Storage> IterManager for ConcurrentMutRingBuf<S> {
-    #[inline(always)]
+    #[inline]
     fn prod_index(&self) -> usize {
         self.prod_idx.load(Acquire)
     }
 
-    #[inline(always)]
+    #[inline]
     fn work_index(&self) -> usize {
         self.work_idx.load(Acquire)
     }
 
-    #[inline(always)]
+    #[inline]
     fn cons_index(&self) -> usize {
         self.cons_idx.load(Acquire)
     }
 
-    #[inline(always)]
+    #[inline]
     fn set_prod_index(&self, index: usize) {
         self.prod_idx.store(index, Release);
     }
 
-    #[inline(always)]
+    #[inline]
     fn set_work_index(&self, index: usize) {
         self.work_idx.store(index, Release);
     }
 
-    #[inline(always)]
+    #[inline]
     fn set_cons_index(&self, index: usize) {
         self.cons_idx.store(index, Release);
     }
@@ -183,17 +183,17 @@ impl<S: Storage<Item = T>, T> StorageManager for ConcurrentMutRingBuf<S> {
     type StoredType = T;
     type S = S;
 
-    #[inline(always)]
+    #[inline]
     fn inner(&self) -> &S {
         unsafe { &(*self.inner.get()) }
     }
 
-    #[inline(always)]
+    #[inline]
     fn inner_mut(&self) -> &mut S {
         unsafe { &mut (*self.inner.get()) }
     }
 
-    #[inline(always)]
+    #[inline]
     fn inner_len(&self) -> usize {
         self.inner_len.get()
     }

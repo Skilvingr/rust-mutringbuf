@@ -43,12 +43,12 @@ impl<'buf, B: MutRB + IterManager> Drop for WorkIter<'buf, B> {
 impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator for WorkIter<'buf, B> {
     type PItem = T;
     
-    #[inline(always)]
+    #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);
     }
 
-    #[inline(always)]
+    #[inline]
     fn succ_index(&self) -> usize {
         self.buffer.prod_index()
     }

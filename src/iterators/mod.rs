@@ -7,7 +7,7 @@ pub use iterator_trait::MRBIterator;
 
 pub(crate) use iterator_trait::iter_macros::*;
 
-#[inline(always)]
+#[inline]
 pub(crate) fn copy_from_slice_unchecked<T: Copy>(src: &[T], dst: &mut [T]) {
     unsafe {
         ptr::copy_nonoverlapping(

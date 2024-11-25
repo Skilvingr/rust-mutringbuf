@@ -36,12 +36,12 @@ impl<'buf, B: MutRB + IterManager, const W: bool> Drop for ConsIter<'buf, B, W> 
 impl<'buf, B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator for ConsIter<'buf, B, W> {
     type PItem = T;
 
-    #[inline(always)]
+    #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
     }
 
-    #[inline(always)]
+    #[inline]
     fn succ_index(&self) -> usize {
         if W {
             self.buffer.work_index()

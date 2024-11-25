@@ -67,7 +67,7 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     ///
     /// # Safety
     /// Index must always be between consumer and producer.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn set_index(&mut self, index: usize) {
         self.inner.set_local_index(index);
     }
@@ -122,7 +122,7 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
 
     /// Synchronises the underlying atomic index with the local index. I.e. let the consumer iterator
     /// advance.
-    #[inline(always)]
+    #[inline]
     pub fn sync_index(&self) {
         self.inner.set_atomic_index(self.inner.index());
     }

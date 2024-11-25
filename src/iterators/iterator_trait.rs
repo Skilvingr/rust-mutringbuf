@@ -186,17 +186,17 @@ pub(crate) mod iter_macros {
             self.set_atomic_index(self.index);
         }
 
-        #[inline(always)]
+        #[inline]
         fn index(&self) -> usize {
             self.index
         }
         
-        #[inline(always)]
+        #[inline]
         fn set_index(&mut self, index: usize) {
             self.index = index;
         }
 
-        #[inline(always)]
+        #[inline]
         fn buf_len(&self) -> usize {
             self.buf_len.get()
         }
@@ -220,26 +220,26 @@ pub(crate) mod iter_macros {
             
         #[inline]
         unsafe fn advance_local(&mut self, count: usize) {
-            self.index += count;
+            self.index = self.index.unchecked_add(count);
 
             if self.index >= self.buf_len.get() {
-                self.index -= self.buf_len.get();
+                self.index = self.index.unchecked_sub(self.buf_len.get());
             }
 
             self.cached_avail = self.cached_avail.saturating_sub(count);
         }
         
-        #[inline(always)]
+        #[inline]
         fn check(&mut self, count: usize) -> bool {
             self.cached_avail >= count || self.available() >= count
         }
 
         #[inline]
         fn next(&mut self) -> Option<T> {
-            self.check(1).then(|| {
-                let ret = unsafe { self.buffer.inner()[self.index].take_inner() };
+            self.check(1).then(|| unsafe {
+                let ret = self.buffer.inner()[self.index].take_inner();
 
-                unsafe { self.advance(1) };
+                self.advance(1);
 
                 ret
             })
@@ -247,10 +247,10 @@ pub(crate) mod iter_macros {
         
         #[inline]
         fn next_duplicate(&mut self) -> Option<T> {
-            self.check(1).then(|| {
-                let ret = unsafe { self.buffer.inner()[self.index].inner_duplicate() };
+            self.check(1).then(|| unsafe {
+                let ret = self.buffer.inner()[self.index].inner_duplicate();
 
-                unsafe { self.advance(1) };
+                self.advance(1);
 
                 ret
             })

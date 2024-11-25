@@ -56,7 +56,7 @@ impl<'buf, B> Clone for BufRef<'buf, B> {
 impl<'buf, B> Deref for BufRef<'buf, B> {
     type Target = B;
 
-    #[inline(always)]
+    #[inline]
     fn deref(&self) -> &Self::Target {
         unsafe { self.inner.as_ref() }
     }
