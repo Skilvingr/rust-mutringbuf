@@ -35,9 +35,6 @@ pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
     /// Returns the index of the iterator.
     fn index(&self) -> usize;
 
-    /// Sets the local index.
-    fn set_index(&mut self, index: usize);
-
     /// Returns the length of the buffer.
     fn buf_len(&self) -> usize;
 
@@ -189,11 +186,6 @@ pub(crate) mod iter_macros {
         #[inline]
         fn index(&self) -> usize {
             self.index
-        }
-        
-        #[inline]
-        fn set_index(&mut self, index: usize) {
-            self.index = index;
         }
 
         #[inline]
