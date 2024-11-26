@@ -1,3 +1,8 @@
+<a name="v0.4.1"></a>
+## v0.4.1 (Unreleased)
+* method `set_index` has been removed from common trait and will be available only for `Detached` iterators.
+* Performance optimisations.
+
 <a name="v0.4.0"></a>
 ## v0.4.0 (15/11/2024)
 
