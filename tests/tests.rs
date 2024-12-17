@@ -1,3 +1,5 @@
+#![cfg(feature = "alloc")]
+
 use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB};
 
 pub mod async_tests;

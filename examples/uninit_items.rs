@@ -1,10 +1,12 @@
-use std::rc::Rc;
-
-use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator};
-
-const RB_SIZE: usize = 5;
-
+#[cfg(feature = "alloc")]
 fn main() {
+
+    use std::rc::Rc;
+
+    use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator};
+
+    const RB_SIZE: usize = 5;
+    
     // Indices from 0 to RB_SIZE+1 are uninitialised
     let buf = unsafe { ConcurrentHeapRB::new_zeroed(RB_SIZE + 1) };
     let (mut prod, mut cons) = buf.split();
@@ -44,3 +46,6 @@ fn main() {
     drop(prod);
     drop(cons);
 }
+
+#[cfg(not(feature = "alloc"))]
+fn main() {}
