@@ -7,3 +7,4 @@ pub mod drop;
 pub mod integration_tests;
 pub mod prod_tests;
 pub mod work_tests;
+pub mod multithreading;
