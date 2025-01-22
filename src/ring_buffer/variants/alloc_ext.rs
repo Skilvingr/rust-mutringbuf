@@ -14,10 +14,9 @@ pub type ConcurrentHeapRB<T> = ConcurrentMutRingBuf<HeapStorage<T>>;
 
 impl<T> From<Vec<T>> for ConcurrentHeapRB<T> {
     /// Constructs a `ConcurrentHeapRB` using the passed vector.
-    /// Note that the length of the buffer will be equal to the length of teh vector, and *not*
+    /// Note that the length of the buffer will be equal to the length of the vector, and *not*
     /// to its capacity.
-    fn from(mut value: Vec<T>) -> Self {
-        value.shrink_to_fit();
+    fn from(value: Vec<T>) -> Self {
         Self::_from(HeapStorage::from(value))
     }
 }
