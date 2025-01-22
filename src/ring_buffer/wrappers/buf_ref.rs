@@ -1,12 +1,13 @@
+use crate::ring_buffer::variants::ring_buffer_trait::IterManager;
 #[cfg(feature = "alloc")]
 use alloc::boxed::Box;
 use core::marker::PhantomData;
 use core::ops::Deref;
 use core::ptr::NonNull;
+use core::sync::atomic::fence;
+use core::sync::atomic::Ordering::SeqCst;
 
-use crate::ring_buffer::variants::ring_buffer_trait::IterManager;
-
-pub struct BufRef<'buf, B>{
+pub struct BufRef<'buf, B> {
     inner: NonNull<B>,
     needs_drop: bool,
     _phantom: PhantomData<&'buf ()>
@@ -17,7 +18,7 @@ impl<'buf, B> BufRef<'buf, B> {
     pub(crate) fn new(buf: B) -> Self {
         let x = Box::new(buf);
 
-        Self{
+        Self {
             inner: NonNull::new(Box::into_raw(x)).unwrap(),
             needs_drop: true,
             _phantom: Default::default(),
@@ -25,9 +26,9 @@ impl<'buf, B> BufRef<'buf, B> {
     }
     
     #[cfg(feature = "alloc")]
-    pub(crate) fn drop(&self) {
+    pub(crate) fn drop(&mut self) {
         if self.needs_drop {
-            unsafe { drop(Box::from_raw(self.inner.as_ptr())) };
+            unsafe { let _ = Box::from_raw(self.inner.as_ptr()); }
         }
     }
 
@@ -64,31 +65,43 @@ impl<'buf, B> Deref for BufRef<'buf, B> {
 
 
 impl<'buf, B: IterManager> BufRef<'buf, B> {
-    pub(crate) fn set_prod_alive(&self, alive: bool) {
+    pub(crate) fn set_prod_alive(&mut self, alive: bool) {
         unsafe {
+            fence(SeqCst);
             self.inner.as_ref().set_prod_alive(alive);
 
-            if !self.inner.as_ref().work_alive() && !self.inner.as_ref().cons_alive() {
+            let cond = !self.inner.as_ref().work_alive() && !self.inner.as_ref().cons_alive();
+            fence(SeqCst);
+
+            if cond {
                 self.drop();
             }
         }
     }
 
-    pub(crate) fn set_work_alive(&self, alive: bool) {
+    pub(crate) fn set_work_alive(&mut self, alive: bool) {
         unsafe {
+            fence(SeqCst);
             self.inner.as_ref().set_work_alive(alive);
 
-            if !self.inner.as_ref().prod_alive() && !self.inner.as_ref().cons_alive() {
+            let cond = !self.inner.as_ref().prod_alive() && !self.inner.as_ref().cons_alive();
+            fence(SeqCst);
+
+            if cond {
                 self.drop();
             }
         }
     }
 
-    pub(crate) fn set_cons_alive(&self, alive: bool) {
+    pub(crate) fn set_cons_alive(&mut self, alive: bool) {
         unsafe {
+            fence(SeqCst);
             self.inner.as_ref().set_cons_alive(alive);
 
-            if !self.inner.as_ref().prod_alive() && !self.inner.as_ref().work_alive() {
+            let cond = !self.inner.as_ref().prod_alive() && !self.inner.as_ref().work_alive();
+            fence(SeqCst);
+
+            if cond {
                 self.drop();
             }
         }
