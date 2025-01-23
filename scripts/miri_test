@@ -1,6 +1,9 @@
 #!/bin/bash
 
-MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}"\
-    cargo +nightly miri test --features async &&
-MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}"\
-    cargo +nightly miri test --test stack --no-default-features
+export MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}"
+
+cargo +nightly miri test --features async &&
+cargo +nightly miri test --test stack --no-default-features &&
+cargo +nightly miri run --example simple &&
+cargo +nightly miri run --example simple_async --no-default-features --features async &&
+cargo +nightly miri run --example uninit_items
