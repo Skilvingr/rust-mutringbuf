@@ -17,7 +17,7 @@ alloc = []
 async = []
 
 [dependencies]
-crossbeam-utils = { version = "0.8.20", default-features = false }
+crossbeam-utils = { version = "0.8.21", default-features = false }
 
 [dev-dependencies]
 tokio-test = { version = "0.4.4" }
