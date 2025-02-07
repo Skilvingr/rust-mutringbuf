@@ -1,5 +1,11 @@
+<a name="v0.4.2"></a>
+## v0.4.2 (07/02/2025)
+
+Re-export trait `ConcurrentRB`.
+
 <a name="v0.4.1"></a>
 ## v0.4.1 (27/01/2025)
+
 * method `set_index` has been removed from common trait and will be available only for `Detached` iterators.
 * Performance optimisations.
 * Fix a memory leak.

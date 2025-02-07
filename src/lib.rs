@@ -17,7 +17,7 @@ pub use iterators::sync_iterators::{
 };
 #[cfg(feature = "alloc")]
 pub use ring_buffer::variants::HeapSplit;
-pub use ring_buffer::variants::ring_buffer_trait::MutRB;
+pub use ring_buffer::variants::ring_buffer_trait::{MutRB, ConcurrentRB};
 pub use ring_buffer::variants::StackSplit;
 pub use ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
