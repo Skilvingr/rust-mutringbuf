@@ -10,12 +10,11 @@ use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
 #[doc = r##"
 Async version of [`ConsIter`].
 "##]
-
 pub struct AsyncConsIter<'buf, B: MutRB, const W: bool> {
     inner: ConsIter<'buf, B, W>,
     waker: Option<Waker>
 }
-unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for AsyncConsIter<'buf, B, W> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for AsyncConsIter<'_, B, W> {}
 
 impl<'buf, B: MutRB<Item = T>, T, const W: bool> AsyncIterator for AsyncConsIter<'buf, B, W> {
     type I = ConsIter<'buf, B, W>;
@@ -42,7 +41,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> AsyncIterator for AsyncConsIter
     }
 }
 
-impl<'buf, 'a, B: MutRB<Item = T>, T: 'buf, const W: bool> AsyncConsIter<'a, B, W> {
+impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<'_, B, W> {
     gen_common_futs_fn!();
 
     delegate!(ConsIter, pub fn reset_index(&(mut) self));

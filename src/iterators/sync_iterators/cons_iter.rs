@@ -16,22 +16,21 @@ Iterator used to pop data from the buffer.
 When working with types which implement both [`Copy`] and [`Clone`] traits, `copy` methods should be
 preferred over `clone` methods.
 "##]
-
 pub struct ConsIter<'buf, B: MutRB, const W: bool> {
     index: usize,
     cached_avail: usize,
     buffer: BufRef<'buf, B>,
 }
 
-unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for ConsIter<'buf, B, W> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for ConsIter<'_, B, W> {}
 
-impl<'buf, B: MutRB + IterManager, const W: bool> Drop for ConsIter<'buf, B, W> {
+impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<'_, B, W> {
     fn drop(&mut self) {
         self.buffer.set_cons_alive(false);
     }
 }
 
-impl<'buf, B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator for ConsIter<'buf, B, W> {
+impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator for ConsIter<'_, B, W> {
     type PItem = T;
 
     #[inline]
@@ -51,7 +50,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator for ConsIter
     private_impl!();
 }
 
-impl<'buf, B: MutRB<Item = T>, T, const W: bool> MRBIterator for ConsIter<'buf, B, W> {
+impl<B: MutRB<Item = T>, T, const W: bool> MRBIterator for ConsIter<'_, B, W> {
     type Item = T;
 
     #[inline]

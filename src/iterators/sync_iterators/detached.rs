@@ -26,7 +26,6 @@ Thus, as stated in the docs written for the former, [`Self::advance`] has to be 
 in order to move the iterator.
 </div>
 "##]
-
 pub struct Detached<I: MRBIterator> {
     inner: I,
 }
@@ -115,7 +114,7 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     delegate!(MRBIterator (inline), pub fn work_index(&self) -> usize);
     delegate!(MRBIterator (inline), pub fn cons_index(&self) -> usize);
     
-    delegate!(MRBIterator (inline), pub fn get_workable(&(mut) self) -> Option<&mut T>);
+    delegate!(MRBIterator (inline), pub fn get_workable(&(mut) self) -> Option<&'_ mut T>);
     delegate!(MRBIterator (inline), pub fn get_workable_slice_exact(&(mut) self, count: usize) -> Option<WorkableSlice<'_, T>>);
     delegate!(MRBIterator (inline), pub fn get_workable_slice_avail(&(mut) self) -> Option<WorkableSlice<'_, T>>);
     delegate!(MRBIterator (inline), pub fn get_workable_slice_multiple_of(&(mut) self, rhs: usize) -> Option<WorkableSlice<'_, T>>);

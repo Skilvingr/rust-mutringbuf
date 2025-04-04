@@ -55,22 +55,21 @@ initialised memory.
 On the other hand, `*_init methods` always perform a check over the memory they are going to write and choose the proper way to
 deal it, even dropping the old value, if there is the need. So they are safe to use upon a possibly uninitialised block.
 "##]
-
 pub struct ProdIter<'buf, B: MutRB> {
     index: usize,
     cached_avail: usize,
     buffer: BufRef<'buf, B>,
 }
 
-unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for ProdIter<'buf, B> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for ProdIter<'_, B> {}
 
-impl<'buf, B: MutRB + IterManager> Drop for ProdIter<'buf, B> {
+impl<B: MutRB + IterManager> Drop for ProdIter<'_, B> {
     fn drop(&mut self) {
         self.buffer.set_prod_alive(false);
     }
 }
 
-impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator for ProdIter<'buf, B> {
+impl<B: MutRB<Item = T>, T> PrivateMRBIterator for ProdIter<'_, B> {
     type PItem = T;
 
     #[inline]
@@ -86,7 +85,7 @@ impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator for ProdIter<'buf, B> {
     private_impl!();
 }
 
-impl<'buf, B: MutRB<Item = T>, T> MRBIterator for ProdIter<'buf, B> {
+impl<B: MutRB<Item = T>, T> MRBIterator for ProdIter<'_, B> {
     type Item = T;
     
     #[inline]

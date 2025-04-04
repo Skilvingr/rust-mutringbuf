@@ -9,12 +9,11 @@ use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
 #[doc = r##"
 Async version of [`WorkIter`].
 "##]
-
 pub struct AsyncWorkIter<'buf, B: MutRB> {
     pub(crate) inner: WorkIter<'buf, B>,
     waker: Option<Waker>
 }
-unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncWorkIter<'buf, B> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncWorkIter<'_, B> {}
 
 impl<'buf, B: MutRB<Item = T>, T> AsyncIterator for AsyncWorkIter<'buf, B> {
     type I = WorkIter<'buf, B>;
@@ -41,7 +40,7 @@ impl<'buf, B: MutRB<Item = T>, T> AsyncIterator for AsyncWorkIter<'buf, B> {
     }
 }
 
-impl<'buf, B: MutRB<Item = T>, T> AsyncWorkIter<'buf, B> {
+impl<B: MutRB<Item = T>, T> AsyncWorkIter<'_, B> {
     gen_common_futs_fn!();
     delegate!(WorkIter, pub fn reset_index(&(mut) self));
 }

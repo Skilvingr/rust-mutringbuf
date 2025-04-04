@@ -44,7 +44,7 @@ impl<'buf, B> BufRef<'buf, B> {
     pub(crate) fn drop(&self) {}
 }
 
-impl<'buf, B> Clone for BufRef<'buf, B> {
+impl<B> Clone for BufRef<'_, B> {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner,
@@ -54,7 +54,7 @@ impl<'buf, B> Clone for BufRef<'buf, B> {
     }
 }
 
-impl<'buf, B> Deref for BufRef<'buf, B> {
+impl<B> Deref for BufRef<'_, B> {
     type Target = B;
 
     #[inline]
@@ -64,7 +64,7 @@ impl<'buf, B> Deref for BufRef<'buf, B> {
 }
 
 
-impl<'buf, B: IterManager> BufRef<'buf, B> {
+impl<B: IterManager> BufRef<'_, B> {
     pub(crate) fn set_prod_alive(&mut self, alive: bool) {
         unsafe {
             fence(SeqCst);

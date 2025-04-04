@@ -50,9 +50,9 @@ where I: AsyncIterator {
     f_m: Option<fn(&mut I, P) -> Result<O, P>>
 }
 
-impl<'a, I: AsyncIterator, P, O, const R: bool> Unpin for MRBFuture<'a, I, P, O, R> {}
+impl<I: AsyncIterator, P, O, const R: bool> Unpin for MRBFuture<'_, I, P, O, R> {}
 
-impl<'a, I: AsyncIterator, P, O, const R: bool> Future for MRBFuture<'a, I, P, O, R> {
+impl<I: AsyncIterator, P, O, const R: bool> Future for MRBFuture<'_, I, P, O, R> {
     type Output = Option<O>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {

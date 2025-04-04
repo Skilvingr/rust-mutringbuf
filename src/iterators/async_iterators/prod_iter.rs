@@ -9,12 +9,11 @@ use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
 #[doc = r##"
 Async version of [`ProdIter`].
 "##]
-
 pub struct AsyncProdIter<'buf, B: MutRB> {
     inner: ProdIter<'buf, B>,
     waker: Option<Waker>
 }
-unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncProdIter<'buf, B> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncProdIter<'_, B> {}
 
 impl<'buf, B: MutRB<Item = T>, T> AsyncIterator for AsyncProdIter<'buf, B> {
     type I = ProdIter<'buf, B>;
@@ -42,7 +41,7 @@ impl<'buf, B: MutRB<Item = T>, T> AsyncIterator for AsyncProdIter<'buf, B> {
 }
 
 
-impl<'buf, B: MutRB<Item = T>, T> AsyncProdIter<'buf, B> {
+impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     gen_common_futs_fn!();
 
     /// Async version of [`ProdIter::push`].

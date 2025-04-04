@@ -10,7 +10,6 @@ use crate::iterators::sync_iterators::detached::Detached;
 #[doc = r##"
 Async version of [`Detached`].
 "##]
-
 pub struct AsyncDetached<I: AsyncIterator, B: MutRB> {
     inner: I,
     phantom_data: PhantomData<B>

@@ -23,22 +23,21 @@ in order to move the iterator.
 [`Self::advance`] updates a global iterator, which is read by the consumer to decide if it can move on.
 To avoid this [`Detached`] can be obtained by calling [`Self::detach`].
 "##]
-
 pub struct WorkIter<'buf, B: MutRB> {
     pub(crate) index: usize,
     pub(crate) cached_avail: usize,
     pub(crate) buffer: BufRef<'buf, B>,
 }
 
-unsafe impl<'buf, B: ConcurrentRB + MutRB<Item = T>, T> Send for WorkIter<'buf, B> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for WorkIter<'_, B> {}
 
-impl<'buf, B: MutRB + IterManager> Drop for WorkIter<'buf, B> {
+impl<B: MutRB + IterManager> Drop for WorkIter<'_, B> {
     fn drop(&mut self) {
         self.buffer.set_work_alive(false);
     }
 }
 
-impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator for WorkIter<'buf, B> {
+impl<B: MutRB<Item = T>, T> PrivateMRBIterator for WorkIter<'_, B> {
     type PItem = T;
     
     #[inline]
@@ -54,7 +53,7 @@ impl<'buf, B: MutRB<Item = T>, T> PrivateMRBIterator for WorkIter<'buf, B> {
     private_impl!();
 }
 
-impl<'buf, B: MutRB<Item = T>, T> MRBIterator for WorkIter<'buf, B> {
+impl<B: MutRB<Item = T>, T> MRBIterator for WorkIter<'_, B> {
     type Item = T;
     
     #[inline]
