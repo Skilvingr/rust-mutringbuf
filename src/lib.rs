@@ -38,7 +38,7 @@ pub use crate::ring_buffer::{
     storage::stack::StackStorage,
     variants::{ConcurrentStackRB, LocalStackRB}
 };
-pub use crate::ring_buffer::storage::storage_trait::Storage;
+pub use crate::ring_buffer::storage::Storage;
 pub use crate::ring_buffer::variants::concurrent_rb::ConcurrentMutRingBuf;
 pub use crate::ring_buffer::variants::local_rb::LocalMutRingBuf;
 

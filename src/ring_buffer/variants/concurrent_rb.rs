@@ -11,7 +11,7 @@ use crate::{AsyncConsIter, AsyncProdIter, AsyncWorkIter, iterators::async_iterat
 #[cfg(feature = "alloc")]
 use crate::HeapStorage;
 use crate::ring_buffer::storage::stack::StackStorage;
-use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::storage::Storage;
 #[cfg(feature = "alloc")]
 use crate::ring_buffer::variants::HeapSplit;
 use crate::ring_buffer::variants::impl_splits::impl_splits;

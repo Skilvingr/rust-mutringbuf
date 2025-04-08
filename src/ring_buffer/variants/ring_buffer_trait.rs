@@ -1,4 +1,4 @@
-use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::storage::Storage;
 
 /// Trait implemented by concurrent ring buffer.
 pub trait ConcurrentRB {}

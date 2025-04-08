@@ -5,7 +5,7 @@ use crate::iterators::{copy_from_slice_unchecked, private_impl, public_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::ProdIter;
-use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;

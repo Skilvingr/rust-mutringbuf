@@ -7,7 +7,7 @@ use crate::HeapSplit;
 #[cfg(feature = "alloc")]
 use crate::HeapStorage;
 use crate::ring_buffer::storage::stack::StackStorage;
-use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::impl_splits::impl_splits;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;

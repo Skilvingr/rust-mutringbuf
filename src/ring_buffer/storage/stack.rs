@@ -1,6 +1,6 @@
 use core::ops::Index;
 
-use crate::ring_buffer::storage::storage_trait::Storage;
+use crate::ring_buffer::storage::Storage;
 use crate::UnsafeSyncCell;
 
 pub struct StackStorage<T, const N: usize> {
