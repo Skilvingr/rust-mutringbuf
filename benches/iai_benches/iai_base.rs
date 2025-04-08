@@ -1,11 +1,7 @@
-#![allow(dead_code)]
-
 use std::hint::black_box;
 use iai_callgrind::{library_benchmark, library_benchmark_group};
 use mutringbuf::{ConcurrentStackRB, LocalStackRB, StackSplit};
-#[cfg(not(bench))]
 use iai_callgrind::main;
-
 
 
 const RB_SIZE: usize = 256;
@@ -116,8 +112,4 @@ library_benchmark_group!(
     benchmarks = push_pop_local, push_pop_shared, push_pop_x100_local, push_pop_x100, slice_x10, slice_x100
 );
 
-#[cfg(not(bench))]
 main!(library_benchmark_groups = bench_iai_base);
-
-#[cfg(bench)]
-fn main() {}

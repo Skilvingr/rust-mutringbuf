@@ -20,31 +20,29 @@ async = []
 crossbeam-utils = { version = "0.8.21", default-features = false }
 
 [dev-dependencies]
+divan = "0.1.18"
 tokio-test = { version = "0.4.4" }
 iai-callgrind = "0.14.0"
-
-[target.'cfg(bench)'.dev-dependencies]
-criterion = { version = "0.5.1", features = ["real_blackbox"] }
 
 [target.'cfg(cpal)'.dev-dependencies]
 cpal = { version = "0.15.3" }
 
 [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(bench)', 'cfg(cpal)'] }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(cpal)'] }
 
 [[bench]]
 name = "bench_main"
-path = "benches/criterion/bench_main.rs"
+path = "benches/divan/base.rs"
 harness = false
 
 [[bench]]
 name = "bench_parts"
-path = "benches/criterion/bench_parts.rs"
+path = "benches/divan/parts.rs"
 harness = false
 
 [[bench]]
 name = "bench_slices"
-path = "benches/criterion/bench_slices.rs"
+path = "benches/divan/slices.rs"
 harness = false
 
 [[bench]]

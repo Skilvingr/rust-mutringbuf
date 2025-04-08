@@ -2,5 +2,4 @@
 
 ./miri_test &&
 cargo bench --no-run &&
-RUSTFLAGS="--cfg bench" cargo +nightly bench --no-run &&
 RUSTFLAGS="--cfg cpal" cargo build --example cpal

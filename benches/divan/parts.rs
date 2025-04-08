@@ -1,37 +1,35 @@
-#![allow(dead_code)]
-
-
-use criterion::{Bencher, black_box, Criterion};
 use mutringbuf::{ConcurrentStackRB, MRBIterator, StackSplit};
+use divan::black_box;
 
 const RB_SIZE: usize = 256;
 
-pub fn setup(c: &mut Criterion) {
-    c.bench_function("advance", advance);
-    c.bench_function("available", available);
+fn main() {
+    divan::main();
 }
 
-fn advance(b: &mut Bencher) {
+#[divan::bench(sample_size = 100000)]
+fn advance(b: divan::Bencher) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; RB_SIZE / 2]);
 
-    b.iter(|| {
+    b.bench_local(|| {
         unsafe { prod.advance(1); }
         unsafe { cons.advance(1); }
     });
 }
 
-fn available(b: &mut Bencher) {
+#[divan::bench(sample_size = 100000)]
+fn available(b: divan::Bencher) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[0; 1 * RB_SIZE / 4]);
+    prod.push_slice(&[0; RB_SIZE / 4]);
     cons.reset_index();
     prod.push_slice(&[1; RB_SIZE / 2]);
 
-    b.iter(|| {
+    b.bench_local(|| {
         black_box(prod.available());
         black_box(&mut prod);
     });

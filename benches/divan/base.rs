@@ -1,52 +1,50 @@
-#![allow(dead_code)]
-
-
-use criterion::{Bencher, black_box, Criterion};
 use mutringbuf::{ConcurrentStackRB, MRBIterator, StackSplit, LocalStackRB};
+use divan::black_box;
 
 const RB_SIZE: usize = 256;
 const BATCH_SIZE: usize = 100;
 
-pub fn setup(c: &mut Criterion) {
-    c.bench_function("push_pop_local", push_pop_local);
-    c.bench_function("push_pop_shared", push_pop_shared);
-    c.bench_function("push_pop_x100_local", push_pop_x100_local);
-    c.bench_function("push_pop_x100", push_pop_x100);
-    c.bench_function("push_pop_work", push_pop_work);
+fn main() {
+    divan::main();
 }
 
-fn push_pop_local(b: &mut Bencher) {
+#[divan::bench(sample_size = 100000)]
+fn push_pop_local(b: divan::Bencher) {
     let mut buf = LocalStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; RB_SIZE / 2]);
 
-    b.iter(|| {
+    b.bench_local(|| {
         prod.push(1).unwrap();
         black_box(cons.pop().unwrap());
     });
 }
 
-fn push_pop_shared(b: &mut Bencher) {
+
+#[divan::bench(sample_size = 100000)]
+fn push_pop_shared(b: divan::Bencher) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; RB_SIZE / 2]);
 
-    b.iter(|| {
+    b.bench_local(|| {
         prod.push(1).unwrap();
         black_box(cons.pop().unwrap());
     });
 }
 
-fn push_pop_x100(b: &mut Bencher) {
+
+#[divan::bench(sample_size = 100000)]
+fn push_pop_x100(b: divan::Bencher) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
 
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; RB_SIZE / 2]);
 
-    b.iter(|| {
+    b.bench_local(|| {
         for _ in 0..BATCH_SIZE {
             prod.push(1).unwrap();
         }
@@ -56,14 +54,16 @@ fn push_pop_x100(b: &mut Bencher) {
     });
 }
 
-fn push_pop_x100_local(b: &mut Bencher) {
+
+#[divan::bench(sample_size = 100000)]
+fn push_pop_x100_local(b: divan::Bencher) {
     let mut buf = LocalStackRB::<u64, {RB_SIZE}>::default();
 
     let (mut prod, mut cons) = buf.split();
 
     prod.push_slice(&[1; RB_SIZE / 2]);
 
-    b.iter(|| {
+    b.bench_local(|| {
         for _ in 0..BATCH_SIZE {
             prod.push(1).unwrap();
         }
@@ -73,7 +73,9 @@ fn push_pop_x100_local(b: &mut Bencher) {
     });
 }
 
-fn push_pop_work(b: &mut Bencher) {
+
+#[divan::bench(sample_size = 100000)]
+fn push_pop_work(b: divan::Bencher) {
     let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
     let (mut prod, mut work, mut cons) = buf.split_mut();
 
@@ -86,7 +88,7 @@ fn push_pop_work(b: &mut Bencher) {
         prod.push(1).unwrap();
     }
 
-    b.iter(|| {
+    b.bench_local(|| {
         for _ in 0..BATCH_SIZE {
             prod.push(1).unwrap();
         }
