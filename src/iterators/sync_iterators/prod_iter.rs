@@ -1,13 +1,10 @@
 #[allow(unused_imports)]
 use core::mem::MaybeUninit;
-use core::mem::transmute;
-use core::slice;
 
 #[allow(unused_imports)]
 use crate::ConsIter;
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
-use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
@@ -69,27 +66,9 @@ impl<B: MutRB + IterManager> Drop for ProdIter<'_, B> {
     }
 }
 
-impl<B: MutRB<Item = T>, T> PrivateMRBIterator for ProdIter<'_, B> {
-    type PItem = T;
-
+impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'_, B> {
     #[inline]
-    fn set_atomic_index(&self, index: usize) {
-        self.buffer.set_prod_index(index);
-    }
-
-    #[inline]
-    fn succ_index(&self) -> usize {
-        self.buffer.cons_index()
-    }
-
-    private_impl!();
-}
-
-impl<B: MutRB<Item = T>, T> MRBIterator for ProdIter<'_, B> {
-    type Item = T;
-    
-    #[inline]
-    fn available(&mut self) -> usize {
+    fn _available(&mut self) -> usize {
         let succ_idx = self.succ_index();
 
         unsafe {
@@ -101,6 +80,22 @@ impl<B: MutRB<Item = T>, T> MRBIterator for ProdIter<'_, B> {
 
         self.cached_avail
     }
+    
+    #[inline]
+    fn set_atomic_index(&self, index: usize) {
+        self.buffer.set_prod_index(index);
+    }
+
+    #[inline]
+    fn succ_index(&self) -> usize {
+        self.buffer.cons_index()
+    }
+    
+    private_impl!();
+}
+
+impl<B: MutRB<Item = T>, T> MRBIterator for ProdIter<'_, B> {
+    type Item = T;
 }
 
 impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {

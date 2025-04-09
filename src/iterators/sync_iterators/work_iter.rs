@@ -1,14 +1,9 @@
-use core::mem::transmute;
-use core::slice;
-
 use crate::iterators::{private_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::iterators::sync_iterators::detached::Detached;
-use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
-use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
 #[doc = r##"
 Iterator used to mutate elements in-place.
@@ -37,8 +32,20 @@ impl<B: MutRB + IterManager> Drop for WorkIter<'_, B> {
     }
 }
 
-impl<B: MutRB<Item = T>, T> PrivateMRBIterator for WorkIter<'_, B> {
-    type PItem = T;
+impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'_, B> {
+    #[inline]
+    fn _available(&mut self) -> usize {
+        let succ_idx = self.succ_index();
+
+        unsafe {
+            self.cached_avail = match self.index <= succ_idx {
+                true => succ_idx.unchecked_sub(self.index),
+                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
+            };
+        }
+
+        self.cached_avail
+    }
     
     #[inline]
     fn set_atomic_index(&self, index: usize) {
@@ -55,20 +62,6 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator for WorkIter<'_, B> {
 
 impl<B: MutRB<Item = T>, T> MRBIterator for WorkIter<'_, B> {
     type Item = T;
-    
-    #[inline]
-    fn available(&mut self) -> usize {
-        let succ_idx = self.succ_index();
-
-        unsafe {
-            self.cached_avail = match self.index <= succ_idx {
-                true => succ_idx.unchecked_sub(self.index),
-                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
-            };
-        }
-
-        self.cached_avail
-    }
 }
 
 impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {

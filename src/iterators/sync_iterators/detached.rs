@@ -76,7 +76,7 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     #[inline]
     pub fn reset_index(&mut self) {
         let new_idx = self.inner.succ_index();
-        unsafe { self.inner.set_local_index(new_idx); }
+        self.inner.set_local_index(new_idx);
     }
 
     /// Advances the iterator as in [`MRBIterator::advance()`], but does not modify the atomic counter,

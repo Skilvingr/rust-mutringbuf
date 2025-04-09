@@ -1,14 +1,9 @@
-use core::mem::transmute;
-use core::slice;
-
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::ProdIter;
-use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
-use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 
 #[doc = r##"
 Iterator used to pop data from the buffer.
@@ -30,9 +25,22 @@ impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<'_, B, W> {
     }
 }
 
-impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator for ConsIter<'_, B, W> {
-    type PItem = T;
+impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<'_, B, W> {
 
+    #[inline]
+    fn _available(&mut self) -> usize {
+        let succ_idx = self.succ_index();
+
+        unsafe {
+            self.cached_avail = match self.index <= succ_idx {
+                true => succ_idx.unchecked_sub(self.index),
+                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
+            };
+        }
+
+        self.cached_avail
+    }
+    
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -52,20 +60,6 @@ impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator for ConsIter<'_, B
 
 impl<B: MutRB<Item = T>, T, const W: bool> MRBIterator for ConsIter<'_, B, W> {
     type Item = T;
-
-    #[inline]
-    fn available(&mut self) -> usize {
-        let succ_idx = self.succ_index();
-
-        unsafe {
-            self.cached_avail = match self.index <= succ_idx {
-                true => succ_idx.unchecked_sub(self.index),
-                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
-            };
-        }
-
-        self.cached_avail
-    }
 }
 
 impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {

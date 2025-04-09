@@ -1,5 +1,7 @@
+use core::mem::transmute;
+use core::slice;
 use crate::iterators::sync_iterators::detached::Detached;
-use crate::MutRB;
+use crate::{MutRB, Storage, UnsafeSyncCell};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, StorageManager};
 
@@ -12,7 +14,7 @@ pub type WorkableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
 
 /// Trait implemented by iterators.
 #[allow(private_bounds)]
-pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
+pub trait MRBIterator: PrivateMRBIterator<Self::Item> {
     type Item;
 
     /// Detaches the iterator yielding a [`Detached`].
@@ -27,13 +29,14 @@ pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
     /// An iterator should never overstep its successor, so it must always be: `count` <= [`MRBIterator::available()`]!
     #[inline]
     unsafe fn advance(&mut self, count: usize) {
-        self.advance_local(count);
-
-        self.set_atomic_index(self.index());
+        self._advance(count);
     }
 
     /// Returns the number of items available for an iterator.
-    fn available(&mut self) -> usize;
+    #[inline]
+    fn available(&mut self) -> usize {
+        self._available()
+    }
 
     /// Waits, blocking the thread in a loop, until there are at least `count` available items.
     fn wait_for(&mut self, count: usize) {
@@ -137,179 +140,170 @@ pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
     }
 }
 
-pub(crate) trait PrivateMRBIterator {
-    type PItem;
-    
-    fn buffer(&self) -> &BufRef<'_, impl MutRB>;
-    fn _index(&self) -> usize;
-    fn cached_avail(&mut self) -> usize;
+pub(crate) trait PrivateMRBIterator<T> {
+    fn buffer(&self) -> &BufRef<'_, impl MutRB<Item = T>>;
+    fn _available(&mut self) -> usize;
+    fn cached_avail(&self) -> usize;
     fn set_cached_avail(&mut self, avail: usize);
-    unsafe fn set_local_index(&mut self, index: usize);
-    
-    unsafe fn advance_local(&mut self, count: usize);
-    
+    fn _index(&self) -> usize;
+    fn set_local_index(&mut self, index: usize);
     /// Sets the global index of this iterator.
     fn set_atomic_index(&self, index: usize);
 
     /// Returns the global index of successor.
     fn succ_index(&self) -> usize;
 
+    #[inline]
+    unsafe fn _advance(&mut self, count: usize) {
+        self.advance_local(count);
+
+        self.set_atomic_index(self._index());
+    }
+    
+    #[inline]
+    unsafe fn advance_local(&mut self, count: usize) {
+        self.set_local_index(self._index().unchecked_add(count));
+
+        if self._index() >= self.buffer().inner_len() {
+            self.set_local_index(self._index().unchecked_sub(self.buffer().inner_len()));
+        }
+
+        self.set_cached_avail(self.cached_avail().saturating_sub(count));
+    }
+    
     /// Checks whether the current index can be returned
-    fn check(&mut self, count: usize) -> bool;
+    #[inline]
+    fn check(&mut self, count: usize) -> bool {
+        self.cached_avail() >= count || self._available() >= count
+    }
 
     /// Returns Some(current element), if `check()` returns `true`, else None
-    fn next(&mut self) -> Option<Self::PItem>;
+    #[inline]
+    fn next(&mut self) -> Option<T> {
+        self.check(1).then(|| unsafe {
+            let ret = self.buffer().inner()[self._index()].take_inner();
+
+            self._advance(1);
+
+            ret
+        })
+    }
 
     /// Returns Some(current element), if `check()` returns `true`, else None. The value is duplicated.
-    fn next_duplicate(&mut self) -> Option<Self::PItem>;
+    #[inline]
+    fn next_duplicate(&mut self) -> Option<T> {
+        self.check(1).then(|| unsafe {
+            let ret = self.buffer().inner()[self._index()].inner_duplicate();
+
+            self._advance(1);
+
+            ret
+        })
+    }
 
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
-    fn next_ref<'a>(&mut self) -> Option<&'a Self::PItem>;
+    #[inline]
+    fn next_ref<'a>(&mut self) -> Option<&'a T> {
+        unsafe { self.check(1).then(|| self.buffer().inner()[self._index()].inner_ref()) }
+    }
 
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
-    fn next_ref_mut<'a>(&mut self) -> Option<&'a mut Self::PItem>;
+    #[inline]
+    fn next_ref_mut<'a>(&mut self) -> Option<&'a mut T> {
+        unsafe { self.check(1).then(|| self.buffer().inner()[self._index()].inner_ref_mut()) }
+    }
 
     /// As next_ref_mut, but can be used for initialisation of inner MaybeUninit.
-    fn next_ref_mut_init(&mut self) -> Option<*mut Self::PItem>;
+    #[inline]
+    fn next_ref_mut_init(&mut self) -> Option<*mut T> {
+        self.check(1).then(|| self.buffer().inner()[self._index()].as_mut_ptr())
+    }
 
-    fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [Self::PItem], &'a [Self::PItem])>;
+    #[inline]
+    fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])> {
+        self.check(count).then(|| {
 
-    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [Self::PItem], &'a mut [Self::PItem])>;
+            let len = self.buffer().inner_len();
+            
+            unsafe {
+                let ptr = self.buffer().inner().as_ptr();
+
+                if self._index() + count >= len {
+                    (
+                        transmute::<&[UnsafeSyncCell<T>], &[T]>(
+                            slice::from_raw_parts(ptr.add(self._index()), len.unchecked_sub(self._index()))
+                        ),
+                        transmute::<&[UnsafeSyncCell<T>], &[T]>(
+                            slice::from_raw_parts(ptr, self._index().unchecked_add(count).unchecked_sub(len))
+                        )
+                    )
+                } else {
+                    (
+                        transmute::<&[UnsafeSyncCell<T>], &[T]>(
+                            slice::from_raw_parts(ptr.add(self._index()), count)
+                        ),
+                        &mut [] as &[T]
+                    )
+                }
+            }
+        })
+    }
+
+    #[inline]
+    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])> {
+        self.check(count).then(|| {
+
+            let len = self.buffer().inner_len();
+            
+            unsafe {
+                let ptr = self.buffer().inner_mut().as_mut_ptr();
+
+                if self._index() + count >= len {
+                    (
+                        transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
+                            slice::from_raw_parts_mut(ptr.add(self._index()), len.unchecked_sub(self._index()))
+                        ),
+                        transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
+                            slice::from_raw_parts_mut(ptr, self._index().unchecked_add(count).unchecked_sub(len))
+                        )
+                    )
+                } else {
+                    (
+                        transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
+                            slice::from_raw_parts_mut(ptr.add(self._index()), count)
+                        ),
+                        &mut [] as &mut [T]
+                    )
+                }
+            }
+        })
+    }
 }
 
 pub(crate) mod iter_macros {
     macro_rules! private_impl { () => (
 
         #[inline]
-        fn buffer(&self) -> &BufRef<'_, impl MutRB> {
+        fn buffer(&self) -> &BufRef<'_, impl MutRB<Item = T>> {
             &self.buffer
         }
+        
         #[inline]
         fn _index(&self) -> usize {
             self.index
         }
         #[inline]
-        fn cached_avail(&mut self) -> usize {
+        fn set_local_index(&mut self, index: usize) {
+            self.index = index;
+        }
+        
+        #[inline]
+        fn cached_avail(&self) -> usize {
             self.cached_avail
         }
-    
         #[inline]
         fn set_cached_avail(&mut self, avail: usize) {
             self.cached_avail = avail;
-        }
-    
-        #[inline]
-        unsafe fn set_local_index(&mut self, index: usize) {
-            self.index = index;
-        }
-            
-        #[inline]
-        unsafe fn advance_local(&mut self, count: usize) {
-            self.index = self.index.unchecked_add(count);
-
-            if self.index >= self.buf_len() {
-                self.index = self.index.unchecked_sub(self.buf_len());
-            }
-
-            self.cached_avail = self.cached_avail.saturating_sub(count);
-        }
-        
-        #[inline]
-        fn check(&mut self, count: usize) -> bool {
-            self.cached_avail >= count || self.available() >= count
-        }
-
-        #[inline]
-        fn next(&mut self) -> Option<T> {
-            self.check(1).then(|| unsafe {
-                let ret = self.buffer.inner()[self.index].take_inner();
-
-                self.advance(1);
-
-                ret
-            })
-        }
-        
-        #[inline]
-        fn next_duplicate(&mut self) -> Option<T> {
-            self.check(1).then(|| unsafe {
-                let ret = self.buffer.inner()[self.index].inner_duplicate();
-
-                self.advance(1);
-
-                ret
-            })
-        }
-
-        #[inline]
-        fn next_ref<'a>(&mut self) -> Option<&'a T> {
-            unsafe { self.check(1).then(|| self.buffer.inner()[self.index].inner_ref()) }
-        }
-
-        #[inline]
-        fn next_ref_mut<'a>(&mut self) -> Option<&'a mut T> {
-            unsafe { self.check(1).then(|| self.buffer.inner()[self.index].inner_ref_mut()) }
-        }
-
-        #[inline]
-        fn next_ref_mut_init(&mut self) -> Option<*mut T> {
-            self.check(1).then(|| self.buffer.inner()[self.index].as_mut_ptr())
-        }
-
-        #[inline]
-        fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])> {
-            self.check(count).then(|| {
-                
-                unsafe {
-                    let ptr = self.buffer.inner().as_ptr();
-                    
-                    if self.index + count >= self.buf_len() {
-                        (
-                            transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                                slice::from_raw_parts(ptr.add(self.index), self.buf_len().unchecked_sub(self.index))
-                            ),
-                            transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                                slice::from_raw_parts(ptr, self.index.unchecked_add(count).unchecked_sub(self.buf_len()))
-                            )
-                        )
-                    } else {
-                        (
-                            transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                                slice::from_raw_parts(ptr.add(self.index), count)
-                            ),
-                            &mut [] as &[T]
-                        )
-                    }
-                }
-            })
-        }
-
-        #[inline]
-        fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])> {
-            self.check(count).then(|| {
-                
-                unsafe {
-                    let ptr = self.buffer.inner_mut().as_mut_ptr();
-                    
-                    if self.index + count >= self.buf_len() {
-                        (
-                            transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                                slice::from_raw_parts_mut(ptr.add(self.index), self.buf_len().unchecked_sub(self.index))
-                            ),
-                            transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                                slice::from_raw_parts_mut(ptr, self.index.unchecked_add(count).unchecked_sub(self.buf_len()))
-                            )
-                        )
-                    } else {
-                        (
-                            transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                                slice::from_raw_parts_mut(ptr.add(self.index), count)
-                            ),
-                            &mut [] as &mut [T]
-                        )
-                    }
-                }
-            })
         }
     )}
 
