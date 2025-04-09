@@ -98,8 +98,8 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
         
         self.inner.set_local_index(
             match idx < count {
-                true => self.inner.buf_len() - (count - idx),
-                false => idx - count
+                true => self.inner.buf_len().unchecked_sub(count).unchecked_sub(idx),
+                false => idx.unchecked_sub(count)
             }
         );
 

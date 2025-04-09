@@ -1,4 +1,7 @@
 use crate::iterators::sync_iterators::detached::Detached;
+use crate::MutRB;
+use crate::ring_buffer::wrappers::buf_ref::BufRef;
+use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, StorageManager};
 
 /// Returned by slice-specialised functions.
 /// # Fields:
@@ -22,7 +25,12 @@ pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
     ///
     /// # Safety
     /// An iterator should never overstep its successor, so it must always be: `count` <= [`MRBIterator::available()`]!
-    unsafe fn advance(&mut self, count: usize);
+    #[inline]
+    unsafe fn advance(&mut self, count: usize) {
+        self.advance_local(count);
+
+        self.set_atomic_index(self.index());
+    }
 
     /// Returns the number of items available for an iterator.
     fn available(&mut self) -> usize;
@@ -33,23 +41,44 @@ pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
     }
 
     /// Returns the index of the iterator.
-    fn index(&self) -> usize;
+    #[inline]
+    fn index(&self) -> usize {
+        self._index()
+    }
 
     /// Returns the length of the buffer.
-    fn buf_len(&self) -> usize;
-
+    #[inline]
+    fn buf_len(&self) -> usize {
+        self.buffer().inner_len()
+    }
+    
     /// Returns `true` if the producer iterator is still alive, `false` if it has been dropped.
-    fn is_prod_alive(&self) -> bool;
+    fn is_prod_alive(&self) -> bool {
+        self.buffer().prod_alive()
+    }
     /// Returns `true` if the worker iterator is still alive, `false` if it has been dropped.
-    fn is_work_alive(&self) -> bool;
+    fn is_work_alive(&self) -> bool {
+        self.buffer().work_alive()
+    }
     /// Returns `true` if the consumer iterator is still alive, `false` if it has been dropped.
-    fn is_cons_alive(&self) -> bool;
+    fn is_cons_alive(&self) -> bool {
+        self.buffer().cons_alive()
+    }
     /// Returns the index of the producer.
-    fn prod_index(&self) -> usize;
+    #[inline(always)]
+    fn prod_index(&self) -> usize {
+        self.buffer().prod_index()
+    }
     /// Returns the index of the worker.
-    fn work_index(&self) -> usize;
+    #[inline(always)]
+    fn work_index(&self) -> usize {
+        self.buffer().work_index()
+    }
     /// Returns the index of the consumer.
-    fn cons_index(&self) -> usize;
+    #[inline(always)]
+    fn cons_index(&self) -> usize {
+        self.buffer().cons_index()
+    }
     
     /// Returns a mutable references to the current value.
     ///
@@ -99,9 +128,11 @@ pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
     fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, <Self as MRBIterator>::Item>> {
         let avail = self.available();
 
-        match avail - avail % rhs {
-            0 => None,
-            avail => self.get_workable_slice_exact(avail)
+        unsafe {
+            match avail.unchecked_sub(avail % rhs) {
+                0 => None,
+                avail => self.get_workable_slice_exact(avail)
+            }
         }
     }
 }
@@ -109,6 +140,8 @@ pub trait MRBIterator: PrivateMRBIterator<PItem = Self::Item> {
 pub(crate) trait PrivateMRBIterator {
     type PItem;
     
+    fn buffer(&self) -> &BufRef<'_, impl MutRB>;
+    fn _index(&self) -> usize;
     fn cached_avail(&mut self) -> usize;
     fn set_cached_avail(&mut self, avail: usize);
     unsafe fn set_local_index(&mut self, index: usize);
@@ -145,56 +178,16 @@ pub(crate) trait PrivateMRBIterator {
 }
 
 pub(crate) mod iter_macros {
-    macro_rules! public_impl { () => (
-        #[inline]
-        fn is_prod_alive(&self) -> bool {
-            self.buffer.prod_alive()
-        }
-    
-        #[inline]
-        fn is_work_alive(&self) -> bool {
-            self.buffer.work_alive()
-        }
-    
-        #[inline]
-        fn is_cons_alive(&self) -> bool {
-            self.buffer.cons_alive()
-        }
-    
-        #[inline]
-        fn prod_index(&self) -> usize {
-            self.buffer.prod_index()
-        }
-    
-        #[inline]
-        fn work_index(&self) -> usize {
-            self.buffer.work_index()
-        }
-    
-        #[inline]
-        fn cons_index(&self) -> usize {
-            self.buffer.cons_index()
-        }
-        
-        #[inline]
-        unsafe fn advance(&mut self, count: usize) {
-            self.advance_local(count);
-
-            self.set_atomic_index(self.index);
-        }
+    macro_rules! private_impl { () => (
 
         #[inline]
-        fn index(&self) -> usize {
+        fn buffer(&self) -> &BufRef<'_, impl MutRB> {
+            &self.buffer
+        }
+        #[inline]
+        fn _index(&self) -> usize {
             self.index
         }
-
-        #[inline]
-        fn buf_len(&self) -> usize {
-            self.buffer.inner_len()
-        }
-    )}
-
-    macro_rules! private_impl { () => (
         #[inline]
         fn cached_avail(&mut self) -> usize {
             self.cached_avail
@@ -273,10 +266,10 @@ pub(crate) mod iter_macros {
                     if self.index + count >= self.buf_len() {
                         (
                             transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                                slice::from_raw_parts(ptr.add(self.index), self.buf_len() - self.index)
+                                slice::from_raw_parts(ptr.add(self.index), self.buf_len().unchecked_sub(self.index))
                             ),
                             transmute::<&[UnsafeSyncCell<T>], &[T]>(
-                                slice::from_raw_parts(ptr, self.index + count - self.buf_len())
+                                slice::from_raw_parts(ptr, self.index.unchecked_add(count).unchecked_sub(self.buf_len()))
                             )
                         )
                     } else {
@@ -301,10 +294,10 @@ pub(crate) mod iter_macros {
                     if self.index + count >= self.buf_len() {
                         (
                             transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                                slice::from_raw_parts_mut(ptr.add(self.index), self.buf_len() - self.index)
+                                slice::from_raw_parts_mut(ptr.add(self.index), self.buf_len().unchecked_sub(self.index))
                             ),
                             transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
-                                slice::from_raw_parts_mut(ptr, self.index + count - self.buf_len())
+                                slice::from_raw_parts_mut(ptr, self.index.unchecked_add(count).unchecked_sub(self.buf_len()))
                             )
                         )
                     } else {
@@ -320,5 +313,5 @@ pub(crate) mod iter_macros {
         }
     )}
 
-    pub(crate) use { public_impl, private_impl };
+    pub(crate) use private_impl;
 }

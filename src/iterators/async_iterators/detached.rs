@@ -56,8 +56,8 @@ impl<B: MutRB<Item = T>, T, I: AsyncIterator> AsyncDetached<I, B> {
         
         self.inner.inner_mut().set_local_index(
             match idx < count {
-                true => buf_len - (count - idx),
-                false => idx - count
+                true => buf_len.unchecked_sub(count).unchecked_sub(idx),
+                false => idx.unchecked_sub(count)
             }
         );
 

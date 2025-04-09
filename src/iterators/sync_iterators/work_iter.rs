@@ -1,7 +1,7 @@
 use core::mem::transmute;
 use core::slice;
 
-use crate::iterators::{private_impl, public_impl};
+use crate::iterators::{private_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::iterators::sync_iterators::detached::Detached;
@@ -69,8 +69,6 @@ impl<B: MutRB<Item = T>, T> MRBIterator for WorkIter<'_, B> {
 
         self.cached_avail
     }
-
-    public_impl!();
 }
 
 impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {
