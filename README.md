@@ -175,7 +175,7 @@ cargo test
 Benchmarks can be run with:
 
 ```shell
-cargo +nightly bench
+cargo bench
 ```
 
 CPAL example can be run with:

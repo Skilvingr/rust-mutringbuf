@@ -31,21 +31,21 @@ cpal = { version = "0.15.3" }
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(cpal)'] }
 
 [[bench]]
-name = "bench_main"
+name = "base"
 path = "benches/divan/base.rs"
 harness = false
 
 [[bench]]
-name = "bench_parts"
+name = "parts"
 path = "benches/divan/parts.rs"
 harness = false
 
 [[bench]]
-name = "bench_slices"
+name = "slices"
 path = "benches/divan/slices.rs"
 harness = false
 
 [[bench]]
-name = "iai_bench_base"
+name = "iai_base"
 path = "benches/iai_benches/iai_base.rs"
 harness = false

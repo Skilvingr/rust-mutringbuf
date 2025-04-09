@@ -1,4 +1,4 @@
-use mutringbuf::{ConcurrentStackRB, MRBIterator, StackSplit, LocalStackRB};
+use mutringbuf::{ConcurrentStackRB, MRBIterator, StackSplit, LocalStackRB, ConcurrentHeapRB, HeapSplit};
 use divan::black_box;
 
 const RB_SIZE: usize = 256;
@@ -73,6 +73,23 @@ fn push_pop_x100_local(b: divan::Bencher) {
     });
 }
 
+#[divan::bench(sample_size = 100000)]
+fn push_pop_x100_heap(b: divan::Bencher) {
+    let buf = ConcurrentHeapRB::<u64>::default(RB_SIZE);
+
+    let (mut prod, mut cons) = buf.split();
+
+    prod.push_slice(&[1; RB_SIZE / 2]);
+
+    b.bench_local(|| {
+        for _ in 0..BATCH_SIZE {
+            prod.push(1).unwrap();
+        }
+        for _ in 0..BATCH_SIZE {
+            black_box(cons.pop().unwrap());
+        }
+    });
+}
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_work(b: divan::Bencher) {
