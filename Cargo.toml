@@ -1,6 +1,6 @@
 [package]
 name = "mutringbuf"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
@@ -14,12 +14,12 @@ documentation = "https://docs.rs/mutringbuf"
 [features]
 default = ["alloc"]
 alloc = []
-vmem = ["alloc"]
+vmem = ["alloc", 'dep:libc']
 async = []
 
 [dependencies]
 crossbeam-utils = { version = "0.8.21", default-features = false }
-libc = "1.0.0-alpha.1"
+libc = { version = "1.0.0-alpha.1", optional = true }
 
 [dev-dependencies]
 divan = "0.1.21"
