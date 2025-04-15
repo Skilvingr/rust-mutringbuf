@@ -1,17 +1,13 @@
-use mutringbuf::{ConcurrentHeapRB, ConsIter, HeapSplit, ProdIter, WorkIter};
 use mutringbuf::MRBIterator;
+use crate::{common_def, get_buf};
 
-const BUF_LEN: usize = 100;
-
-fn prepare<'buf>() -> (ProdIter<'buf, ConcurrentHeapRB<usize>>, WorkIter<'buf, ConcurrentHeapRB<usize>>, ConsIter<'buf, ConcurrentHeapRB<usize>, true>) {
-    let buf = ConcurrentHeapRB::from(vec![0; BUF_LEN + 1]);
-    buf.split_mut()
-}
+common_def!();
 
 #[test]
 pub fn prod_drop_test() {
-    let (prod, work, cons) = prepare();
-
+    let mut buf = get_buf!(Concurrent);
+    let (prod, work, cons) = buf.split_mut();
+    
     assert!(work.is_prod_alive());
     assert!(cons.is_work_alive());
     assert!(work.is_cons_alive());
@@ -25,7 +21,8 @@ pub fn prod_drop_test() {
 
 #[test]
 pub fn work_drop_test() {
-    let (prod, work, cons) = prepare();
+    let mut buf = get_buf!(Concurrent);
+    let (prod, work, cons) = buf.split_mut();
 
     assert!(cons.is_prod_alive());
     assert!(cons.is_work_alive());
@@ -40,7 +37,8 @@ pub fn work_drop_test() {
 
 #[test]
 pub fn cons_drop_test() {
-    let (prod, work, cons) = prepare();
+    let mut buf = get_buf!(Concurrent);
+    let (prod, work, cons) = buf.split_mut();
 
     assert!(work.is_prod_alive());
     assert!(prod.is_work_alive());
@@ -55,7 +53,8 @@ pub fn cons_drop_test() {
 
 #[test]
 pub fn drop_everything() {
-    let (prod, work, cons) = prepare();
+    let mut buf = get_buf!(Concurrent);
+    let (prod, work, cons) = buf.split_mut();
 
     drop(prod);
     drop(work);

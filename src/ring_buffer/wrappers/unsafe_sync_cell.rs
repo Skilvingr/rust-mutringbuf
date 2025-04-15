@@ -3,7 +3,7 @@ use core::mem::MaybeUninit;
 use core::ptr::slice_from_raw_parts;
 
 /// Sync version of `UnsafeCell<MaybeUninit<T>>`.
-/// While it should not be used outside of this crate, it might result useful in certain cases.
+/// While it should not be used outside of this crate, it may be useful in certain scenarios.
 #[repr(transparent)]
 pub struct UnsafeSyncCell<T>(UnsafeCell<MaybeUninit<T>>);
 
@@ -42,7 +42,7 @@ impl<T> UnsafeSyncCell<T> {
         Self(UnsafeCell::new(MaybeUninit::zeroed()))
     }
 
-    /// Checks whether the memory pointed by `ptr`, for a certain type T, is only composed of zeros.
+    /// Checks whether the memory pointed to by `ptr`, for a certain type `T`, is composed entirely of zeros.
     #[inline]
     pub fn check_zeroed(ptr: *const T) -> bool {
         unsafe {
@@ -57,9 +57,10 @@ impl<T> UnsafeSyncCell<T> {
     }
 
     /// Reads and duplicates the value.
-    /// For more info, refer to [docs](https://doc.rust-lang.org/core/mem/union.MaybeUninit.html#method.assume_init_read).
+    /// For more information on `MaybeUninit`, refer to
+    /// [the Rust documentation](https://doc.rust-lang.org/core/mem/union.MaybeUninit.html#method.assume_init_read).
     /// # Safety
-    /// Inner value must be initialised.
+    /// The inner value must be initialised (i.e., properly constructed).
     #[inline]
     pub unsafe fn inner_duplicate(&self) -> T {
         (*self.0.get()).assume_init_read()
@@ -67,7 +68,7 @@ impl<T> UnsafeSyncCell<T> {
 
     /// Returns a reference to inner value.
     /// # Safety
-    /// Inner value must be initialised.
+    /// Inner value must be initialised (i.e., properly constructed).
     #[inline]
     pub unsafe fn inner_ref<'a>(&self) -> &'a T {
         (*self.0.get()).assume_init_ref()

@@ -1,7 +1,13 @@
+<a name="v0.5.0"></a>
+## v0.5.0 (15/04/2025)
+
+* Iterators have been moved to `mutringbuf::iterators` module.
+* Added support for virtual memory optimisation.
+
 <a name="v0.4.2"></a>
 ## v0.4.2 (07/02/2025)
 
-Re-export trait `ConcurrentRB`.
+* Re-export trait `ConcurrentRB`.
 
 <a name="v0.4.1"></a>
 ## v0.4.1 (27/01/2025)

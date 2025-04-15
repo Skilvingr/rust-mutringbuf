@@ -1,7 +1,7 @@
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
-use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
+use crate::iterators::iterator_trait::{MRBIterator, NonWorkableSlice, PrivateMRBIterator};
 #[allow(unused_imports)]
-use crate::ProdIter;
+use crate::iterators::ProdIter;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
@@ -97,7 +97,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn peek_slice<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])> {
+    pub fn peek_slice<'a>(&mut self, count: usize) -> Option<NonWorkableSlice<'a, T>> {
         self.next_chunk(count)
     }
 
@@ -108,7 +108,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn peek_available<'a>(&mut self) -> Option<(&'a [T], &'a [T])> {
+    pub fn peek_available<'a>(&mut self) -> Option<NonWorkableSlice<'a, T>> {
         let avail = self.available();
         self.peek_slice(avail)
     }
@@ -171,6 +171,23 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
         self._extract_item(dst, f)
     }
 
+    #[cfg(feature = "vmem")]
+    #[inline]
+    fn _extract_slice(&mut self, dst: &mut [T], f: fn(&[T], &mut[T])) -> Option<()> {
+        let count = dst.len();
+
+        if let Some(binding) = self.next_chunk(count) {
+            unsafe {
+                f(binding, dst);
+                self.advance(count)
+            }
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    #[cfg(not(feature = "vmem"))]
     #[inline]
     fn _extract_slice(&mut self, dst: &mut [T], f: fn(&[T], &mut[T])) -> Option<()> {
         let count = dst.len();
@@ -234,11 +251,11 @@ mod test {
     #[test]
     fn cached_avail() {
         use super::*;
-        use crate::{ConcurrentStackRB, StackSplit};
+        use crate::{ConcurrentHeapRB, HeapSplit};
 
         const BUFFER_SIZE: usize = 100;
         
-        let mut buf = ConcurrentStackRB::<u32, { BUFFER_SIZE + 1 }>::default();
+        let buf = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1);
         let (mut prod, mut cons) = buf.split();
         
         assert_eq!(cons.cached_avail, 0);

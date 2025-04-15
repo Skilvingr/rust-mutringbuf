@@ -11,189 +11,190 @@
 [tests-badge]: https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml/badge.svg
 [tests-url]: https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml
 
-A simple lock-free SPSC FIFO ring buffer, with in-place mutability.
-
-## Should I use it?
-
-If you are in search of a ring buffer to use in production environment, take a look at one of these, before returning here:
-* [ringbuf](https://github.com/agerasev/ringbuf);
-* [thingbuf](https://github.com/hawkw/thingbuf).
-
-If you find any mistakes with this project, please, open an [issue](https://github.com/Skilvingr/rust-mutringbuf/issues/new/choose); I'll be glad to take a look!
+A lock-free single-producer, single-consumer (SPSC) ring buffer with in-place mutability, asynchronous support,
+and virtual memory optimisation.
 
 ## Performance
 
-According to benchmarks, `ringbuf` should be a little bit faster than this crate, when executing certain operations.
+Benchmarks indicate that [ringbuf](https://github.com/agerasev/ringbuf) may outperform this crate in certain operations.
+However, my own tests using `Instant` suggest that `mutringbuf` is slightly faster. I recommend trying both to see which
+one meets your needs better.
 
-On the other hand, according to tests I've made by myself using Instants, `mutringbuf` seems to be slightly faster.
+## Purpose
 
-I frankly don't know why, so my suggestion is to try both and decide, bearing in mind that, for typical producer-consumer use, `ringbuf` is certainly more stable and mature than this crate.
-
-## What is the purpose of this crate?
-I've written this crate to perform real-time computing over audio streams,
-you can find a (simple) meaningful example [here](https://github.com/Skilvingr/rust-mutringbuf/blob/master/examples/cpal.rs).
-To run it, jump [here](#tests-benchmarks-and-examples).
+This crate was developed for real-time audio stream processing. You can find a simple example
+[here](https://github.com/Skilvingr/rust-mutringbuf/blob/master/examples/cpal.rs). For instructions on running it, jump
+to the [Tests, Benchmarks, and Examples](#tests-benchmarks-and-examples) section.
 
 ## Features
-- `default`: `alloc`
-- `alloc`: uses alloc crate, enabling heap-allocated buffers
-- `async`: enables async/await support
+
+- `default`: Enables the `alloc` feature.
+- `alloc`: Uses the `alloc` crate for heap-allocated buffers.
+- `async`: Provides support for async/await.
+- `vmem`: Enables virtual memory optimisations.
+
+## `vmem` Extension
+
+An interesting optimisation for circular buffers involves mapping the underlying buffer to two contiguous regions of
+virtual memory. More information can be found [here](https://en.wikipedia.org/wiki/Circular_buffer#Optimization).
+
+This crate supports this optimisation through the `vmem` feature, which can only be used with heap-allocated buffers and
+is currently limited to `unix` targets. The buffer size must be a multiple of the system's page size (usually `4096`).
+When using the `default` and `new_zeroed` methods, the correct size is calculated based on the provided minimum size.
+However, when using the `from` methods, the user must ensure this requirement is met to avoid panics.
 
 ## Usage
 
-### A note about uninitialised items
-This buffer can handle uninitialised items.
-They are produced either when the buffer is created with `new_zeroed` methods, or when an initialised item
-is moved out of the buffer via [`ConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/cons_iter/struct.ConsIter.html#method.pop) or
-[`AsyncConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/cons_iter/struct.AsyncConsIter.html#method.pop).
+### Note on Uninitialised Items
 
-As also stated in `ProdIter` doc page, there are two ways to push an item into the buffer:
-* normal methods can be used *only* when the location in which we are pushing the item is initialised;
-* `*_init` methods must be used when that location is not initialised.
+This buffer can handle uninitialised items, which can occur when the buffer is created with `new_zeroed` methods or when
+an initialised item is moved out via [`ConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/cons_iter/struct.ConsIter.html#method.pop)
+or [`AsyncConsIter::pop`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/cons_iter/struct.AsyncConsIter.html#method.pop).
 
-That's because normal methods implicitly drop the old value, which is a good thing if it is initialised, but
-it becomes a terrible one if it's not. To be more precise, dropping an uninitialised value results in UB,
-mostly in a SIGSEGV.
+As noted in the `ProdIter` documentation, there are two ways to push an item into the buffer:
+- Normal methods can only be used when the target location is initialised.
+- `*_init` methods must be used when the target location is uninitialised.
 
-### Initialisation of buffer and iterators
-First, a buffer has to be created.
+Using normal methods on uninitialised values can lead to undefined behaviour (UB), such as a segmentation fault (SIGSEGV).
 
-Local buffers should be faster, due to the use of plain integers as indices, but can't obviously be used in a concurrent environment.
+### Initialising Buffers and Iterators
 
-#### Stack-allocated buffers
+First, create a buffer. Local buffers are generally faster due to the use of plain integers as indices, but they are not
+suitable for concurrent environments. In some cases, concurrent buffers may perform better than local ones.
+
+#### Stack-Allocated Buffers
 
 ```rust
 use mutringbuf::{ConcurrentStackRB, LocalStackRB};
-// buffers filled with default values
-let concurrent_buf = ConcurrentStackRB::<usize, 10>::default();
-let local_buf = LocalStackRB::<usize, 10>::default();
-// buffers built from existing arrays
-let concurrent_buf = ConcurrentStackRB::from([0; 10]);
-let local_buf = LocalStackRB::from([0; 10]);
-// buffers with uninitialised (zeroed) items
+
+// Buffers filled with default values
+let concurrent_buf = ConcurrentStackRB::<usize, 4096>::default();
+let local_buf = LocalStackRB::<usize, 4096>::default();
+
+// Buffers built from existing arrays
+let concurrent_buf = ConcurrentStackRB::from([0; 4096]);
+let local_buf = LocalStackRB::from([0; 4096]);
+
+// Buffers with uninitialised (zeroed) items
 unsafe {
-    let concurrent_buf = ConcurrentStackRB::<usize, 10>::new_zeroed();
-    let local_buf = LocalStackRB::<usize, 10>::new_zeroed();
+    let concurrent_buf = ConcurrentStackRB::<usize, 4096>::new_zeroed();
+    let local_buf = LocalStackRB::<usize, 4096>::new_zeroed();
 }
 ```
 
-#### Heap-allocated buffer
-
+#### Heap-Allocated Buffers
 ```rust
 use mutringbuf::{ConcurrentHeapRB, LocalHeapRB};
-// buffers filled with default values
-let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::default(10);
-let local_buf: LocalHeapRB<usize> = LocalHeapRB::default(10);
-// buffers built from existing vec
-let concurrent_buf = ConcurrentHeapRB::from(vec![0; 10]);
-let local_buf = LocalHeapRB::from(vec![0; 10]);
-// buffers with uninitialised (zeroed) items
+
+// Buffers filled with default values
+let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::default(4096);
+let local_buf: LocalHeapRB<usize> = LocalHeapRB::default(4096);
+
+// Buffers built from existing vectors
+let concurrent_buf = ConcurrentHeapRB::from(vec![0; 4096]);
+let local_buf = LocalHeapRB::from(vec![0; 4096]);
+
+// Buffers with uninitialised (zeroed) items
 unsafe {
-    let concurrent_buf: ConcurrentHeapRB <usize> = ConcurrentHeapRB::new_zeroed(10);
-    let local_buf: LocalHeapRB <usize> = LocalHeapRB::new_zeroed(10);
+    let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::new_zeroed(4096);
+    let local_buf: LocalHeapRB<usize> = LocalHeapRB::new_zeroed(4096);
 }
 ```
 
-<br/>
+### Buffer Usage
 
-<div class="warning">
-Please, note that the buffer uses a location to synchronise the iterators.
+The buffer can be utilised in two primary ways:
 
-Thus, a buffer of size `SIZE` can keep a max amount of `SIZE - 1` values!
-</div>
+#### Sync Immutable
 
-Then such buffer can be used in two ways:
-
-##### Sync immutable
-The normal way to make use of a ring buffer: a producer inserts values that will eventually be taken
-by a consumer.
+This is the standard way to use a ring buffer, where a producer inserts values that will eventually be consumed.
 
 ```rust
 use mutringbuf::{LocalHeapRB, HeapSplit};
-let buf = LocalHeapRB::from(vec![0; 10]);
+
+let buf = LocalHeapRB::from(vec![0; 4096]);
 let (mut prod, mut cons) = buf.split();
 ```
 
-#### Sync mutable
-As in the immutable case, but a third iterator `work` stands between `prod` and `cons`.
+#### Sync Mutable
 
-This iterator mutates elements in place.
+Similar to the immutable case, but with an additional iterator `work` that allows for in-place mutation of elements.
 
 ```rust
 use mutringbuf::{LocalHeapRB, HeapSplit};
-let buf = LocalHeapRB::from(vec![0; 10]);
+
+let buf = LocalHeapRB::from(vec![0; 4096]);
 let (mut prod, mut work, mut cons) = buf.split_mut();
 ```
 
-#### Async immutable
+#### Async Immutable
 ```rust ignore
 use mutringbuf::LocalHeapRB;
-let buf = LocalHeapRB::from(vec![0; 10]);
+
+let buf = LocalHeapRB::from(vec![0; 4096]);
 let (mut as_prod, mut as_cons) = buf.split_async();
 ```
 
-#### Async mutable
+#### Async Mutable
 ```rust ignore
 use mutringbuf::LocalHeapRB;
-let buf = LocalHeapRB::from(vec![0; 10]);
+
+let buf = LocalHeapRB::from(vec![0; 4096]);
 let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
 ```
 
-Iterators can also be wrapped in a [`Detached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached/struct.Detached.html),
-as well as in an [`AsyncDetached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached/struct.AsyncDetached.html), indirectly pausing the consumer, in
-order to explore produced data back and forth.
+Iterators can also be wrapped in a [`Detached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached/struct.Detached.html)
+or an [`AsyncDetached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached/struct.AsyncDetached.html),
+allowing for exploration of produced data back and forth while indirectly pausing the consumer.
 
-<br/>
+Each iterator can be passed to a thread to perform its tasks. More information can be found in the respective documentation pages:
 
-Each iterator can then be passed to a thread to do its job. More information can be found
-in the relative pages:
-- Sync
+- **Sync**
   - [`ProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/prod_iter/struct.ProdIter.html)
   - [`WorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/work_iter/struct.WorkIter.html)
   - [`Detached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached/struct.Detached.html)
   - [`ConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/cons_iter/struct.ConsIter.html)
 
-- Async
+- **Async**
   - [`AsyncProdIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/prod_iter/struct.AsyncProdIter.html)
   - [`AsyncWorkIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/work_iter/struct.AsyncWorkIter.html)
   - [`AsyncDetached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/detached/struct.AsyncDetached.html)
   - [`AsyncConsIter`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/async_iterators/cons_iter/struct.AsyncConsIter.html)
 
-Note that a buffer, no matter its type, lives until the last of the iterators does so.
+Note that a buffer, regardless of its type, remains alive until the last of its iterators is dropped.
 
-## Tests, benchmarks and examples
-Miri test can be found within `script`.
+## Tests, Benchmarks, and Examples
 
-The following commands must be run starting from the root of the crate.
+Miri tests can be found within the `script` directory. The following commands should be run from the root of the crate.
 
-Tests can be run with:
+To run tests:
 
 ```shell
-cargo test
+cargo +nightly test
 ```
 
-Benchmarks can be run with:
+To run benchmarks:
 
 ```shell
 cargo bench
 ```
 
-CPAL example can be run with:
+To run the CPAL example:
 
 ```shell
 RUSTFLAGS="--cfg cpal" cargo run --example cpal
 ```
-If you run into something like:
-`ALSA lib pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`,
-please, take a look [here](https://github.com/Uberi/speech_recognition/issues/526#issuecomment-1670900376).
 
-Async example can be run with:
+If you encounter an error like:
+`ALSA lib pcm_dsnoop.c:567:(snd_pcm_dsnoop_open) unable to open slave`, please refer to
+[this issue](https://github.com/Uberi/speech_recognition/issues/526#issuecomment-1670900376).
 
+To run the async example:
 ```shell
 cargo run --example simple_async --features async
 ```
 
-Every other `example_name` can be run with:
+Every other example_name can be run with:
 ```shell
-cargo run --example `example_name`
+cargo run --example `example_name` 
 ```

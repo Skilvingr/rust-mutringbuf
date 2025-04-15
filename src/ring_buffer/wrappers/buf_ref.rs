@@ -24,7 +24,7 @@ impl<'buf, B> BufRef<'buf, B> {
             _phantom: Default::default(),
         }
     }
-    
+
     #[cfg(feature = "alloc")]
     pub(crate) fn drop(&mut self) {
         if self.needs_drop {
@@ -32,6 +32,7 @@ impl<'buf, B> BufRef<'buf, B> {
         }
     }
 
+    #[cfg(not(feature = "vmem"))]
     pub(crate) fn from_ref(buf: &'buf mut B) -> Self {
         Self {
             inner: NonNull::from(buf),

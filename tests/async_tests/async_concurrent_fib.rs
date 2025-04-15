@@ -3,13 +3,19 @@ use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::sync::atomic::Ordering::{Acquire, Release};
 use std::time::Instant;
 
-use mutringbuf::ConcurrentStackRB;
 use mutringbuf::iterators::async_iterators::AsyncIterator;
 
-const RB_SIZE: usize = 30;
+#[cfg(feature = "vmem")]
+const RB_SIZE: usize = 4096;
+#[cfg(not(feature = "vmem"))]
+const RB_SIZE: usize = 100;
 
 fn rb_fibonacci() {
-    let buf = ConcurrentStackRB::from([0; RB_SIZE]);
+    #[cfg(not(feature = "vmem"))]
+    let buf = mutringbuf::ConcurrentStackRB::from([0; RB_SIZE]);
+    #[cfg(feature = "vmem")]
+    let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; RB_SIZE]);
+
     let (
         mut as_prod,
         mut as_work,

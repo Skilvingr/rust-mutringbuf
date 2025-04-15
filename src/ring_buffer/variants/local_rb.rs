@@ -1,18 +1,27 @@
 use core::cell::UnsafeCell;
 use core::num::NonZeroUsize;
 
-use crate::{ConsIter, LocalStackRB, ProdIter, WorkIter};
-#[cfg(feature = "alloc")]
-use crate::HeapSplit;
-#[cfg(feature = "alloc")]
-use crate::HeapStorage;
-use crate::ring_buffer::storage::stack::StackStorage;
+use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::Storage;
-use crate::ring_buffer::variants::impl_splits::impl_splits;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
-use crate::StackSplit;
+#[cfg(feature = "alloc")]
+use crate::{
+    HeapSplit,
+    HeapStorage
+};
+#[cfg(not(feature = "vmem"))]
+use crate::{
+    StackSplit,
+    StackStorage
+};
 
+use crate::ring_buffer::storage::impl_splits::impl_splits;
+
+/// Local (non-concurrent) mutable ring buffer. This buffer is useful for implementing types.
+/// For more direct usage, consider using one of the following alternatives:
+/// - [`crate::LocalHeapRB`]
+/// - [`crate::LocalStackRB`].
 pub struct LocalMutRingBuf<S: Storage> {
     inner_len: NonZeroUsize,
     inner: UnsafeCell<S>,
@@ -124,17 +133,5 @@ impl<S: Storage<Item = T>, T> StorageManager for LocalMutRingBuf<S> {
     #[inline]
     fn inner_len(&self) -> usize {
         self.inner_len.get()
-    }
-}
-
-impl<T, const N: usize> From<[T; N]> for LocalStackRB<T, N> {
-    fn from(value: [T; N]) -> Self {
-        Self::_from(StackStorage::from(value))
-    }
-}
-
-impl<T: Default + Copy, const N: usize> Default for LocalStackRB<T, N> {
-    fn default() -> Self {
-        Self::from([T::default(); N])
     }
 }

@@ -1,26 +1,28 @@
 [package]
 name = "mutringbuf"
-version = "0.4.3"
+version = "0.5.0"
 edition = "2021"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
-description = "A simple lock-free SPSC ring buffer, with in-place mutability."
+description = "A lock-free single-producer, single-consumer (SPSC) ring buffer with in-place mutability, asynchronous support, and virtual memory optimisation."
 repository = "https://github.com/Skilvingr/rust-mutringbuf"
 license = "MIT OR Apache-2.0"
-keywords = ["lock-free", "async", "ring", "circular", "buffer"]
+keywords = ["lock-free", "async", "mmap", "circular", "buffer"]
 categories = ["asynchronous", "concurrency", "data-structures", "no-std", "no-std::no-alloc"]
 documentation = "https://docs.rs/mutringbuf"
 
 [features]
 default = ["alloc"]
 alloc = []
+vmem = ["alloc"]
 async = []
 
 [dependencies]
 crossbeam-utils = { version = "0.8.21", default-features = false }
+libc = "1.0.0-alpha.1"
 
 [dev-dependencies]
-divan = "0.1.18"
+divan = "0.1.21"
 tokio-test = { version = "0.4.4" }
 iai-callgrind = "0.14.0"
 

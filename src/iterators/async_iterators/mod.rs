@@ -1,4 +1,7 @@
+#![cfg_attr(doc, doc(cfg(feature = "async")))]
 #![cfg(any(feature = "async", doc))]
+
+//! Async iterators.
 
 use core::future::Future;
 use core::pin::Pin;
@@ -8,12 +11,13 @@ use crate::{MRBIterator, MutRB};
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
 
-pub mod prod_iter;
-pub mod work_iter;
-pub mod cons_iter;
-pub mod detached;
+pub(crate) mod prod_iter;
+pub(crate) mod work_iter;
+pub(crate) mod cons_iter;
+pub(crate) mod detached;
 
 
+/// Trait implemented by async iterators.
 pub trait AsyncIterator {
     type I: MRBIterator;
     type B: MutRB;
@@ -42,6 +46,7 @@ pub trait AsyncIterator {
     delegate!(MRBIterator, unsafe fn advance(&(mut) self, count: usize));
 }
 
+/// Future returned by methods in async iterators.
 pub struct MRBFuture<'a, I, P, O, const R: bool>
 where I: AsyncIterator {
     iter: &'a mut I,
@@ -114,8 +119,8 @@ pub(crate) mod async_macros {
         }
     
         /// Async version of [`MRBIterator::get_workable_slice_exact`].
-        pub fn get_workable_slice_exact<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, (&'b mut [T], &'b mut [T]), true> {
-            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<(&'b mut [T], &'b mut [T])> {
+        pub fn get_workable_slice_exact<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, WorkableSlice<'b, T>, true> {
+            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<WorkableSlice<'b, T>> {
                 s.inner_mut().get_workable_slice_exact(*count)
             }
     
@@ -128,8 +133,8 @@ pub(crate) mod async_macros {
         }
     
         /// Async version of [`MRBIterator::get_workable_slice_avail`].
-        pub fn get_workable_slice_avail<'b>(&mut self) -> MRBFuture<Self, (), (&'b mut [T], &'b mut [T]), true> {
-            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, _: &mut ()) -> Option<(&'b mut [T], &'b mut [T])> {
+        pub fn get_workable_slice_avail<'b>(&mut self) -> MRBFuture<Self, (), WorkableSlice<'b, T>, true> {
+            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, _: &mut ()) -> Option<WorkableSlice<'b, T>> {
                 s.inner_mut().get_workable_slice_avail()
             }
     
@@ -142,8 +147,8 @@ pub(crate) mod async_macros {
         }
     
         /// Async version of [`MRBIterator::get_workable_slice_multiple_of`].
-        pub fn get_workable_slice_multiple_of<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, (&'b mut [T], &'b mut [T]), true> {
-            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<(&'b mut [T], &'b mut [T])> {
+        pub fn get_workable_slice_multiple_of<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, WorkableSlice<'b, T>, true> {
+            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<WorkableSlice<'b, T>> {
                 s.inner_mut().get_workable_slice_multiple_of(*count)
             }
     

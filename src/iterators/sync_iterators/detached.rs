@@ -2,7 +2,7 @@ use crate::iterators::iterator_trait::{MRBIterator, WorkableSlice};
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
 #[allow(unused_imports)]
-use crate::WorkIter;
+use crate::iterators::WorkIter;
 
 #[doc = r##"
 Detached iterator: does not update the atomic index when advancing.

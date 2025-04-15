@@ -4,7 +4,7 @@ use crate::iterators::async_iterators::AsyncIterator;
 use crate::{MRBIterator, MutRB};
 use crate::iterators::iterator_trait::PrivateMRBIterator;
 #[allow(unused_imports)]
-use crate::iterators::sync_iterators::detached::Detached;
+use crate::iterators::Detached;
 
 
 #[doc = r##"

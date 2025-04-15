@@ -1,19 +1,55 @@
 #![cfg(feature = "alloc")]
-
-use mutringbuf::{ConcurrentHeapRB, ConcurrentStackRB};
+#![allow(unused_mut)]
 
 pub mod async_tests;
 pub mod sync_tests;
-pub mod stack;
+
+#[cfg(feature = "vmem")]
+macro_rules! common_def {
+    () => {
+        use mutringbuf::HeapSplit;
+        const BUFFER_SIZE: usize = 4096;
+    }
+}
+#[cfg(not(feature = "vmem"))]
+macro_rules! common_def {
+    () => {
+        use mutringbuf::StackSplit;
+        const BUFFER_SIZE: usize = 400;
+    }
+}
+
+#[cfg(feature = "vmem")]
+macro_rules! get_buf {
+    (Local) => {
+        #[cfg(feature = "vmem")]
+        mutringbuf::LocalHeapRB::from(vec![0; BUFFER_SIZE])
+    };
+    (Concurrent) => { 
+        mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE])
+    }
+}
+#[cfg(not(feature = "vmem"))]
+macro_rules! get_buf {
+    (Local) => {
+        mutringbuf::LocalStackRB::from([0; BUFFER_SIZE])
+
+    };
+    (Concurrent) => { 
+        mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE])
+    }
+}
+pub(crate) use {common_def, get_buf};
 
 #[test]
 #[should_panic]
 fn len_zero_heap() {
-    let _ = ConcurrentHeapRB::<i32>::default(0);
+    let _ = mutringbuf::ConcurrentHeapRB::<i32>::default(0);
 }
 
+#[cfg(not(feature = "vmem"))]
 #[test]
 #[should_panic]
 fn len_zero_stack() {
-    let _ = ConcurrentStackRB::<i32, 0>::default();
+    let _ = mutringbuf::ConcurrentStackRB::<i32, 0>::default();
 }

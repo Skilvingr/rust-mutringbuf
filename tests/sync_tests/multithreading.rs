@@ -1,11 +1,11 @@
 extern crate alloc;
 
-use crate::ConcurrentStackRB;
-use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator, StackSplit};
+use mutringbuf::{MRBIterator};
 use std::thread;
 use std::time::Instant;
+use crate::{common_def, get_buf};
 
-const BUFFER_SIZE: usize = 300;
+common_def!();
 
 macro_rules! get_prod {
     ($s: ident, $prod: ident) => {
@@ -45,9 +45,10 @@ macro_rules! get_cons {
 
 #[test]
 fn test_mt_non_workable() {
-    let (mut prod, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE).split();
-
-    let mut buf = ConcurrentStackRB::<u32, BUFFER_SIZE>::default();
+    let mut buf = get_buf!(Concurrent);
+    let (mut prod, mut cons) = buf.split();
+    
+    let mut buf = get_buf!(Concurrent);
 
 
     thread::scope(|s| {
@@ -70,10 +71,12 @@ fn test_mt_non_workable() {
 
 #[test]
 fn test_mt_workable() {
-    let (mut prod, mut work, mut cons) = ConcurrentHeapRB::default(BUFFER_SIZE).split_mut();
-
-    let mut buf = ConcurrentStackRB::<u32, BUFFER_SIZE>::default();
-
+    let mut buf = get_buf!(Concurrent);
+    let (mut prod, mut work, mut cons) = buf.split_mut();
+    
+    let mut buf = get_buf!(Concurrent);
+    
+    
     thread::scope(|s| {
         let producer = get_prod!(s, prod);
         let worker = get_work!(s, work);

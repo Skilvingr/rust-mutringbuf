@@ -1,10 +1,11 @@
-use core::task::Waker;
-#[allow(unused_imports)]
-use crate::{MRBIterator, WorkIter};
 use crate::iterators::async_iterators::async_macros::{gen_common_futs_fn, waker_registerer};
 use crate::iterators::async_iterators::{AsyncIterator, MRBFuture};
+use crate::iterators::iterator_trait::WorkableSlice;
 use crate::iterators::util_macros::delegate;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
+#[allow(unused_imports)]
+use crate::{MRBIterator, iterators::WorkIter};
+use core::task::Waker;
 
 #[doc = r##"
 Async version of [`WorkIter`].

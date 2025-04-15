@@ -1,10 +1,12 @@
-#[allow(unused_imports)]
-use core::mem::MaybeUninit;
+#[cfg(doc)]
+use {
+    core::mem::MaybeUninit,
+    crate::iterators::Detached,
+    crate::iterators::ConsIter
+};
 
-#[allow(unused_imports)]
-use crate::ConsIter;
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
-use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
+use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator, WorkableSlice};
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
@@ -157,6 +159,23 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
         self._push(value, f)
     }
 
+    #[cfg(feature = "vmem")]
+    #[inline]
+    fn _push_slice(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()> {
+        let count = slice.len();
+
+        if let Some(binding) = self.next_chunk_mut(count) {
+        
+            f(binding, slice);
+
+            unsafe { self.advance(count) };
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    #[cfg(not(feature = "vmem"))]
     #[inline]
     fn _push_slice(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()> {
         let count = slice.len();
@@ -338,21 +357,20 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     ///
     /// # Safety
     /// The retrieved items must be initialised! For more info, refer to [`MaybeUninit::assume_init_mut`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#method.assume_init_mut).
-    pub unsafe fn get_next_slices_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])> {
+    pub unsafe fn get_next_slices_mut<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
         self.next_chunk_mut(count)
     }
 }
 
 pub mod test {
-
     #[test]
     fn cached_avail() {
-        use crate::{ConcurrentStackRB, StackSplit};
         use super::*;
+        use crate::{ConcurrentHeapRB, HeapSplit};
 
-        const BUFFER_SIZE: usize = 10;
+        const BUFFER_SIZE: usize = 4095;
         
-        let mut buf = ConcurrentStackRB::<u32, { BUFFER_SIZE + 1 }>::default();
+        let buf = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1);
         let (mut prod, mut cons) = buf.split();
 
         assert_eq!(prod.cached_avail, 0);
@@ -363,14 +381,14 @@ pub mod test {
 
         unsafe { prod.advance(2); }
 
-        assert_eq!(prod.cached_avail, 8);
+        assert_eq!(prod.cached_avail, BUFFER_SIZE - 2);
 
         unsafe { cons.advance(1); }
 
-        assert_eq!(prod.cached_avail, 8);
+        assert_eq!(prod.cached_avail, BUFFER_SIZE - 2);
 
         prod.check(10);
 
-        assert_eq!(prod.cached_avail, 9);
+        assert_eq!(prod.cached_avail, BUFFER_SIZE - 2);
     }
 }

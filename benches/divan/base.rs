@@ -1,7 +1,7 @@
-use mutringbuf::{ConcurrentStackRB, MRBIterator, StackSplit, LocalStackRB, ConcurrentHeapRB, HeapSplit};
+use mutringbuf::{MRBIterator, HeapSplit, LocalHeapRB};
 use divan::black_box;
 
-const RB_SIZE: usize = 256;
+const BUFFER_SIZE: usize = 4096;
 const BATCH_SIZE: usize = 100;
 
 fn main() {
@@ -10,10 +10,10 @@ fn main() {
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_local(b: divan::Bencher) {
-    let mut buf = LocalStackRB::<u64, {RB_SIZE}>::default();
+    let buf = LocalHeapRB::default(BUFFER_SIZE);
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
         prod.push(1).unwrap();
@@ -24,10 +24,10 @@ fn push_pop_local(b: divan::Bencher) {
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_shared(b: divan::Bencher) {
-    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
+    let buf = LocalHeapRB::default(BUFFER_SIZE);
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
         prod.push(1).unwrap();
@@ -38,11 +38,11 @@ fn push_pop_shared(b: divan::Bencher) {
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_x100(b: divan::Bencher) {
-    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
+    let buf = LocalHeapRB::default(BUFFER_SIZE);
 
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
         for _ in 0..BATCH_SIZE {
@@ -57,11 +57,11 @@ fn push_pop_x100(b: divan::Bencher) {
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_x100_local(b: divan::Bencher) {
-    let mut buf = LocalStackRB::<u64, {RB_SIZE}>::default();
+    let buf = LocalHeapRB::default(BUFFER_SIZE);
 
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
         for _ in 0..BATCH_SIZE {
@@ -75,11 +75,11 @@ fn push_pop_x100_local(b: divan::Bencher) {
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_x100_heap(b: divan::Bencher) {
-    let buf = ConcurrentHeapRB::<u64>::default(RB_SIZE);
+    let buf = LocalHeapRB::default(BUFFER_SIZE);
 
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
         for _ in 0..BATCH_SIZE {
@@ -93,7 +93,7 @@ fn push_pop_x100_heap(b: divan::Bencher) {
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_work(b: divan::Bencher) {
-    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
+    let buf = LocalHeapRB::default(BUFFER_SIZE);
     let (mut prod, mut work, mut cons) = buf.split_mut();
 
     #[inline]
@@ -101,7 +101,7 @@ fn push_pop_work(b: divan::Bencher) {
         *x += 1u64;
     }
 
-    for _ in 0..RB_SIZE / 2 {
+    for _ in 0..BUFFER_SIZE / 2 {
         prod.push(1).unwrap();
     }
 

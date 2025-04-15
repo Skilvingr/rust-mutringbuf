@@ -1,13 +1,16 @@
 extern crate alloc;
 
-use mutringbuf::ConcurrentHeapRB;
 use mutringbuf::iterators::async_iterators::AsyncIterator;
 
-const BUFFER_SIZE: usize = 300;
+const BUFFER_SIZE: usize = 4096;
 
 #[test]
 fn test_push_work_pop_single_and_slice() {
-    let buf = ConcurrentHeapRB::from(vec![0; BUFFER_SIZE + 1]);
+    #[cfg(not(feature = "vmem"))]
+    let buf = mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE]);
+    #[cfg(feature = "vmem")]
+    let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE]);
+    
     let (
         mut as_prod,
         mut as_work,
@@ -29,6 +32,7 @@ fn test_push_work_pop_single_and_slice() {
         let slice: Vec<i32> = (0..BUFFER_SIZE as i32 /2).collect();
         as_prod.push_slice(&slice).await;
 
+        #[cfg(not(feature = "vmem"))]
         if let Some((h, t)) = as_work.get_workable_slice_avail().await {
             let len = h.len() + t.len();
 
@@ -39,8 +43,27 @@ fn test_push_work_pop_single_and_slice() {
             unsafe { as_work.advance(len); }
         }
 
+        #[cfg(feature = "vmem")]
+        if let Some(r) = as_work.get_workable_slice_avail().await {
+            let len = r.len();
+
+            for x in r {
+                *x += 1;
+            }
+
+            unsafe { as_work.advance(len); }
+        }
+
+        #[cfg(not(feature = "vmem"))]
         if let Some((h, t)) = as_cons.peek_available().await {
             for (x, y) in h.iter().chain(t).zip(&slice) {
+                assert_eq!(*x, y + 1);
+            }
+        }
+        
+        #[cfg(feature = "vmem")]
+        if let Some(r) = as_cons.peek_available().await {
+            for (x, y) in r.iter().zip(&slice) {
                 assert_eq!(*x, y + 1);
             }
         }

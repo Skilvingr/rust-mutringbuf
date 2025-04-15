@@ -1,7 +1,7 @@
-use mutringbuf::{ConcurrentStackRB, MRBIterator, StackSplit};
 use divan::black_box;
+use mutringbuf::{HeapSplit, ConcurrentHeapRB, MRBIterator,};
 
-const RB_SIZE: usize = 256;
+const BUFFER_SIZE: usize = 4096;
 
 fn main() {
     divan::main();
@@ -9,10 +9,10 @@ fn main() {
 
 #[divan::bench(sample_size = 100000)]
 fn advance(b: divan::Bencher) {
-    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
+    let buf = ConcurrentHeapRB::default(BUFFER_SIZE);
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
         unsafe { prod.advance(1); }
@@ -22,12 +22,12 @@ fn advance(b: divan::Bencher) {
 
 #[divan::bench(sample_size = 100000)]
 fn available(b: divan::Bencher) {
-    let mut buf = ConcurrentStackRB::<u64, {RB_SIZE}>::default();
+    let buf = ConcurrentHeapRB::default(BUFFER_SIZE);
     let (mut prod, mut cons) = buf.split();
 
-    prod.push_slice(&[0; RB_SIZE / 4]);
+    prod.push_slice(&[0; BUFFER_SIZE / 4]);
     cons.reset_index();
-    prod.push_slice(&[1; RB_SIZE / 2]);
+    prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
         black_box(prod.available());

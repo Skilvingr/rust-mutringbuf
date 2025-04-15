@@ -1,8 +1,15 @@
+#![cfg_attr(doc, doc(cfg(not(feature = "vmem"))))]
+#![cfg(any(not(feature = "vmem"), doc))]
+
+pub mod rb;
+
 use core::ops::Index;
 
 use crate::ring_buffer::storage::Storage;
-use crate::UnsafeSyncCell;
+use crate::{MutRB, UnsafeSyncCell};
+use crate::iterators::{ConsIter, ProdIter, WorkIter};
 
+/// Stack-allocated storage.
 pub struct StackStorage<T, const N: usize> {
     inner: [UnsafeSyncCell<T>; N]
 }
@@ -52,4 +59,18 @@ impl<T, const N: usize> Storage for StackStorage<T, N> {
     fn len(&self) -> usize {
         self.inner.len()
     }
+}
+
+/// Trait needed to call `split` method on a stack-allocated buffer.
+pub trait StackSplit<B: MutRB> {
+    /// Borrows the buffer, yielding two iterators. See:
+    /// - [`ProdIter`];
+    /// - [`ConsIter`].
+    fn split(&mut self) -> (ProdIter<B>, ConsIter<B, false>);
+
+    /// Borrows the buffer, yielding three iterators. See:
+    /// - [`ProdIter`];
+    /// - [`WorkIter`];
+    /// - [`ConsIter`].
+    fn split_mut(&mut self) -> (ProdIter<B>, WorkIter<B>, ConsIter<B, true>);
 }

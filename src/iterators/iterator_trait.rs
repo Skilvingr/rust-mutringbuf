@@ -6,10 +6,16 @@ use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, StorageManager};
 
 /// Returned by slice-specialised functions.
-/// # Fields:
-/// - 1: head
-/// - 2: tail
+#[cfg(feature = "vmem")]
+pub type WorkableSlice<'a, T> = &'a mut [T];
+#[cfg(not(feature = "vmem"))]
 pub type WorkableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
+
+/// Returned by slice-specialised functions.
+#[cfg(feature = "vmem")]
+pub type NonWorkableSlice<'a, T> = &'a [T];
+#[cfg(not(feature = "vmem"))]
+pub type NonWorkableSlice<'a, T> = (&'a [T], &'a [T]);
 
 
 /// Trait implemented by iterators.
@@ -219,8 +225,32 @@ pub(crate) trait PrivateMRBIterator<T> {
         self.check(1).then(|| self.buffer().inner()[self._index()].as_mut_ptr())
     }
 
+    #[cfg(feature = "vmem")]
     #[inline]
-    fn next_chunk<'a>(&mut self, count: usize) -> Option<(&'a [T], &'a [T])> {
+    fn next_chunk<'a>(&mut self, count: usize) -> Option<NonWorkableSlice<'a, T>> {
+        self.check(count).then(|| {
+            unsafe {
+                transmute::<&[UnsafeSyncCell<T>], &[T]>(
+                    slice::from_raw_parts(self.buffer().inner().as_ptr().add(self._index()), count)
+                )
+            }
+        })
+    }
+    #[cfg(feature = "vmem")]
+    #[inline]
+    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
+        self.check(count).then(|| {
+            unsafe {
+                transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
+                    slice::from_raw_parts_mut(self.buffer().inner_mut().as_mut_ptr().add(self._index()), count)
+                )
+            }
+        })
+    }
+
+    #[cfg(not(feature = "vmem"))]
+    #[inline]
+    fn next_chunk<'a>(&mut self, count: usize) -> Option<NonWorkableSlice<'a, T>> {
         self.check(count).then(|| {
 
             let len = self.buffer().inner_len();
@@ -249,8 +279,9 @@ pub(crate) trait PrivateMRBIterator<T> {
         })
     }
 
+    #[cfg(not(feature = "vmem"))]
     #[inline]
-    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<(&'a mut [T], &'a mut [T])> {
+    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
         self.check(count).then(|| {
 
             let len = self.buffer().inner_len();

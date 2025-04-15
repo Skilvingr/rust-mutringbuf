@@ -1,4 +1,6 @@
-#[cfg(not(feature = "alloc"))]
+#![cfg(not(feature = "vmem"))]
+
+
 use std::{
     sync::Arc,
     sync::atomic::{AtomicBool, AtomicUsize},
@@ -6,30 +8,27 @@ use std::{
     thread,
     time::Duration
 };
-#[cfg(not(feature = "alloc"))]
 use mutringbuf::{ConcurrentStackRB, MRBIterator as MRBIt, LocalStackRB, StackSplit};
 
-#[cfg(not(feature = "alloc"))]
 const BUFFER_SIZE: usize = 300;
 
-#[cfg(not(feature = "alloc"))]
 #[test]
 fn test_local_stack() {
-    let mut buf = LocalStackRB::<usize, { BUFFER_SIZE + 1 }>::default();
+    let mut buf = LocalStackRB::<usize, { BUFFER_SIZE }>::default();
     let (mut prod, mut work, mut cons) = buf.split_mut();
 
-    assert_eq!(prod.available(), BUFFER_SIZE);
+    assert_eq!(prod.available(), BUFFER_SIZE - 1);
     assert_eq!(work.available(), 0);
     assert_eq!(cons.available(), 0);
 
-    for i in 0..BUFFER_SIZE {
+    for i in 0..BUFFER_SIZE - 1 {
         let _ = prod.push(i);
     }
     assert_eq!(prod.available(), 0);
-    assert_eq!(work.available(), BUFFER_SIZE);
+    assert_eq!(work.available(), BUFFER_SIZE - 1);
     assert_eq!(cons.available(), 0);
 
-    for _ in 0..BUFFER_SIZE {
+    for _ in 0..BUFFER_SIZE - 1 {
         if let Some(data) = work.get_workable() {
             *data += 1;
             unsafe { work.advance(1) };
@@ -37,24 +36,19 @@ fn test_local_stack() {
     }
     assert_eq!(prod.available(), 0);
     assert_eq!(work.available(), 0);
-    assert_eq!(cons.available(), BUFFER_SIZE);
+    assert_eq!(cons.available(), BUFFER_SIZE - 1);
 
-    for i in 0..BUFFER_SIZE {
+    for i in 0..BUFFER_SIZE - 1 {
         assert_eq!(cons.pop().unwrap(), i + 1);
     }
 
-    assert_eq!(prod.available(), BUFFER_SIZE);
+    assert_eq!(prod.available(), BUFFER_SIZE - 1);
     assert_eq!(work.available(), 0);
     assert_eq!(cons.available(), 0);
 }
 
-
-#[cfg(not(feature = "alloc"))]
-const RB_SIZE: usize = 30;
-
-#[cfg(not(feature = "alloc"))]
 fn rb_fibonacci() {
-    let mut buf = ConcurrentStackRB::<usize, RB_SIZE>::default();
+    let mut buf = ConcurrentStackRB::<usize, BUFFER_SIZE>::default();
     let (mut prod, mut work, mut cons) = buf.split_mut();
 
     // Flag variable to stop threads
@@ -141,7 +135,7 @@ fn rb_fibonacci() {
     let mut work = worker.join().unwrap();
     let (mut cons, consumed) = consumer.join().unwrap();
 
-    assert_eq!(prod.available(), RB_SIZE - 1);
+    assert_eq!(prod.available(), BUFFER_SIZE - 1);
     assert_eq!(work.available(), 0);
     assert_eq!(cons.available(), 0);
     assert_eq!(consumed, produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>());
@@ -152,7 +146,6 @@ fn rb_fibonacci() {
     // println!("{:?}", produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>())
 }
 
-#[cfg(not(feature = "alloc"))]
 #[test]
 fn fibonacci_test_stack() {
     for _ in 0 .. 100 {
@@ -160,7 +153,6 @@ fn fibonacci_test_stack() {
     }
 }
 
-#[cfg(not(feature = "alloc"))]
 pub fn fib(n: usize) -> usize {
     match n {
         1 | 2 => 1,

@@ -7,8 +7,7 @@ common_def!();
 
 #[test]
 fn test_push_work_pop_single() {
-    let mut buf = get_buf!(Concurrent);
-    let (mut prod, mut work, mut cons) = buf.split_mut();
+    let (mut prod, mut work, mut cons) = get_buf!(Concurrent).split_mut();
 
     assert_eq!(prod.available(), BUFFER_SIZE - 1);
     assert_eq!(work.available(), 0);
@@ -42,8 +41,7 @@ fn test_push_work_pop_single() {
 
 #[test]
 fn test_push_work_pop_slice() {
-    let mut buf = get_buf!(Concurrent);
-    let (mut prod, mut work, mut cons) = buf.split_mut();
+    let (mut prod, mut work, mut cons) = get_buf!(Concurrent).split_mut();
 
     let slice = (0..BUFFER_SIZE - 1).collect::<Vec<usize>>();
 
@@ -58,8 +56,8 @@ fn test_push_work_pop_slice() {
     assert_eq!(cons.available(), 0);
 
 
-    if let Some((h, t)) = work.get_workable_slice_exact(BUFFER_SIZE - 1) {
-        for i in h.iter_mut().chain(t) {
+    if let Some(res) = work.get_workable_slice_exact(BUFFER_SIZE - 1) {
+        for i in res {
             *i += 1;
         }
         unsafe { work.advance(BUFFER_SIZE - 1) };
@@ -71,8 +69,8 @@ fn test_push_work_pop_slice() {
     assert_eq!(cons.available(), BUFFER_SIZE - 1);
 
 
-    if let Some((h, t)) = cons.peek_slice(BUFFER_SIZE - 1) {
-        for (consumed, i) in [h, t].concat().iter().zip(slice) {
+    if let Some(res) = cons.peek_slice(BUFFER_SIZE - 1) {
+        for (consumed, i) in res.iter().zip(slice) {
             assert_eq!(*consumed, i + 1);
         }
     }
@@ -85,8 +83,7 @@ fn test_push_work_pop_slice() {
 
 #[test]
 fn test_reset() {
-    let mut buf = get_buf!(Concurrent);
-    let (mut prod, mut work, mut cons) = buf.split_mut();
+    let (mut prod, mut work, mut cons) = get_buf!(Concurrent).split_mut();
 
     let two_thirds_slice = (0..BUFFER_SIZE/3 * 2).collect::<Vec<usize>>();
     let slice = (0..BUFFER_SIZE - 1).collect::<Vec<usize>>();

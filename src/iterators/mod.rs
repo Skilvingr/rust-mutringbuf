@@ -1,6 +1,23 @@
+//! Module containing sync and async iterators.
+
 mod iterator_trait;
-pub mod sync_iterators;
+pub(crate) mod sync_iterators;
 pub mod async_iterators;
+
+#[cfg(any(feature = "async", doc))]
+pub use async_iterators::{
+    cons_iter::AsyncConsIter,
+    detached::AsyncDetached,
+    prod_iter::AsyncProdIter,
+    work_iter::AsyncWorkIter
+};
+
+pub use sync_iterators::{
+    cons_iter::ConsIter,
+    detached::Detached,
+    prod_iter::ProdIter,
+    work_iter::WorkIter
+};
 
 use core::ptr;
 pub use iterator_trait::MRBIterator;

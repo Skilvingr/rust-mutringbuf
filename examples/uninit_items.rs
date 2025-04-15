@@ -5,7 +5,7 @@ fn main() {
 
     use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator};
 
-    const RB_SIZE: usize = 5;
+    const RB_SIZE: usize = 4095;
     
     // Indices from 0 to RB_SIZE+1 are uninitialised
     let buf = unsafe { ConcurrentHeapRB::new_zeroed(RB_SIZE + 1) };

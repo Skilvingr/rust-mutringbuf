@@ -5,7 +5,7 @@ fn test_uninit() {
 
     use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator};
 
-    const RB_SIZE: usize = 5;
+    const RB_SIZE: usize = 4095;
 
 
     // Indices from 0 to RB_SIZE+1 are uninitialised

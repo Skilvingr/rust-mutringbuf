@@ -1,10 +1,19 @@
 #![cfg(feature = "alloc")]
 
 pub mod concurrent_fib;
+#[cfg(not(feature = "vmem"))]
 pub mod cons_tests;
+#[cfg(feature = "vmem")]
+pub mod cons_tests_vmem;
 pub mod detached_work_tests;
 pub mod drop;
+#[cfg(not(feature = "vmem"))]
 pub mod integration_tests;
+#[cfg(feature = "vmem")]
+pub mod integration_tests_vmem;
 pub mod prod_tests;
+#[cfg(not(feature = "vmem"))]
 pub mod work_tests;
+#[cfg(feature = "vmem")]
+pub mod work_tests_vmem;
 pub mod multithreading;

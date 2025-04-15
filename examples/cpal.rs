@@ -9,9 +9,8 @@ fn main() {
     use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
     use mutringbuf::{ConcurrentHeapRB, MRBIterator};
     use mutringbuf::HeapSplit;
-
-
-    const BUF_SIZE: usize = 1000000;
+    
+    const BUF_SIZE: usize = 4096 * 500;
     const DELAY_MS: usize = 500;
     const DECAY: f32 = 0.5;
 
@@ -33,12 +32,25 @@ fn main() {
         let mut acc = vec![0f32; delay_samples];
 
         while !stop_clone.load(Relaxed) {
+            #[cfg(not(feature = "vmem"))]
             if let Some((h, t)) = work.get_workable_slice_exact(delay_samples) {
                 let len = h.len() + t.len();
                 h.swap_with_slice(&mut acc[..h.len()]);
                 t.swap_with_slice(&mut acc[h.len()..]);
 
                 for (v, w) in h.iter_mut().chain(t).zip(&acc) {
+                    *v *= DECAY;
+                    *v += *w;
+                }
+
+                unsafe { work.advance(len) };
+            }
+            #[cfg(feature = "vmem")]
+            if let Some(r) = work.get_workable_slice_exact(delay_samples) {
+                let len = r.len();
+                r.swap_with_slice(&mut acc);
+
+                for (v, w) in r.iter_mut().zip(&acc) {
                     *v *= DECAY;
                     *v += *w;
                 }
@@ -64,12 +76,21 @@ fn main() {
         &out_cfg,
         move |slice: &mut [f32], _info: &OutputCallbackInfo| {
             let len = slice.len();
+
+            #[cfg(not(feature = "vmem"))]
             if let Some((h, t)) = cons.peek_slice(len) {
                 slice[.. h.len()].copy_from_slice(h);
                 slice[h.len() ..].copy_from_slice(t);
 
                 unsafe { cons.advance(len) };
+            }
+            #[cfg(feature = "vmem")]
+            if let Some(r) = cons.peek_slice(len) {
+                slice.copy_from_slice(r);
+
+                unsafe { cons.advance(len) };
             } else {
+                // Good!
                 println!("Output iter fell behind!");
             }
         },
