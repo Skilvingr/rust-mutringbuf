@@ -29,6 +29,16 @@ impl<T> From<T> for UnsafeSyncCell<T> {
     }
 }
 
+impl<T: Clone> Clone for UnsafeSyncCell<T> {
+    fn clone(&self) -> Self {
+        if Self::check_zeroed(self.as_mut_ptr() as _) {
+            UnsafeSyncCell::new_zeroed()
+        } else {
+            unsafe { Self::from(self.inner_ref().clone()) }
+        }
+    }
+}
+
 impl<T> UnsafeSyncCell<T> {
     /// Constructs a new instance of `UnsafeSyncCell` which wraps the specified value.
     #[inline]
