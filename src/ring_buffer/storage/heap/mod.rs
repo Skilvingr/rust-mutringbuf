@@ -119,3 +119,21 @@ pub trait HeapSplit<B: MutRB> {
     /// - [`ConsIter`].
     fn split_mut<'buf>(self) -> (ProdIter<'buf, B>, WorkIter<'buf, B>, ConsIter<'buf, B, true>);
 }
+
+pub mod test {
+    #[test]
+    fn from_tests() {
+        use alloc::vec;
+        use crate::{HeapStorage, UnsafeSyncCell};
+        
+        #[cfg(feature = "vmem")]
+        let buf_len = crate::vmem_helper::page_size();
+        #[cfg(not(feature = "vmem"))]
+        let buf_len = 100;
+        
+        let _ = HeapStorage::from(vec![0; buf_len]);
+        let _ = HeapStorage::from(vec![0; buf_len].into_boxed_slice());
+        let _: HeapStorage<i32> = HeapStorage::from(vec![UnsafeSyncCell::new(0i32); buf_len]);
+        let _: HeapStorage<i32> = HeapStorage::from(vec![UnsafeSyncCell::new(0i32); buf_len].into_boxed_slice());
+    }
+}

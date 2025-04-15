@@ -74,3 +74,13 @@ pub trait StackSplit<B: MutRB> {
     /// - [`ConsIter`].
     fn split_mut(&mut self) -> (ProdIter<B>, WorkIter<B>, ConsIter<B, true>);
 }
+
+pub mod test {
+    #[test]
+    fn from_tests() {
+        use crate::{StackStorage, UnsafeSyncCell};
+        
+        let _ = StackStorage::from([0; 100]);
+        let _: StackStorage<i32, 100> = StackStorage::from(core::array::from_fn(|_| UnsafeSyncCell::new(0)));
+    }
+}
