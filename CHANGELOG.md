@@ -1,3 +1,9 @@
+<a name="v0.5.1"></a>
+## v0.5.1 (17/04/2025)
+
+* add method `UnsafeSyncCell::take_inner`.
+* fix vmem optimisation.
+
 <a name="v0.5.0"></a>
 ## v0.5.0 (15/04/2025)
 

@@ -43,6 +43,8 @@ is currently limited to `unix` targets. The buffer size must be a multiple of th
 When using the `default` and `new_zeroed` methods, the correct size is calculated based on the provided minimum size.
 However, when using the `from` methods, the user must ensure this requirement is met to avoid panics.
 
+At the moment, the feature has been tested on GNU/Linux, Android and iOS.
+
 ## Usage
 
 ### Note on Uninitialised Items
