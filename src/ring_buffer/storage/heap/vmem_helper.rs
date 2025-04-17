@@ -27,33 +27,22 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
     
     unsafe {
         let size = size_of_val(value);
-
-        let fd = libc::memfd_create(c"mutringbuf".as_ptr(), 0);
-        
-        assert_ne!(fd, -1, "memfd_create failed");
-        if libc::ftruncate(fd, size as libc::off_t) == -1 {
-            assert_eq!(libc::close(fd), 0, "close failed");
-            panic!("ftruncate failed");
-        }
-        
         
         let buffer = libc::mmap(
             ptr::null_mut(),
             2 * size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_SHARED,
-            fd, 0
+            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+            -1, 0
         );
         
         libc::mmap(
             buffer.byte_add(size),
             size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_SHARED | libc::MAP_FIXED,
-            fd, 0
+            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED,
+            -1, 0
         );
-
-        assert_eq!(libc::close(fd), 0, "close failed");
 
         let r = buffer as *mut UnsafeSyncCell<T>;
         libc::memcpy(value.as_ptr() as _, r as _, size_of_val(value));
