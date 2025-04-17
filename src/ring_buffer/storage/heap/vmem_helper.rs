@@ -33,8 +33,8 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
 
         #[cfg(not(target_os = "linux"))]
         let fd = {
-            let fd = libc::open(c"mutringbuf".as_ptr(), 0);
-            libc::unlink(c"mutringbuf".as_ptr());
+            let fd = libc::shm_open(c"mutringbuf".as_ptr(), 0);
+            libc::shm_unlink(c"mutringbuf".as_ptr());
             fd
         };
         
