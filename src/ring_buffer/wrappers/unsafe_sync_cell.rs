@@ -61,8 +61,10 @@ impl<T> UnsafeSyncCell<T> {
     }
 
     /// Takes inner value, replacing its old location with zeros.
+    /// # Safety
+    /// The cell will be uninitialised and so must be initialised again with [`Self::as_mut_ptr`].
     #[inline]
-    pub(crate) unsafe fn take_inner(&self) -> T {
+    pub unsafe fn take_inner(&self) -> T {
         core::mem::replace(&mut *self.0.get(), MaybeUninit::<T>::zeroed()).assume_init()
     }
 
