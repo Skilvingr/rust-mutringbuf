@@ -26,47 +26,24 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
     assert_eq!(value.len() % page_size, 0, "must be a multiple of page size, which is: {}.", page_size);
     
     unsafe {
-        let size = size_of_val(value);
-
-        #[cfg(any(target_os = "linux", target_os = "android"))]
-        let fd = {
-            let fd = libc::memfd_create(c"mutringbuf".as_ptr(), 0);
-            assert_ne!(fd, -1, "memfd_create failed.");
-            fd
-        };
-
-        #[cfg(not(any(target_os = "linux", target_os = "android")))]
-        let fd = {
-            let fd = libc::shm_open(c"mutringbuf".as_ptr(), libc::O_CREAT | libc::O_RDWR);
-            libc::shm_unlink(c"mutringbuf".as_ptr());
-            assert_ne!(fd, -1, "memfd_create failed. ERRNO: {}", libc::__error());
-            fd
-        };
-        
-        if libc::ftruncate(fd, size as libc::off_t) == -1 {
-            assert_eq!(libc::close(fd), 0, "close failed");
-            panic!("ftruncate failed");
-        }
-        
+        let size = size_of_val(value);        
         
         let buffer = libc::mmap(
             ptr::null_mut(),
             2 * size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_SHARED,
-            fd, 0
+            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+            -1, 0
         );
         
         libc::mmap(
             buffer.byte_add(size),
             size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_SHARED | libc::MAP_FIXED,
-            fd, 0
+            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_FIXED,
+            -1, 0
         );
-
-        assert_eq!(libc::close(fd), 0, "close failed");
-
+        
         let r = buffer as *mut UnsafeSyncCell<T>;
         libc::memcpy(value.as_ptr() as _, r as _, size_of_val(value));
         
