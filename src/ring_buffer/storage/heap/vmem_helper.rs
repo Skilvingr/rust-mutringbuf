@@ -28,7 +28,15 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
     unsafe {
         let size = size_of_val(value);
 
+        #[cfg(target_os = "linux")]
         let fd = libc::memfd_create(c"mutringbuf".as_ptr(), 0);
+
+        #[cfg(not(target_os = "linux"))]
+        let fd = {
+            let fd = libc::open(c"mutringbuf".as_ptr(), 0);
+            libc::unlink(c"mutringbuf".as_ptr());
+            fd
+        };
         
         assert_ne!(fd, -1, "memfd_create failed");
         if libc::ftruncate(fd, size as libc::off_t) == -1 {
