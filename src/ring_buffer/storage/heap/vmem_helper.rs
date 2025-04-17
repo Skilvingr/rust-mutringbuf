@@ -28,12 +28,12 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
     unsafe {
         let size = size_of_val(value);
 
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "android"))]
         let fd = libc::memfd_create(c"mutringbuf".as_ptr(), 0);
 
-        #[cfg(not(target_os = "linux"))]
+        #[cfg(not(any(target_os = "linux", target_os = "android")))]
         let fd = {
-            let fd = libc::shm_open(c"mutringbuf".as_ptr(), 0);
+            let fd = libc::shm_open(c"mutringbuf".as_ptr(), libc::O_CREAT | libc::O_RDWR);
             libc::shm_unlink(c"mutringbuf".as_ptr());
             fd
         };
