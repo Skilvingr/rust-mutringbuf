@@ -41,9 +41,21 @@ virtual memory. More information can be found [here](https://en.wikipedia.org/wi
 This crate supports this optimisation through the `vmem` feature, which can only be used with heap-allocated buffers and
 is currently limited to `unix` targets. The buffer size must be a multiple of the system's page size (usually `4096`).
 When using the `default` and `new_zeroed` methods, the correct size is calculated based on the provided minimum size.
-However, when using the `from` methods, the user must ensure this requirement is met to avoid panics.
+However, when using the `from` methods, the user must ensure that this requirement is met to avoid panics.
 
-At the moment, the feature has been tested on GNU/Linux, Android and iOS.
+At the moment, the feature has been tested on GNU/Linux and Android.
+
+[//]: # (### A Note About iOS)
+
+[//]: # (`vmem` works by allocating shared memory. While this doesn't represent a problem on other platforms,)
+
+[//]: # (it is different on iOS.)
+
+[//]: # (Users should create an app group)
+
+[//]: # (&#40;more information [here]&#40;https://developer.apple.com/documentation/xcode/configuring-app-groups&#41;&#41;)
+
+[//]: # (and then set the environment variable `IOS_APP_GROUP_NAME` to the name of that group.)
 
 ## Usage
 
