@@ -37,7 +37,7 @@ unsafe fn open_fd() -> c_int {
     let mut name;
 
     let fd = loop {
-        name = CString::new(format!("{}{}{}", group_name, "/mutringbuf", rand())).unwrap();
+        name = CString::new(format!("{}{}{}", group_name, "/mrb", rand() % 99)).unwrap();
         let fd = libc::shm_open(
             name.as_ptr(),
             libc::O_CREAT | libc::O_RDWR | libc::O_EXCL,
