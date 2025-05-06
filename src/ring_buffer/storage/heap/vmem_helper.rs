@@ -57,7 +57,7 @@ unsafe fn open_fd() -> c_int {
 
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
 unsafe fn open_fd() -> c_int {
-    libc::memfd_create(c"/mutringbuf".as_ptr(), 0)
+    libc::memfd_create(c"/mrb".as_ptr(), 0)
 }
 
 pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
@@ -95,7 +95,7 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
         assert_eq!(libc::close(fd), 0, "close failed");
 
         let r = buffer as *mut UnsafeSyncCell<T>;
-        libc::memcpy(value.as_ptr() as _, r as _, size_of_val(value));
+        //libc::memcpy(value.as_ptr() as _, r as _, size_of_val(value));
 
         r
     }
