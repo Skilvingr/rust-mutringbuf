@@ -79,7 +79,7 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
             ptr::null_mut(),
             2 * size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE,
+            libc::MAP_SHARED,
             fd, 0
         );
         
@@ -87,14 +87,14 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
             buffer.byte_add(size),
             size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_PRIVATE | libc::MAP_FIXED,
+            libc::MAP_SHARED | libc::MAP_FIXED,
             fd, 0
         );
 
         assert_eq!(libc::close(fd), 0, "close failed");
 
         let r = buffer as *mut UnsafeSyncCell<T>;
-        libc::memcpy(r, value.as_ptr(), size_of_val(value));
+        libc::memcpy(r as _, value.as_ptr() as _, size_of_val(value));
 
         r
     }
