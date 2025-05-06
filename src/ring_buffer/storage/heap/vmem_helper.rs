@@ -48,8 +48,7 @@ unsafe fn open_fd() -> c_int {
             break fd;
         }
     };
-
-    assert_ne!(fd, -1, "AAAAAAAAAAAAAAAAAAAAAAAA: {}", *libc::__error());
+    
     assert_eq!(libc::shm_unlink(name.as_ptr()), 0, "shm_unlink failed");
 
     fd
@@ -84,6 +83,8 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
             fd, 0
         );
 
+        panic!("AAAAAAAAAAAAAAAAAAAAAAAA: {}", *libc::__error());
+        
         libc::mmap(
             buffer.byte_add(size),
             size as libc::size_t,
@@ -93,7 +94,7 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
         );
 
         assert_eq!(libc::close(fd), 0, "close failed");
-
+        
         let r = buffer as *mut UnsafeSyncCell<T>;
         //libc::memcpy(value.as_ptr() as _, r as _, size_of_val(value));
 
