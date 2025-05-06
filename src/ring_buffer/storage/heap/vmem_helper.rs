@@ -49,7 +49,7 @@ unsafe fn open_fd() -> c_int {
         }
     };
 
-    assert_ne!(fd, -1, "AAAAAAAAAAAAAAAAAAAAAAAA");
+    assert_ne!(fd, -1, "AAAAAAAAAAAAAAAAAAAAAAAA: {}", libc::__error());
     assert_eq!(libc::shm_unlink(name.as_ptr()), 0, "shm_unlink failed");
 
     fd
