@@ -2,6 +2,7 @@
 #![allow(unused_mut)]
 
 pub mod async_tests;
+pub mod common;
 pub mod sync_tests;
 
 #[cfg(feature = "vmem")]

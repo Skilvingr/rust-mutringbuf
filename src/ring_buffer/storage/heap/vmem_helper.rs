@@ -28,16 +28,19 @@ unsafe fn open_fd() -> c_int {
     use alloc::format;
     use libc::rand;
 
-    let group_name = env!(
-    "IOS_APP_GROUP_NAME",
-    "In order to use feature vmem in ios, the env variable IOS_APP_GROUP_NAME must be filled with the app's group name."
-    );
+    let group_name = option_env!("IOS_APP_GROUP_NAME");
 
     libc::srand(libc::time(ptr::null_mut()) as libc::c_uint);
     let mut name;
 
     let fd = loop {
-        name = CString::new(format!("{}{}{}", group_name, "/mrb", rand() % 99)).unwrap();
+        name = CString::new(
+            if let Some(gn) = group_name {
+                format!("{}{}{}", gn, "/mrb", rand() % 99)
+            } else {
+                format!("{}{}", "/mrb", rand() % 99)
+            }
+        ).unwrap();
         let fd = libc::shm_open(
             name.as_ptr(),
             libc::O_CREAT | libc::O_RDWR | libc::O_EXCL,
@@ -78,18 +81,29 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
         let buffer = libc::mmap(
             ptr::null_mut(),
             2 * size as libc::size_t,
+            libc::PROT_NONE,
+            libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
+            -1, 0
+        );
+        assert_ne!(buffer as isize, -1, "mmap 1 failed");
+        
+        let addr = libc::mmap(
+            buffer,
+            size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
-            libc::MAP_SHARED,
+            libc::MAP_SHARED | libc::MAP_FIXED,
             fd, 0
         );
+        assert_ne!(addr as isize, -1, "mmap 2 failed");
         
-        libc::mmap(
+        let addr = libc::mmap(
             buffer.byte_add(size),
             size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
             libc::MAP_SHARED | libc::MAP_FIXED,
             fd, 0
         );
+        assert_ne!(addr as isize, -1, "mmap 3 failed");
 
         assert_eq!(libc::close(fd), 0, "close failed");
 
