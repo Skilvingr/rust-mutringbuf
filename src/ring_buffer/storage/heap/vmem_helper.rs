@@ -108,7 +108,7 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
         assert_eq!(libc::close(fd), 0, "close failed");
 
         let r = buffer as *mut UnsafeSyncCell<T>;
-        libc::memcpy(r as _, value.as_ptr() as _, size_of_val(value));
+        ptr::copy_nonoverlapping(value.as_ptr(), r, value.len());
 
         r
     }
