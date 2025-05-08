@@ -1,3 +1,9 @@
+<a name="v0.5.2"></a>
+## v0.5.2 (Unreleased)
+
+* fix vmem optimisation.
+* Add additional tests.
+
 <a name="v0.5.1"></a>
 ## v0.5.1 (17/04/2025)
 

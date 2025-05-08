@@ -2,7 +2,7 @@
 
 [package]
 name = "mutringbuf"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2021"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
@@ -21,12 +21,13 @@ async = []
 
 [dependencies]
 crossbeam-utils = { version = "0.8.21", default-features = false }
-libc = { version = "1.0.0-alpha.1", optional = true }
+libc = { version = "0.2", optional = true }
 
 [dev-dependencies]
 divan = "0.1.21"
 tokio-test = { version = "0.4.4" }
 iai-callgrind = "0.14.0"
+libc = "0.2"
 
 [target.'cfg(cpal)'.dev-dependencies]
 cpal = { version = "0.15.3" }
