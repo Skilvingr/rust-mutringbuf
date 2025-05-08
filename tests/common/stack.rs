@@ -1,6 +1,5 @@
 #![cfg(not(feature = "vmem"))]
 
-
 use std::{
     sync::Arc,
     sync::atomic::{AtomicBool, AtomicUsize},
@@ -8,9 +7,10 @@ use std::{
     thread,
     time::Duration
 };
-use mutringbuf::{ConcurrentStackRB, MRBIterator as MRBIt, LocalStackRB, StackSplit};
+use mutringbuf::{ConcurrentStackRB, MRBIterator as MRBIt, LocalStackRB};
+use crate::common_def;
 
-const BUFFER_SIZE: usize = 300;
+common_def!();
 
 #[test]
 fn test_local_stack() {

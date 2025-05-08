@@ -4,17 +4,15 @@ use std::sync::atomic::Ordering::{Acquire, Release};
 use std::time::Instant;
 
 use mutringbuf::iterators::async_iterators::AsyncIterator;
+use crate::common_def;
 
-#[cfg(feature = "vmem")]
-const RB_SIZE: usize = 4096;
-#[cfg(not(feature = "vmem"))]
-const RB_SIZE: usize = 100;
+common_def!(buf);
 
 fn rb_fibonacci() {
     #[cfg(not(feature = "vmem"))]
-    let buf = mutringbuf::ConcurrentStackRB::from([0; RB_SIZE]);
+    let buf = mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE]);
     #[cfg(feature = "vmem")]
-    let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; RB_SIZE]);
+    let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE]);
 
     let (
         mut as_prod,
@@ -110,7 +108,7 @@ fn rb_fibonacci() {
         let mut work = worker.await;
         let (mut cons, consumed) = consumer.await;
 
-        assert_eq!(prod.available(), RB_SIZE - 1);
+        assert_eq!(prod.available(), BUFFER_SIZE - 1);
         assert_eq!(work.available(), 0);
         assert_eq!(cons.available(), 0);
         assert_eq!(consumed, produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>());

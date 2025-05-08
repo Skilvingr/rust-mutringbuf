@@ -1,8 +1,9 @@
 extern crate alloc;
 
 use mutringbuf::iterators::async_iterators::AsyncIterator;
+use crate::common_def;
 
-const BUFFER_SIZE: usize = 4096;
+common_def!(buf);
 
 #[test]
 fn test_push_work_pop_single_and_slice() {

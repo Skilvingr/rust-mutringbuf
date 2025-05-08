@@ -2,12 +2,19 @@
 #![allow(unused_mut)]
 
 pub mod async_tests;
+pub mod common;
 pub mod sync_tests;
 
 #[cfg(feature = "vmem")]
 macro_rules! common_def {
     () => {
         use mutringbuf::HeapSplit;
+        common_def!(buf);
+    };
+    (buf) => {
+        #[cfg(target_arch = "aarch64")]
+        const BUFFER_SIZE: usize = 16384;
+        #[cfg(not(target_arch = "aarch64"))]
         const BUFFER_SIZE: usize = 4096;
     }
 }
@@ -15,6 +22,9 @@ macro_rules! common_def {
 macro_rules! common_def {
     () => {
         use mutringbuf::StackSplit;
+        common_def!(buf);
+    };
+    (buf) => {
         const BUFFER_SIZE: usize = 400;
     }
 }
