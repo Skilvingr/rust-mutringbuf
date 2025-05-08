@@ -1,5 +1,5 @@
 <a name="v0.5.2"></a>
-## v0.5.2 (Unreleased)
+## v0.5.2 (08/05/2025)
 
 * fix vmem optimisation.
 * Add additional tests.
