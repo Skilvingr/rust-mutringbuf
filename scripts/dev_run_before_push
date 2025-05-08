@@ -1,6 +1,6 @@
 #!/bin/bash
 
 ./miri_test &&
-cargo +nightly test --features vmem --features async --test tests
+cargo +nightly test --features vmem --features async --test tests &&
 cargo bench --no-run &&
 RUSTFLAGS="--cfg cpal" cargo build --example cpal
