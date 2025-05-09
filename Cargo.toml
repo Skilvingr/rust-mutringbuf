@@ -2,7 +2,7 @@
 
 [package]
 name = "mutringbuf"
-version = "0.5.2"
+version = "0.5.3"
 edition = "2021"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
@@ -34,6 +34,9 @@ cpal = { version = "0.15.3" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(cpal)'] }
+
+[package.metadata.docs.rs]
+all-features = true
 
 [[bench]]
 name = "base"
