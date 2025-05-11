@@ -2,8 +2,8 @@ use core::task::Waker;
 
 use crate::iterators::async_iterators::async_macros::{gen_common_futs_fn, waker_registerer};
 use crate::iterators::async_iterators::{AsyncIterator, MRBFuture};
-use crate::iterators::iterator_trait::{MRBIterator, NonWorkableSlice};
-use crate::iterators::iterator_trait::WorkableSlice;
+use crate::iterators::iterator_trait::{MRBIterator, NonMutableSlice};
+use crate::iterators::iterator_trait::MutableSlice;
 use crate::iterators::util_macros::delegate;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
 use crate::iterators::ConsIter;
@@ -63,9 +63,9 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<'_, B, W> {
     }
 
     /// Async version of [`ConsIter::peek_slice`].
-    pub fn peek_slice<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, NonWorkableSlice<'b, T>, true> {
+    pub fn peek_slice<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, NonMutableSlice<'b, T>, true> {
         #[inline]
-        fn f<'b, B: MutRB<Item = T>, const W: bool, T>(s: &mut AsyncConsIter<B, W>, count: &mut usize) -> Option<NonWorkableSlice<'b, T>> {
+        fn f<'b, B: MutRB<Item = T>, const W: bool, T>(s: &mut AsyncConsIter<B, W>, count: &mut usize) -> Option<NonMutableSlice<'b, T>> {
             s.inner_mut().peek_slice(*count)
         }
 
@@ -78,9 +78,9 @@ impl<B: MutRB<Item = T>, T, const W: bool> AsyncConsIter<'_, B, W> {
     }
 
     /// Async version of [`ConsIter::peek_available`].
-    pub fn peek_available<'b>(&mut self) -> MRBFuture<Self, (), NonWorkableSlice<'b, T>, true> {
+    pub fn peek_available<'b>(&mut self) -> MRBFuture<Self, (), NonMutableSlice<'b, T>, true> {
         #[inline]
-        fn f<'b, B: MutRB<Item = T>, const W: bool, T>(s: &mut AsyncConsIter<B, W>, _: &mut ()) -> Option<NonWorkableSlice<'b, T>> {
+        fn f<'b, B: MutRB<Item = T>, const W: bool, T>(s: &mut AsyncConsIter<B, W>, _: &mut ()) -> Option<NonMutableSlice<'b, T>> {
             s.inner_mut().peek_available()
         }
 

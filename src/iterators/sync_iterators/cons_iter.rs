@@ -1,5 +1,5 @@
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
-use crate::iterators::iterator_trait::{MRBIterator, NonWorkableSlice, PrivateMRBIterator};
+use crate::iterators::iterator_trait::{MRBIterator, NonMutableSlice, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::iterators::ProdIter;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
@@ -97,7 +97,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn peek_slice<'a>(&mut self, count: usize) -> Option<NonWorkableSlice<'a, T>> {
+    pub fn peek_slice<'a>(&mut self, count: usize) -> Option<NonMutableSlice<'a, T>> {
         self.next_chunk(count)
     }
 
@@ -108,7 +108,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    pub fn peek_available<'a>(&mut self) -> Option<NonWorkableSlice<'a, T>> {
+    pub fn peek_available<'a>(&mut self) -> Option<NonMutableSlice<'a, T>> {
         let avail = self.available();
         self.peek_slice(avail)
     }

@@ -21,6 +21,8 @@ pub use sync_iterators::{
 
 use core::ptr;
 pub use iterator_trait::MRBIterator;
+pub use iterator_trait::MutableSlice;
+pub use iterator_trait::NonMutableSlice;
 
 pub(crate) use iterator_trait::iter_macros::*;
 

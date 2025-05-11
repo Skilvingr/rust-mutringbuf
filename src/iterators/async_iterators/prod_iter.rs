@@ -3,7 +3,7 @@ use core::task::Waker;
 use crate::iterators::async_iterators::async_macros::{gen_common_futs_fn, waker_registerer};
 use crate::iterators::async_iterators::{AsyncIterator, MRBFuture};
 use crate::iterators::iterator_trait::MRBIterator;
-use crate::iterators::iterator_trait::WorkableSlice;
+use crate::iterators::iterator_trait::MutableSlice;
 use crate::iterators::ProdIter;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, MutRB};
 
@@ -127,9 +127,9 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     /// Async version of [`ProdIter::get_next_slices_mut`].
     /// # Safety
     /// See above.
-    pub unsafe fn get_next_slices_mut<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, WorkableSlice<'b, T>, true> {
+    pub unsafe fn get_next_slices_mut<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, MutableSlice<'b, T>, true> {
         #[inline]
-        fn f<'b, B: MutRB<Item = T>, T>(s: &mut AsyncProdIter<B>, count: &mut usize) -> Option<WorkableSlice<'b, T>> {
+        fn f<'b, B: MutRB<Item = T>, T>(s: &mut AsyncProdIter<B>, count: &mut usize) -> Option<MutableSlice<'b, T>> {
             unsafe { s.inner_mut().get_next_slices_mut(*count) }
         }
 

@@ -119,8 +119,8 @@ pub(crate) mod async_macros {
         }
     
         /// Async version of [`MRBIterator::get_workable_slice_exact`].
-        pub fn get_workable_slice_exact<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, WorkableSlice<'b, T>, true> {
-            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<WorkableSlice<'b, T>> {
+        pub fn get_workable_slice_exact<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, MutableSlice<'b, T>, true> {
+            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<MutableSlice<'b, T>> {
                 s.inner_mut().get_workable_slice_exact(*count)
             }
     
@@ -133,8 +133,8 @@ pub(crate) mod async_macros {
         }
     
         /// Async version of [`MRBIterator::get_workable_slice_avail`].
-        pub fn get_workable_slice_avail<'b>(&mut self) -> MRBFuture<Self, (), WorkableSlice<'b, T>, true> {
-            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, _: &mut ()) -> Option<WorkableSlice<'b, T>> {
+        pub fn get_workable_slice_avail<'b>(&mut self) -> MRBFuture<Self, (), MutableSlice<'b, T>, true> {
+            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, _: &mut ()) -> Option<MutableSlice<'b, T>> {
                 s.inner_mut().get_workable_slice_avail()
             }
     
@@ -147,8 +147,8 @@ pub(crate) mod async_macros {
         }
     
         /// Async version of [`MRBIterator::get_workable_slice_multiple_of`].
-        pub fn get_workable_slice_multiple_of<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, WorkableSlice<'b, T>, true> {
-            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<WorkableSlice<'b, T>> {
+        pub fn get_workable_slice_multiple_of<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, MutableSlice<'b, T>, true> {
+            fn f<'b, II: MRBIterator<Item = T>, I: AsyncIterator<I = II>, T>(s: &mut I, count: &mut usize) -> Option<MutableSlice<'b, T>> {
                 s.inner_mut().get_workable_slice_multiple_of(*count)
             }
     

@@ -6,7 +6,7 @@ use {
 };
 
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
-use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator, WorkableSlice};
+use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator, MutableSlice};
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
@@ -357,7 +357,7 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     ///
     /// # Safety
     /// The retrieved items must be initialised! For more info, refer to [`MaybeUninit::assume_init_mut`](https://doc.rust-lang.org/std/mem/union.MaybeUninit.html#method.assume_init_mut).
-    pub unsafe fn get_next_slices_mut<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
+    pub unsafe fn get_next_slices_mut<'a>(&mut self, count: usize) -> Option<MutableSlice<'a, T>> {
         self.next_chunk_mut(count)
     }
 }

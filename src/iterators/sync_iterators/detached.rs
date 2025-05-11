@@ -1,4 +1,4 @@
-use crate::iterators::iterator_trait::{MRBIterator, WorkableSlice};
+use crate::iterators::iterator_trait::{MRBIterator, MutableSlice};
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
 #[allow(unused_imports)]
@@ -115,9 +115,9 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     delegate!(MRBIterator (inline), pub fn cons_index(&self) -> usize);
     
     delegate!(MRBIterator (inline), pub fn get_workable(&(mut) self) -> Option<&'_ mut T>);
-    delegate!(MRBIterator (inline), pub fn get_workable_slice_exact(&(mut) self, count: usize) -> Option<WorkableSlice<'_, T>>);
-    delegate!(MRBIterator (inline), pub fn get_workable_slice_avail(&(mut) self) -> Option<WorkableSlice<'_, T>>);
-    delegate!(MRBIterator (inline), pub fn get_workable_slice_multiple_of(&(mut) self, rhs: usize) -> Option<WorkableSlice<'_, T>>);
+    delegate!(MRBIterator (inline), pub fn get_workable_slice_exact(&(mut) self, count: usize) -> Option<MutableSlice<'_, T>>);
+    delegate!(MRBIterator (inline), pub fn get_workable_slice_avail(&(mut) self) -> Option<MutableSlice<'_, T>>);
+    delegate!(MRBIterator (inline), pub fn get_workable_slice_multiple_of(&(mut) self, rhs: usize) -> Option<MutableSlice<'_, T>>);
 
     /// Synchronises the underlying atomic index with the local index. I.e. let the consumer iterator
     /// advance.

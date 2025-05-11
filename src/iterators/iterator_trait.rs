@@ -5,17 +5,17 @@ use crate::{MutRB, Storage, UnsafeSyncCell};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, StorageManager};
 
-/// Returned by slice-specialised functions.
+/// Mutable slice returned by slice-specialised functions.
 #[cfg(feature = "vmem")]
-pub type WorkableSlice<'a, T> = &'a mut [T];
+pub type MutableSlice<'a, T> = &'a mut [T];
 #[cfg(not(feature = "vmem"))]
-pub type WorkableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
+pub type MutableSlice<'a, T> = (&'a mut [T], &'a mut [T]);
 
-/// Returned by slice-specialised functions.
+/// Non-mutable slice returned by slice-specialised functions.
 #[cfg(feature = "vmem")]
-pub type NonWorkableSlice<'a, T> = &'a [T];
+pub type NonMutableSlice<'a, T> = &'a [T];
 #[cfg(not(feature = "vmem"))]
-pub type NonWorkableSlice<'a, T> = (&'a [T], &'a [T]);
+pub type NonMutableSlice<'a, T> = (&'a [T], &'a [T]);
 
 
 /// Trait implemented by iterators.
@@ -108,7 +108,7 @@ pub trait MRBIterator: PrivateMRBIterator<Self::Item> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    fn get_workable_slice_exact<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, <Self as MRBIterator>::Item>> {
+    fn get_workable_slice_exact<'a>(&mut self, count: usize) -> Option<MutableSlice<'a, <Self as MRBIterator>::Item>> {
         self.next_chunk_mut(count)
     }
 
@@ -119,7 +119,7 @@ pub trait MRBIterator: PrivateMRBIterator<Self::Item> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    fn get_workable_slice_avail<'a>(&mut self) -> Option<WorkableSlice<'a, <Self as MRBIterator>::Item>> {
+    fn get_workable_slice_avail<'a>(&mut self) -> Option<MutableSlice<'a, <Self as MRBIterator>::Item>> {
         match self.available() {
             0 => None,
             avail => self.get_workable_slice_exact(avail)
@@ -134,7 +134,7 @@ pub trait MRBIterator: PrivateMRBIterator<Self::Item> {
     /// in order to move the iterator.
     /// </div>
     #[inline]
-    fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<WorkableSlice<'a, <Self as MRBIterator>::Item>> {
+    fn get_workable_slice_multiple_of<'a>(&mut self, rhs: usize) -> Option<MutableSlice<'a, <Self as MRBIterator>::Item>> {
         let avail = self.available();
 
         unsafe {
@@ -227,7 +227,7 @@ pub(crate) trait PrivateMRBIterator<T> {
 
     #[cfg(feature = "vmem")]
     #[inline]
-    fn next_chunk<'a>(&mut self, count: usize) -> Option<NonWorkableSlice<'a, T>> {
+    fn next_chunk<'a>(&mut self, count: usize) -> Option<NonMutableSlice<'a, T>> {
         self.check(count).then(|| {
             unsafe {
                 transmute::<&[UnsafeSyncCell<T>], &[T]>(
@@ -238,7 +238,7 @@ pub(crate) trait PrivateMRBIterator<T> {
     }
     #[cfg(feature = "vmem")]
     #[inline]
-    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
+    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<MutableSlice<'a, T>> {
         self.check(count).then(|| {
             unsafe {
                 transmute::<&mut [UnsafeSyncCell<T>], &mut [T]>(
@@ -250,7 +250,7 @@ pub(crate) trait PrivateMRBIterator<T> {
 
     #[cfg(not(feature = "vmem"))]
     #[inline]
-    fn next_chunk<'a>(&mut self, count: usize) -> Option<NonWorkableSlice<'a, T>> {
+    fn next_chunk<'a>(&mut self, count: usize) -> Option<NonMutableSlice<'a, T>> {
         self.check(count).then(|| {
 
             let len = self.buffer().inner_len();
@@ -281,7 +281,7 @@ pub(crate) trait PrivateMRBIterator<T> {
 
     #[cfg(not(feature = "vmem"))]
     #[inline]
-    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<WorkableSlice<'a, T>> {
+    fn next_chunk_mut<'a>(&mut self, count: usize) -> Option<MutableSlice<'a, T>> {
         self.check(count).then(|| {
 
             let len = self.buffer().inner_len();
