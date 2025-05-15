@@ -22,7 +22,7 @@ pub fn get_page_size_mul(min_size: usize) -> usize {
     min_size.div_ceil(page_size) * page_size
 }
 
-#[cfg(any(target_os = "macos", target_os = "ios"))]
+#[cfg(any(target_os = "macos", target_os = "ios", target_os = "android"))]
 unsafe fn open_fd() -> c_int {
     use alloc::ffi::CString;
     use alloc::format;
@@ -57,7 +57,7 @@ unsafe fn open_fd() -> c_int {
     fd
 }
 
-#[cfg(not(any(target_os = "macos", target_os = "ios")))]
+#[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "android")))]
 unsafe fn open_fd() -> c_int {
     libc::memfd_create(c"/mrb".as_ptr(), 0)
 }
