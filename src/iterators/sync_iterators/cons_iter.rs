@@ -109,8 +109,10 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// </div>
     #[inline]
     pub fn peek_available<'a>(&mut self) -> Option<NonMutableSlice<'a, T>> {
-        let avail = self.available();
-        self.peek_slice(avail)
+        match self.available() {
+            0 => None,
+            avail => self.peek_slice(avail)
+        }
     }
 
     /// Tries to pop an element, moving it.
