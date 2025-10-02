@@ -46,7 +46,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     gen_common_futs_fn!();
 
     /// Async version of [`ProdIter::push`].
-    pub fn push(&mut self, item: T) -> MRBFuture<Self, T, (), false> {
+    pub fn push(&'_ mut self, item: T) -> MRBFuture<'_, Self, T, (), false> {
         #[inline]
         fn f<B: MutRB<Item = T>, T>(s: &mut AsyncProdIter<B>, item: T) -> Result<(), T> {
             s.inner_mut().push(item)
@@ -61,7 +61,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     }
 
     /// Async version of [`ProdIter::push_slice`].
-    pub fn push_slice<'b>(&mut self, slice: &'b [T]) -> MRBFuture<Self, &'b [T], (), true>
+    pub fn push_slice<'b>(&'_ mut self, slice: &'b [T]) -> MRBFuture<'_, Self, &'b [T], (), true>
     where T: Copy {
         #[inline]
         fn f<B: MutRB<Item = T>, T: Copy>(s: &mut AsyncProdIter<B>, slice: &mut& [T]) -> Option<()> {
@@ -77,7 +77,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     }
 
     /// Async version of [`ProdIter::push_slice_clone`].
-    pub fn push_slice_clone<'b>(&mut self, slice: &'b [T]) -> MRBFuture<Self, &'b [T], (), true>
+    pub fn push_slice_clone<'b>(&'_ mut self, slice: &'b [T]) -> MRBFuture<'_, Self, &'b [T], (), true>
     where T: Clone {
         #[inline]
         fn f<B: MutRB<Item = T>, T: Clone>(s: &mut AsyncProdIter<B>, slice: &mut& [T]) -> Option<()> {
@@ -95,7 +95,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     /// Async version of [`ProdIter::get_next_item_mut`].
     /// # Safety
     /// Same as [`ProdIter::get_next_item_mut`].
-    pub unsafe fn get_next_item_mut<'b>(&mut self) -> MRBFuture<Self, (), &'b mut T, true> {
+    pub unsafe fn get_next_item_mut<'b>(&'_ mut self) -> MRBFuture<'_, Self, (), &'b mut T, true> {
         #[inline]
         fn f<'b, B: MutRB<Item = T>, T>(s: &mut AsyncProdIter<B>, _: &mut ()) -> Option<&'b mut T> {
             unsafe { s.inner_mut().get_next_item_mut() }
@@ -110,7 +110,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     }
 
     /// Async version of [`ProdIter::get_next_item_mut_init`].
-    pub fn get_next_item_mut_init(&mut self) -> MRBFuture<Self, (), *mut T, true> {
+    pub fn get_next_item_mut_init(&'_ mut self) -> MRBFuture<'_, Self, (), *mut T, true> {
         #[inline]
         fn f<B: MutRB<Item = T>, T>(s: &mut AsyncProdIter<B>, _: &mut ()) -> Option<*mut T> {
             s.inner_mut().get_next_item_mut_init()
@@ -127,7 +127,7 @@ impl<B: MutRB<Item = T>, T> AsyncProdIter<'_, B> {
     /// Async version of [`ProdIter::get_next_slices_mut`].
     /// # Safety
     /// See above.
-    pub unsafe fn get_next_slices_mut<'b>(&mut self, count: usize) -> MRBFuture<Self, usize, MutableSlice<'b, T>, true> {
+    pub unsafe fn get_next_slices_mut<'b>(&'_ mut self, count: usize) -> MRBFuture<'_, Self, usize, MutableSlice<'b, T>, true> {
         #[inline]
         fn f<'b, B: MutRB<Item = T>, T>(s: &mut AsyncProdIter<B>, count: &mut usize) -> Option<MutableSlice<'b, T>> {
             unsafe { s.inner_mut().get_next_slices_mut(*count) }

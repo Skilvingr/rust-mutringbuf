@@ -66,13 +66,13 @@ pub trait StackSplit<B: MutRB> {
     /// Borrows the buffer, yielding two iterators. See:
     /// - [`ProdIter`];
     /// - [`ConsIter`].
-    fn split(&mut self) -> (ProdIter<B>, ConsIter<B, false>);
+    fn split(&'_ mut self) -> (ProdIter<'_, B>, ConsIter<'_, B, false>);
 
     /// Borrows the buffer, yielding three iterators. See:
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    fn split_mut(&mut self) -> (ProdIter<B>, WorkIter<B>, ConsIter<B, true>);
+    fn split_mut(&'_ mut self) -> (ProdIter<'_, B>, WorkIter<'_, B>, ConsIter<'_, B, true>);
 }
 
 pub mod test {

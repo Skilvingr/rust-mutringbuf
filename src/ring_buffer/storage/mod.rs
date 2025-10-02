@@ -51,7 +51,7 @@ pub(crate) mod impl_splits {
 
         #[cfg(not(feature = "vmem"))]
         impl<T, const N: usize> StackSplit<$Struct<StackStorage<T, N>>> for $Struct<StackStorage<T, N>> {
-            fn split(&mut self) -> (ProdIter<$Struct<StackStorage<T, N>>>, ConsIter<$Struct<StackStorage<T, N>>, false>) {
+            fn split(&'_ mut self) -> (ProdIter<'_, $Struct<StackStorage<T, N>>>, ConsIter<'_, $Struct<StackStorage<T, N>>, false>) {
                 self.set_prod_alive(true);
                 self.set_cons_alive(true);
 
@@ -62,7 +62,7 @@ pub(crate) mod impl_splits {
                 )
             }
 
-            fn split_mut(&mut self) -> (ProdIter<$Struct<StackStorage<T, N>>>, WorkIter<$Struct<StackStorage<T, N>>>, ConsIter<$Struct<StackStorage<T, N>>, true>) {
+            fn split_mut(&'_ mut self) -> (ProdIter<'_, $Struct<StackStorage<T, N>>>, WorkIter<'_, $Struct<StackStorage<T, N>>>, ConsIter<'_, $Struct<StackStorage<T, N>>, true>) {
                 self.set_prod_alive(true);
                 self.set_work_alive(true);
                 self.set_cons_alive(true);
