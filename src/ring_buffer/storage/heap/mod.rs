@@ -3,10 +3,11 @@
 pub mod rb;
 pub mod vmem_helper;
 
+use core::ops::Index;
+
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use core::ops::Index;
-use crate::ring_buffer::storage::Storage;
+use crate::ring_buffer::storage::{MRBIndex, Storage};
 use crate::{MutRB, UnsafeSyncCell};
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 
@@ -83,6 +84,16 @@ impl<T> Index<usize> for HeapStorage<T> {
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
+        assert!(index < self.len, "index out of bounds: the len is {} but the index is {index}", self.len);
+        unsafe { &*self.inner.add(index) }
+    }
+}
+
+impl<T> MRBIndex<usize> for HeapStorage<T> {
+    type Output = UnsafeSyncCell<T>;
+
+    #[inline]
+    fn _index(&self, index: usize) -> &Self::Output {
         unsafe { &*self.inner.add(index) }
     }
 }
@@ -91,12 +102,12 @@ impl<T> Storage for HeapStorage<T> {
     type Item = T;
 
     #[inline]
-    fn as_ptr(&self) -> *const Self::Output {
+    fn as_ptr(&self) -> *const UnsafeSyncCell<Self::Item> {
         self.inner as _
     }
 
     #[inline]
-    fn as_mut_ptr(&mut self) -> *mut Self::Output {
+    fn as_mut_ptr(&mut self) -> *mut UnsafeSyncCell<Self::Item> {
         self.inner
     }
 

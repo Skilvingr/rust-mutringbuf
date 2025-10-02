@@ -1,20 +1,25 @@
-use core::ops::Index;
-
 use crate::UnsafeSyncCell;
 
 pub mod heap;
 pub mod stack;
 
+pub(crate) trait MRBIndex<Idx: ?Sized> {
+    type Output: ?Sized;
+
+    fn _index(&self, index: Idx) -> &Self::Output;
+}
+
 /// Trait implemented by `*Storage` structs.
 #[allow(clippy::len_without_is_empty)]
-pub trait Storage: Index<usize, Output = UnsafeSyncCell<Self::Item>>
+#[allow(private_bounds)]
+pub trait Storage: MRBIndex<usize, Output = UnsafeSyncCell<Self::Item>>
 {
     type Item;
 
     /// Returns the underlying array as a const ptr.
-    fn as_ptr(&self) -> *const Self::Output;
+    fn as_ptr(&self) -> *const UnsafeSyncCell<Self::Item>;
     /// Returns the underlying array as a mutable ptr.
-    fn as_mut_ptr(&mut self) -> *mut Self::Output;
+    fn as_mut_ptr(&mut self) -> *mut UnsafeSyncCell<Self::Item>;
     /// Returns the length of the underlying array.
     fn len(&self) -> usize;
 }

@@ -5,7 +5,7 @@ pub mod rb;
 
 use core::ops::Index;
 
-use crate::ring_buffer::storage::Storage;
+use crate::ring_buffer::storage::{MRBIndex, Storage};
 use crate::{MutRB, UnsafeSyncCell};
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 
@@ -38,6 +38,16 @@ impl<T, const N: usize> Index<usize> for StackStorage<T, N> {
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
+        assert!(index < N, "index out of bounds: the len is {N} but the index is {index}");
+        unsafe { self.inner.get_unchecked(index) }
+    }
+}
+
+impl<T, const N: usize> MRBIndex<usize> for StackStorage<T, N> {
+    type Output = UnsafeSyncCell<T>;
+
+    #[inline]
+    fn _index(&self, index: usize) -> &Self::Output {
         unsafe { self.inner.get_unchecked(index) }
     }
 }
@@ -46,12 +56,12 @@ impl<T, const N: usize> Storage for StackStorage<T, N> {
     type Item = T;
 
     #[inline]
-    fn as_ptr(&self) -> *const Self::Output {
+    fn as_ptr(&self) -> *const UnsafeSyncCell<Self::Item> {
         self.inner.as_ptr()
     }
 
     #[inline]
-    fn as_mut_ptr(&mut self) -> *mut Self::Output {
+    fn as_mut_ptr(&mut self) -> *mut UnsafeSyncCell<Self::Item> {
         self.inner.as_mut_ptr()
     }
 

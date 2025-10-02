@@ -1,6 +1,7 @@
 use core::mem::transmute;
 use core::slice;
 use crate::iterators::sync_iterators::detached::Detached;
+use crate::ring_buffer::storage::MRBIndex;
 use crate::{MutRB, Storage, UnsafeSyncCell};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, StorageManager};
@@ -187,7 +188,7 @@ pub(crate) trait PrivateMRBIterator<T> {
     #[inline]
     fn next(&mut self) -> Option<T> {
         self.check(1).then(|| unsafe {
-            let ret = self.buffer().inner()[self._index()].take_inner();
+            let ret = self.buffer().inner()._index(self._index()).take_inner();
 
             self._advance(1);
 
@@ -199,7 +200,7 @@ pub(crate) trait PrivateMRBIterator<T> {
     #[inline]
     fn next_duplicate(&mut self) -> Option<T> {
         self.check(1).then(|| unsafe {
-            let ret = self.buffer().inner()[self._index()].inner_duplicate();
+            let ret = self.buffer().inner()._index(self._index()).inner_duplicate();
 
             self._advance(1);
 
@@ -210,19 +211,19 @@ pub(crate) trait PrivateMRBIterator<T> {
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
     #[inline]
     fn next_ref<'a>(&mut self) -> Option<&'a T> {
-        unsafe { self.check(1).then(|| self.buffer().inner()[self._index()].inner_ref()) }
+        unsafe { self.check(1).then(|| self.buffer().inner()._index(self._index()).inner_ref()) }
     }
 
     /// Returns Some(&UnsafeSyncCell<current element>), if `check()` returns `true`, else None
     #[inline]
     fn next_ref_mut<'a>(&mut self) -> Option<&'a mut T> {
-        unsafe { self.check(1).then(|| self.buffer().inner()[self._index()].inner_ref_mut()) }
+        unsafe { self.check(1).then(|| self.buffer().inner()._index(self._index()).inner_ref_mut()) }
     }
 
     /// As next_ref_mut, but can be used for initialisation of inner MaybeUninit.
     #[inline]
     fn next_ref_mut_init(&mut self) -> Option<*mut T> {
-        self.check(1).then(|| self.buffer().inner()[self._index()].as_mut_ptr())
+        self.check(1).then(|| self.buffer().inner()._index(self._index()).as_mut_ptr())
     }
 
     #[cfg(feature = "vmem")]
