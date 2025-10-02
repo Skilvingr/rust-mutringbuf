@@ -26,11 +26,11 @@ libc = { version = "0.2", optional = true }
 [dev-dependencies]
 divan = "0.1.21"
 tokio-test = { version = "0.4.4" }
-iai-callgrind = "0.14.0"
+gungraun = "0.17.0"
 libc = "0.2"
 
 [target.'cfg(cpal)'.dev-dependencies]
-cpal = { version = "0.15.3" }
+cpal = { version = "0.16.0" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(cpal)'] }

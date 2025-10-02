@@ -1,7 +1,7 @@
 use std::hint::black_box;
-use iai_callgrind::{library_benchmark, library_benchmark_group};
+use gungraun::{library_benchmark, library_benchmark_group};
 use mutringbuf::{LocalHeapRB, HeapSplit};
-use iai_callgrind::main;
+use gungraun::main;
 
 
 const BUFFER_SIZE: usize = 4096;
