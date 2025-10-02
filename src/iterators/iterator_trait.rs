@@ -36,7 +36,7 @@ pub trait MRBIterator: PrivateMRBIterator<Self::Item> {
     /// An iterator should never overstep its successor, so it must always be: `count` <= [`MRBIterator::available()`]!
     #[inline]
     unsafe fn advance(&mut self, count: usize) {
-        self._advance(count);
+        unsafe { self._advance(count) };
     }
 
     /// Returns the number of items available for an iterator.
@@ -162,17 +162,17 @@ pub(crate) trait PrivateMRBIterator<T> {
 
     #[inline]
     unsafe fn _advance(&mut self, count: usize) {
-        self.advance_local(count);
+        unsafe { self.advance_local(count) };
 
         self.set_atomic_index(self._index());
     }
     
     #[inline]
     unsafe fn advance_local(&mut self, count: usize) {
-        self.set_local_index(self._index().unchecked_add(count));
+        self.set_local_index(unsafe { self._index().unchecked_add(count) });
 
         if self._index() >= self.buffer().inner_len() {
-            self.set_local_index(self._index().unchecked_sub(self.buffer().inner_len()));
+            self.set_local_index(unsafe { self._index().unchecked_sub(self.buffer().inner_len()) });
         }
 
         self.set_cached_avail(self.cached_avail().saturating_sub(count));

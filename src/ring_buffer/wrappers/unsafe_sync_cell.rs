@@ -65,7 +65,7 @@ impl<T> UnsafeSyncCell<T> {
     /// The cell will be uninitialised and so must be initialised again with [`Self::as_mut_ptr`].
     #[inline]
     pub unsafe fn take_inner(&self) -> T {
-        core::mem::replace(&mut *self.0.get(), MaybeUninit::<T>::zeroed()).assume_init()
+        unsafe { core::mem::replace(&mut *self.0.get(), MaybeUninit::<T>::zeroed()).assume_init() }
     }
 
     /// Reads and duplicates the value.
@@ -75,7 +75,7 @@ impl<T> UnsafeSyncCell<T> {
     /// The inner value must be initialised (i.e., properly constructed).
     #[inline]
     pub unsafe fn inner_duplicate(&self) -> T {
-        (*self.0.get()).assume_init_read()
+        unsafe { (*self.0.get()).assume_init_read() }
     }
 
     /// Returns a reference to inner value.
@@ -83,7 +83,7 @@ impl<T> UnsafeSyncCell<T> {
     /// Inner value must be initialised (i.e., properly constructed).
     #[inline]
     pub unsafe fn inner_ref<'a>(&self) -> &'a T {
-        (*self.0.get()).assume_init_ref()
+        unsafe { (*self.0.get()).assume_init_ref() }
     }
 
     /// Returns a mutable reference to inner value.
@@ -92,7 +92,7 @@ impl<T> UnsafeSyncCell<T> {
     #[inline]
     #[allow(clippy::mut_from_ref)]
     pub unsafe fn inner_ref_mut<'a>(&self) -> &'a mut T {
-        (*self.0.get()).assume_init_mut()
+        unsafe { (*self.0.get()).assume_init_mut() }
     }
 
     /// Gets a mutable pointer to the contained value.

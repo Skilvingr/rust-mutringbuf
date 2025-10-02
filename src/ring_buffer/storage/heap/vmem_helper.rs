@@ -59,7 +59,7 @@ unsafe fn open_fd() -> c_int {
 
 #[cfg(not(any(target_os = "macos", target_os = "ios")))]
 unsafe fn open_fd() -> c_int {
-    libc::memfd_create(c"/mrb".as_ptr(), 0)
+    unsafe { libc::memfd_create(c"/mrb".as_ptr(), 0) }
 }
 
 pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {

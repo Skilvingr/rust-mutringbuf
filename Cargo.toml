@@ -2,8 +2,8 @@
 
 [package]
 name = "mutringbuf"
-version = "0.5.3"
-edition = "2021"
+version = "0.5.4"
+edition = "2024"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
 description = "A lock-free single-producer, single-consumer (SPSC) ring buffer with in-place mutability, asynchronous support, and virtual memory optimisation."

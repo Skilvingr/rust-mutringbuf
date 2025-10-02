@@ -1,3 +1,8 @@
+<a name="v0.5.4"></a>
+## v0.5.4 (02/10/2025)
+
+* make `index` panic if index is out of bounds.
+
 <a name="v0.5.3"></a>
 ## v0.5.3 (09/05/2025)
 

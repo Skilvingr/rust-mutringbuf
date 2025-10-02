@@ -81,7 +81,7 @@ pub(crate) mod util_macros {
             #[doc = concat!("Same as [`", stringify!($Inner), "::", stringify!($fn_name), "`].")]
             $(#[$inline])?
             $v unsafe fn $fn_name(&$($m)? self$(, $arg $(: $arg_t)?)*) $(-> muncher!{ $($ret_g)* })? {
-                self.inner_mut().$fn_name($($arg)*)
+                unsafe { self.inner_mut().$fn_name($($arg)*) }
             }
         };
     }

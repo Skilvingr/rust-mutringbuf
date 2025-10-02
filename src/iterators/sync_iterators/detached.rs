@@ -86,7 +86,7 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     /// See [`MRBIterator::advance`].
     #[inline]
     pub unsafe fn advance(&mut self, count: usize) {
-        self.inner.advance_local(count);
+        unsafe { self.inner.advance_local(count) };
     }
 
     /// Goes back, wrapping if necessary.
@@ -98,13 +98,13 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
         
         self.inner.set_local_index(
             match idx < count {
-                true => self.inner.buf_len().unchecked_sub(count).unchecked_sub(idx),
-                false => idx.unchecked_sub(count)
+                true => unsafe { self.inner.buf_len().unchecked_sub(count).unchecked_sub(idx) },
+                false => unsafe { idx.unchecked_sub(count) }
             }
         );
 
         let cached_avail = self.inner.cached_avail();
-        self.inner.set_cached_avail(cached_avail.unchecked_add(count));
+        self.inner.set_cached_avail(unsafe { cached_avail.unchecked_add(count) });
     }
 
     delegate!(MRBIterator (inline), pub fn is_prod_alive(&self) -> bool);

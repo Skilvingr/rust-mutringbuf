@@ -43,7 +43,7 @@ impl<B: MutRB<Item = T>, T, I: AsyncIterator> AsyncDetached<I, B> {
     /// # Safety
     /// Same as [`Detached::advance`].
     pub unsafe fn advance(&mut self, count: usize) {
-        self.inner.inner_mut().advance_local(count);
+        unsafe { self.inner.inner_mut().advance_local(count) };
     }
 
     /// Same as [`Detached::go_back`].
@@ -56,12 +56,12 @@ impl<B: MutRB<Item = T>, T, I: AsyncIterator> AsyncDetached<I, B> {
         
         self.inner.inner_mut().set_local_index(
             match idx < count {
-                true => buf_len.unchecked_sub(count).unchecked_sub(idx),
-                false => idx.unchecked_sub(count)
+                true => unsafe { buf_len.unchecked_sub(count).unchecked_sub(idx) },
+                false => unsafe { idx.unchecked_sub(count) }
             }
         );
 
         let avail = self.inner.inner_mut().cached_avail();
-        self.inner.inner_mut().set_cached_avail(avail.unchecked_add(count));
+        self.inner.inner_mut().set_cached_avail(unsafe { avail.unchecked_add(count) });
     }
 }
