@@ -8,7 +8,7 @@ use crate::common_def;
 
 common_def!(buf);
 
-fn rb_fibonacci() {
+async fn rb_fibonacci() {
     #[cfg(not(feature = "vmem"))]
     let buf = mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE]);
     #[cfg(feature = "vmem")]
@@ -30,7 +30,7 @@ fn rb_fibonacci() {
     let prod_last_index_clone = prod_last_index.clone();
     let prod_finished_clone = prod_finished.clone();
     // An infinite stream of data
-    let mut producer = tokio_test::task::spawn(async {
+    let mut producer = tokio::task::spawn(async move {
         let mut produced = vec![];
         let mut counter = 1usize;
 
@@ -53,7 +53,7 @@ fn rb_fibonacci() {
 
     let prod_last_index_clone = prod_last_index.clone();
     let prod_finished_clone = prod_finished.clone();
-    let mut worker = tokio_test::task::spawn(async {
+    let mut worker = tokio::task::spawn(async move {
 
         let mut acc = (1, 0);
 
@@ -75,7 +75,7 @@ fn rb_fibonacci() {
         as_work
     });
 
-    let mut consumer = tokio_test::task::spawn(async {
+    let mut consumer = tokio::task::spawn(async move {
         let mut consumed = vec![];
 
         while !prod_finished.load(Acquire) || as_cons.index() != prod_last_index.load(Acquire) {
@@ -91,38 +91,32 @@ fn rb_fibonacci() {
         (as_cons, consumed)
     });
 
-    tokio_test::block_on(async {
-        let start = Instant::now();
+    let start = Instant::now();
 
-        // advance futures
-        while start.elapsed().as_millis() <= 100 {
-            let _ = producer.poll();
-            let _ = worker.poll();
-            let _ = consumer.poll();
-        }
+    // advance futures
+    while start.elapsed().as_millis() <= 500 {}
 
-        // Stop producer
-        stop_prod.store(true, Release);
+    // Stop producer
+    stop_prod.store(true, Release);
 
-        let (mut prod, produced) = producer.await;
-        let mut work = worker.await;
-        let (mut cons, consumed) = consumer.await;
+    let (mut prod, produced) = producer.await.unwrap();
+    let mut work = worker.await.unwrap();
+    let (mut cons, consumed) = consumer.await.unwrap();
 
-        assert_eq!(prod.available(), BUFFER_SIZE - 1);
-        assert_eq!(work.available(), 0);
-        assert_eq!(cons.available(), 0);
-        assert_eq!(consumed, produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>());
+    assert_eq!(prod.available(), BUFFER_SIZE - 1);
+    assert_eq!(work.available(), 0);
+    assert_eq!(cons.available(), 0);
+    assert_eq!(consumed, produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>());
 
-        //println!("{:?}", produced);
-        //println!("{:?}", consumed);
-        //println!("{:?}", produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>())
-    });
+    //println!("{:?}", produced);
+    //println!("{:?}", consumed);
+    //println!("{:?}", produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>())
 }
 
-#[test]
-fn async_fibonacci_test() {
+#[tokio::test]
+async fn async_fibonacci_test() {
     for _ in 0 .. 10 {
-        rb_fibonacci();
+        rb_fibonacci().await;
     }
 }
 
