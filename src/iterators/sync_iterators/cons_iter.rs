@@ -1,7 +1,7 @@
-use crate::iterators::{copy_from_slice_unchecked, private_impl};
-use crate::iterators::iterator_trait::{MRBIterator, NonMutableSlice, PrivateMRBIterator};
 #[allow(unused_imports)]
 use crate::iterators::ProdIter;
+use crate::iterators::iterator_trait::{MRBIterator, NonMutableSlice, PrivateMRBIterator};
+use crate::iterators::{copy_from_slice_unchecked, private_impl};
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 
@@ -26,7 +26,6 @@ impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<'_, B, W> {
 }
 
 impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<'_, B, W> {
-
     #[inline]
     fn _available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -34,13 +33,16 @@ impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<'_
         unsafe {
             self.cached_avail = match self.index <= succ_idx {
                 true => succ_idx.unchecked_sub(self.index),
-                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
+                false => self
+                    .buf_len()
+                    .unchecked_sub(self.index)
+                    .unchecked_add(succ_idx),
             };
         }
 
         self.cached_avail
     }
-    
+
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_cons_index(index);
@@ -111,7 +113,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     pub fn peek_available<'a>(&mut self) -> Option<NonMutableSlice<'a, T>> {
         match self.available() {
             0 => None,
-            avail => self.peek_slice(avail)
+            avail => self.peek_slice(avail),
         }
     }
 
@@ -140,9 +142,11 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
 
             unsafe { self.advance(1) };
             Some(())
-        } else { None }
+        } else {
+            None
+        }
     }
-    
+
     /// - Returns `Some(())`, copying next item into `dst`, if available.
     /// - Returns `None` doing nothing, otherwise.
     ///
@@ -153,10 +157,13 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// </div>
     #[inline]
     pub fn copy_item(&mut self, dst: &mut T) -> Option<()>
-        where T: Copy
+    where
+        T: Copy,
     {
         #[inline]
-        fn f<T: Copy>(src: &T, dst: &mut T) { *dst = *src; }
+        fn f<T: Copy>(src: &T, dst: &mut T) {
+            *dst = *src;
+        }
         self._extract_item(dst, f)
     }
 
@@ -167,15 +174,18 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// </div>
     #[inline]
     pub fn clone_item(&mut self, dst: &mut T) -> Option<()>
-        where T: Clone
+    where
+        T: Clone,
     {
-        fn f<T: Clone>(src: &T, dst: &mut T) { *dst = src.clone(); }
+        fn f<T: Clone>(src: &T, dst: &mut T) {
+            *dst = src.clone();
+        }
         self._extract_item(dst, f)
     }
 
     #[cfg(feature = "vmem")]
     #[inline]
-    fn _extract_slice(&mut self, dst: &mut [T], f: fn(&[T], &mut[T])) -> Option<()> {
+    fn _extract_slice(&mut self, dst: &mut [T], f: fn(&[T], &mut [T])) -> Option<()> {
         let count = dst.len();
 
         if let Some(binding) = self.next_chunk(count) {
@@ -191,7 +201,7 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
 
     #[cfg(not(feature = "vmem"))]
     #[inline]
-    fn _extract_slice(&mut self, dst: &mut [T], f: fn(&[T], &mut[T])) -> Option<()> {
+    fn _extract_slice(&mut self, dst: &mut [T], f: fn(&[T], &mut [T])) -> Option<()> {
         let count = dst.len();
 
         if let Some((binding_h, binding_t)) = self.next_chunk_mut(count) {
@@ -222,12 +232,13 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// </div>
     #[inline]
     pub fn copy_slice(&mut self, dst: &mut [T]) -> Option<()>
-        where T: Copy
+    where
+        T: Copy,
     {
         fn f<T: Copy>(binding: &[T], dst: &mut [T]) {
             copy_from_slice_unchecked(binding, dst);
         }
-        
+
         self._extract_slice(dst, f)
     }
 
@@ -238,7 +249,8 @@ impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
     /// </div>
     #[inline]
     pub fn clone_slice(&mut self, dst: &mut [T]) -> Option<()>
-        where T: Clone
+    where
+        T: Clone,
     {
         fn f<T: Clone>(binding: &[T], dst: &mut [T]) {
             dst.clone_from_slice(binding);
@@ -256,21 +268,25 @@ mod test {
         use crate::{ConcurrentHeapRB, HeapSplit};
 
         const BUFFER_SIZE: usize = 100;
-        
+
         let buf = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1);
         let (mut prod, mut cons) = buf.split();
-        
-        assert_eq!(cons.cached_avail, 0);
-        
-        unsafe { prod.advance(10); }
 
         assert_eq!(cons.cached_avail, 0);
-        
+
+        unsafe {
+            prod.advance(10);
+        }
+
+        assert_eq!(cons.cached_avail, 0);
+
         cons.check(1);
 
         assert_eq!(cons.cached_avail, 10);
-        
-        unsafe { cons.advance(9); }
+
+        unsafe {
+            cons.advance(9);
+        }
 
         assert_eq!(cons.cached_avail, 1);
     }

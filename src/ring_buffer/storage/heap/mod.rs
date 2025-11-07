@@ -5,11 +5,11 @@ pub mod vmem_helper;
 
 use core::ops::Index;
 
-use alloc::boxed::Box;
-use alloc::vec::Vec;
+use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::{MRBIndex, Storage};
 use crate::{MutRB, UnsafeSyncCell};
-use crate::iterators::{ConsIter, ProdIter, WorkIter};
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 
 /// Heap-allocated storage.
 pub struct HeapStorage<T> {
@@ -17,7 +17,7 @@ pub struct HeapStorage<T> {
     len: usize,
 }
 
-impl <T> Drop for HeapStorage<T> {
+impl<T> Drop for HeapStorage<T> {
     fn drop(&mut self) {
         unsafe {
             #[cfg(feature = "vmem")]
@@ -49,7 +49,7 @@ impl<T> HeapStorage<T> {
         unsafe {
             Self {
                 inner: (*v).as_mut_ptr(),
-                len
+                len,
             }
         }
     }
@@ -84,7 +84,11 @@ impl<T> Index<usize> for HeapStorage<T> {
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
-        assert!(index < self.len, "index out of bounds: the len is {} but the index is {index}", self.len);
+        assert!(
+            index < self.len,
+            "index out of bounds: the len is {} but the index is {index}",
+            self.len
+        );
         unsafe { &*self.inner.add(index) }
     }
 }
@@ -128,23 +132,30 @@ pub trait HeapSplit<B: MutRB> {
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    fn split_mut<'buf>(self) -> (ProdIter<'buf, B>, WorkIter<'buf, B>, ConsIter<'buf, B, true>);
+    fn split_mut<'buf>(
+        self,
+    ) -> (
+        ProdIter<'buf, B>,
+        WorkIter<'buf, B>,
+        ConsIter<'buf, B, true>,
+    );
 }
 
 pub mod test {
     #[test]
     fn from_tests() {
-        use alloc::vec;
         use crate::{HeapStorage, UnsafeSyncCell};
-        
+        use alloc::vec;
+
         #[cfg(feature = "vmem")]
         let buf_len = crate::vmem_helper::page_size();
         #[cfg(not(feature = "vmem"))]
         let buf_len = 100;
-        
+
         let _ = HeapStorage::from(vec![0; buf_len]);
         let _ = HeapStorage::from(vec![0; buf_len].into_boxed_slice());
         let _: HeapStorage<i32> = HeapStorage::from(vec![UnsafeSyncCell::new(0i32); buf_len]);
-        let _: HeapStorage<i32> = HeapStorage::from(vec![UnsafeSyncCell::new(0i32); buf_len].into_boxed_slice());
+        let _: HeapStorage<i32> =
+            HeapStorage::from(vec![UnsafeSyncCell::new(0i32); buf_len].into_boxed_slice());
     }
 }

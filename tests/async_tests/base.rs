@@ -1,7 +1,7 @@
 extern crate alloc;
 
-use mutringbuf::iterators::async_iterators::AsyncIterator;
 use crate::common_def;
+use mutringbuf::iterators::async_iterators::AsyncIterator;
 
 common_def!(buf);
 
@@ -11,25 +11,25 @@ async fn test_push_work_pop_single_and_slice() {
     let buf = mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE]);
     #[cfg(feature = "vmem")]
     let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE]);
-    
-    let (
-        mut as_prod,
-        mut as_work,
-        mut as_cons
-    ) = buf.split_mut_async();
-    
+
+    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
+
     as_prod.push(1).await;
 
     if let Some(res) = as_work.get_workable().await {
         *res += 1;
-        unsafe { as_work.advance(1); }
+        unsafe {
+            as_work.advance(1);
+        }
     }
 
     let res = as_cons.peek_ref().await.unwrap();
     assert_eq!(res, &2);
-    unsafe { as_cons.advance(1); }
+    unsafe {
+        as_cons.advance(1);
+    }
 
-    let slice: Vec<i32> = (0..BUFFER_SIZE as i32 /2).collect();
+    let slice: Vec<i32> = (0..BUFFER_SIZE as i32 / 2).collect();
     as_prod.push_slice(&slice).await;
 
     #[cfg(not(feature = "vmem"))]
@@ -40,7 +40,9 @@ async fn test_push_work_pop_single_and_slice() {
             *x += 1;
         }
 
-        unsafe { as_work.advance(len); }
+        unsafe {
+            as_work.advance(len);
+        }
     }
 
     #[cfg(feature = "vmem")]
@@ -51,7 +53,9 @@ async fn test_push_work_pop_single_and_slice() {
             *x += 1;
         }
 
-        unsafe { as_work.advance(len); }
+        unsafe {
+            as_work.advance(len);
+        }
     }
 
     #[cfg(not(feature = "vmem"))]
@@ -60,7 +64,7 @@ async fn test_push_work_pop_single_and_slice() {
             assert_eq!(*x, y + 1);
         }
     }
-    
+
     #[cfg(feature = "vmem")]
     if let Some(r) = as_cons.peek_available().await {
         for (x, y) in r.iter().zip(&slice) {
@@ -73,4 +77,3 @@ async fn test_push_work_pop_single_and_slice() {
     drop(as_work);
     assert!(!as_cons.is_work_alive());
 }
-

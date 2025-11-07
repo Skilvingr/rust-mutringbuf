@@ -12,7 +12,7 @@ Async version of [`WorkIter`].
 "##]
 pub struct AsyncWorkIter<'buf, B: MutRB> {
     pub(crate) inner: WorkIter<'buf, B>,
-    waker: Option<Waker>
+    waker: Option<Waker>,
 }
 unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for AsyncWorkIter<'_, B> {}
 
@@ -21,7 +21,7 @@ impl<'buf, B: MutRB<Item = T>, T> AsyncIterator for AsyncWorkIter<'buf, B> {
     type B = B;
 
     waker_registerer!();
-    
+
     #[inline]
     fn inner(&self) -> &Self::I {
         &self.inner

@@ -1,10 +1,10 @@
-use mutringbuf::{MRBIterator, MutRB};
-use mutringbuf::iterators::ProdIter;
 use crate::{common_def, get_buf};
+use mutringbuf::iterators::ProdIter;
+use mutringbuf::{MRBIterator, MutRB};
 
 common_def!();
 
-fn fill_buf<B: MutRB<Item=usize>>(prod: &mut ProdIter<B>, count: usize) {
+fn fill_buf<B: MutRB<Item = usize>>(prod: &mut ProdIter<B>, count: usize) {
     for i in 0..count {
         let _ = prod.push(i);
     }
@@ -21,17 +21,23 @@ fn test_pop_exact() {
 
     for i in 0..BUFFER_SIZE - 1 {
         assert_eq!(*cons.peek_ref().unwrap(), i);
-        unsafe { cons.advance(1); }
+        unsafe {
+            cons.advance(1);
+        }
     }
 
     assert!(cons.peek_ref().is_none());
-    unsafe { cons.advance(1); }
+    unsafe {
+        cons.advance(1);
+    }
 
     fill_buf(&mut prod, BUFFER_SIZE - 1);
 
     for i in 0..BUFFER_SIZE - 1 {
         assert_eq!(*cons.peek_ref().unwrap(), i);
-        unsafe { cons.advance(1); }
+        unsafe {
+            cons.advance(1);
+        }
     }
 
     assert!(cons.pop().is_none());
@@ -41,7 +47,7 @@ fn test_pop_exact() {
 fn test_pop_ref_exact() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
+
     fill_buf(&mut prod, BUFFER_SIZE - 1);
 
     for i in 0..BUFFER_SIZE - 1 {
@@ -56,7 +62,7 @@ fn test_pop_ref_exact() {
 fn test_pop_slice_exact() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
+
     fill_buf(&mut prod, BUFFER_SIZE - 1);
 
     let (head, tail) = cons.peek_slice(BUFFER_SIZE - 1).unwrap();
@@ -74,7 +80,7 @@ fn test_pop_slice_exact() {
 fn test_pop_avail_nw_exact() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
+
     fill_buf(&mut prod, BUFFER_SIZE - 1);
 
     let (head, tail) = cons.peek_available().unwrap();
@@ -92,7 +98,7 @@ fn test_pop_avail_nw_exact() {
 fn test_pop_slice_seam() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
+
     fill_buf(&mut prod, BUFFER_SIZE / 2);
 
     let (head, tail) = cons.peek_available().unwrap();
@@ -118,7 +124,7 @@ fn test_pop_slice_seam() {
 fn test_pop_slice_copy() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
+
     fill_buf(&mut prod, BUFFER_SIZE / 2);
 
     let mut vec = vec![0; BUFFER_SIZE / 2];

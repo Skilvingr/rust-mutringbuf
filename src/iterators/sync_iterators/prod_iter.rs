@@ -1,12 +1,8 @@
 #[cfg(doc)]
-use {
-    core::mem::MaybeUninit,
-    crate::iterators::Detached,
-    crate::iterators::ConsIter
-};
+use {crate::iterators::ConsIter, crate::iterators::Detached, core::mem::MaybeUninit};
 
+use crate::iterators::iterator_trait::{MRBIterator, MutableSlice, PrivateMRBIterator};
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
-use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator, MutableSlice};
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
@@ -76,13 +72,17 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'_, B> {
         unsafe {
             self.cached_avail = match self.index < succ_idx {
                 true => succ_idx.unchecked_sub(self.index).unchecked_sub(1),
-                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx).unchecked_sub(1)
+                false => self
+                    .buf_len()
+                    .unchecked_sub(self.index)
+                    .unchecked_add(succ_idx)
+                    .unchecked_sub(1),
             };
         }
 
         self.cached_avail
     }
-    
+
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_prod_index(index);
@@ -92,7 +92,7 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'_, B> {
     fn succ_index(&self) -> usize {
         self.buffer.cons_index()
     }
-    
+
     private_impl!();
 }
 
@@ -132,7 +132,9 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     #[inline]
     pub fn push(&mut self, value: T) -> Result<(), T> {
         fn f<T>(binding: *mut T, value: T) {
-            unsafe { *binding = value; }
+            unsafe {
+                *binding = value;
+            }
         }
 
         self._push(value, f)
@@ -161,11 +163,10 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
 
     #[cfg(feature = "vmem")]
     #[inline]
-    fn _push_slice(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()> {
+    fn _push_slice(&mut self, slice: &[T], f: fn(&mut [T], &[T])) -> Option<()> {
         let count = slice.len();
 
         if let Some(binding) = self.next_chunk_mut(count) {
-        
             f(binding, slice);
 
             unsafe { self.advance(count) };
@@ -177,7 +178,7 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
 
     #[cfg(not(feature = "vmem"))]
     #[inline]
-    fn _push_slice(&mut self, slice: &[T], f: fn(&mut[T], &[T])) -> Option<()> {
+    fn _push_slice(&mut self, slice: &[T], f: fn(&mut [T], &[T])) -> Option<()> {
         let count = slice.len();
 
         if let Some((binding_h, binding_t)) = self.next_chunk_mut(count) {
@@ -198,7 +199,6 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
         }
     }
 
-
     /// Tries to push a slice of items by copying the elements.
     /// The elements must implement [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html) trait.
     ///
@@ -211,7 +211,8 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     /// * `Some(())`, otherwise.
     #[inline]
     pub fn push_slice(&mut self, slice: &[T]) -> Option<()>
-        where T: Copy
+    where
+        T: Copy,
     {
         #[inline]
         fn f<T: Copy>(binding: &mut [T], slice: &[T]) {
@@ -221,7 +222,6 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
         self._push_slice(slice, f)
     }
 
-
     /// Same as [`Self::push_slice`], but can be used when dealing with possibly uninitialised
     /// locations within the buffer, e.g. after a [`ConsIter::pop`].
     ///
@@ -230,13 +230,16 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     /// * `Some(())`, otherwise.
     #[inline]
     pub fn push_slice_init(&mut self, slice: &[T]) -> Option<()>
-        where T: Copy
+    where
+        T: Copy,
     {
         #[inline]
         fn f<T: Copy>(binding_h: &mut [T], slice: &[T]) {
             for (x, y) in binding_h.iter_mut().zip(slice) {
                 if UnsafeSyncCell::check_zeroed(x as *mut T) {
-                    unsafe { (x as *mut T).write(*y); }
+                    unsafe {
+                        (x as *mut T).write(*y);
+                    }
                 } else {
                     *x = *y;
                 }
@@ -258,7 +261,8 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     /// * `Some(())`, otherwise.
     #[inline]
     pub fn push_slice_clone(&mut self, slice: &[T]) -> Option<()>
-        where T: Clone
+    where
+        T: Clone,
     {
         #[inline]
         fn f<T: Clone>(binding_h: &mut [T], slice: &[T]) {
@@ -276,13 +280,16 @@ impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
     /// * `Some(())`, otherwise.
     #[inline]
     pub fn push_slice_clone_init(&mut self, slice: &[T]) -> Option<()>
-        where T: Clone
+    where
+        T: Clone,
     {
         #[inline]
         fn f<T: Clone>(binding_h: &mut [T], slice: &[T]) {
             for (x, y) in binding_h.iter_mut().zip(slice) {
                 if UnsafeSyncCell::check_zeroed(x as *mut T) {
-                    unsafe { (x as *mut T).write(y.clone()); }
+                    unsafe {
+                        (x as *mut T).write(y.clone());
+                    }
                 } else {
                     x.clone_from(y);
                 }
@@ -369,21 +376,25 @@ pub mod test {
         use crate::{ConcurrentHeapRB, HeapSplit};
 
         const BUFFER_SIZE: usize = 4095;
-        
+
         let buf = ConcurrentHeapRB::<u32>::default(BUFFER_SIZE + 1);
         let (mut prod, mut cons) = buf.split();
 
         assert_eq!(prod.cached_avail, 0);
-        
+
         prod.check(1);
 
         assert_eq!(prod.cached_avail, BUFFER_SIZE);
 
-        unsafe { prod.advance(2); }
+        unsafe {
+            prod.advance(2);
+        }
 
         assert_eq!(prod.cached_avail, BUFFER_SIZE - 2);
 
-        unsafe { cons.advance(1); }
+        unsafe {
+            cons.advance(1);
+        }
 
         assert_eq!(prod.cached_avail, BUFFER_SIZE - 2);
 

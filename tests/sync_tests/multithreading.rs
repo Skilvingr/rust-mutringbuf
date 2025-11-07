@@ -1,9 +1,9 @@
 extern crate alloc;
 
-use mutringbuf::{MRBIterator};
+use crate::{common_def, get_buf};
+use mutringbuf::MRBIterator;
 use std::thread;
 use std::time::Instant;
-use crate::{common_def, get_buf};
 
 common_def!();
 
@@ -25,7 +25,9 @@ macro_rules! get_work {
 
             while start.elapsed().as_secs() < 3 {
                 let avail = $work.available();
-                unsafe { $work.advance(avail); }
+                unsafe {
+                    $work.advance(avail);
+                }
             }
         })
     };
@@ -37,7 +39,9 @@ macro_rules! get_cons {
 
             while start.elapsed().as_secs() < 3 {
                 let avail = $cons.available();
-                unsafe { $cons.advance(avail); }
+                unsafe {
+                    $cons.advance(avail);
+                }
             }
         })
     };
@@ -47,9 +51,8 @@ macro_rules! get_cons {
 fn test_mt_non_workable() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
-    let mut buf = get_buf!(Concurrent);
 
+    let mut buf = get_buf!(Concurrent);
 
     thread::scope(|s| {
         let producer = get_prod!(s, prod);
@@ -57,7 +60,6 @@ fn test_mt_non_workable() {
 
         let _ = producer.join();
         let _ = consumer.join();
-
 
         let (mut prod, mut cons) = buf.split();
 
@@ -73,10 +75,9 @@ fn test_mt_non_workable() {
 fn test_mt_workable() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut work, mut cons) = buf.split_mut();
-    
+
     let mut buf = get_buf!(Concurrent);
-    
-    
+
     thread::scope(|s| {
         let producer = get_prod!(s, prod);
         let worker = get_work!(s, work);
@@ -85,7 +86,6 @@ fn test_mt_workable() {
         let _ = producer.join();
         let _ = worker.join();
         let _ = consumer.join();
-
 
         let (mut prod, mut work, mut cons) = buf.split_mut();
 

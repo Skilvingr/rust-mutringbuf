@@ -27,7 +27,7 @@ macro_rules! impl_rb {
                 Self::_from(HeapStorage::from(value))
             }
         }
-        
+
         impl<T> $t<T> {
             #[doc = concat!("Creates a new [`", stringify!($t), "`] with given capacity and zeroed (uninitialised) elements.")]
             /// # Safety
@@ -39,13 +39,13 @@ macro_rules! impl_rb {
             /// size (equal to or greater than it).
             pub unsafe fn new_zeroed(capacity: usize) -> Self {
                 Self::_from(
-                    HeapStorage::from(                        
+                    HeapStorage::from(
                         (0..get_range_max(capacity))
                         .map(|_| UnsafeSyncCell::new_zeroed()).collect::<Box<[UnsafeSyncCell<T>]>>()
                     )
                 )
             }
-        
+
             #[doc = concat!("Creates a new [`", stringify!($t), "`] with given capacity and elements initialised to `default`.")]
             /// # Behaviour with `vmem` feature
             /// When `vmem` feature is enabled, the capacity of the buffer must be a multiple of
@@ -66,7 +66,6 @@ macro_rules! impl_rb {
 pub type ConcurrentHeapRB<T> = ConcurrentMutRingBuf<HeapStorage<T>>;
 
 impl_rb!(ConcurrentHeapRB);
-
 
 // Local
 

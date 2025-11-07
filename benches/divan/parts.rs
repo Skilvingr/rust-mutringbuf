@@ -1,5 +1,5 @@
 use divan::black_box;
-use mutringbuf::{HeapSplit, ConcurrentHeapRB, MRBIterator,};
+use mutringbuf::{ConcurrentHeapRB, HeapSplit, MRBIterator};
 
 const BUFFER_SIZE: usize = 4096;
 
@@ -15,8 +15,12 @@ fn advance(b: divan::Bencher) {
     prod.push_slice(&[1; BUFFER_SIZE / 2]);
 
     b.bench_local(|| {
-        unsafe { prod.advance(1); }
-        unsafe { cons.advance(1); }
+        unsafe {
+            prod.advance(1);
+        }
+        unsafe {
+            cons.advance(1);
+        }
     });
 }
 

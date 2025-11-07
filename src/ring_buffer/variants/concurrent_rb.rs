@@ -5,26 +5,21 @@ use core::sync::atomic::{AtomicBool, AtomicUsize};
 
 #[cfg(any(feature = "async", doc))]
 use crate::iterators::{
-    async_iterators::AsyncIterator,
-    AsyncConsIter, AsyncProdIter, AsyncWorkIter
+    AsyncConsIter, AsyncProdIter, AsyncWorkIter, async_iterators::AsyncIterator,
 };
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::Storage;
-use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB, StorageManager};
+use crate::ring_buffer::variants::ring_buffer_trait::{
+    ConcurrentRB, IterManager, MutRB, StorageManager,
+};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crossbeam_utils::CachePadded;
 
-#[cfg(feature = "alloc")]
-use crate::{
-    HeapSplit,
-    HeapStorage
-};
-#[cfg(not(feature = "vmem"))]
-use crate::{
-    StackSplit,
-    StackStorage
-};
 use crate::ring_buffer::storage::impl_splits::impl_splits;
+#[cfg(feature = "alloc")]
+use crate::{HeapSplit, HeapStorage};
+#[cfg(not(feature = "vmem"))]
+use crate::{StackSplit, StackStorage};
 
 /// Concurrent mutable ring buffer. This buffer is useful for implementing types.
 /// For more direct usage, consider using one of the following alternatives:
@@ -57,7 +52,13 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// - [`AsyncWorkIter`];
     /// - [`AsyncConsIter`].
     #[cfg(all(feature = "alloc", any(feature = "async", doc)))]
-    pub fn split_mut_async<'buf>(self) -> (AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>, AsyncWorkIter<'buf, ConcurrentMutRingBuf<S>>, AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, true>) {
+    pub fn split_mut_async<'buf>(
+        self,
+    ) -> (
+        AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>,
+        AsyncWorkIter<'buf, ConcurrentMutRingBuf<S>>,
+        AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, true>,
+    ) {
         self.set_prod_alive(true);
         self.set_work_alive(true);
         self.set_cons_alive(true);
@@ -74,7 +75,12 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// - [`AsyncProdIter`];
     /// - [`AsyncConsIter`].
     #[cfg(all(not(feature = "alloc"), any(feature = "async", doc)))]
-    pub fn split_async(&mut self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, false>) {
+    pub fn split_async(
+        &mut self,
+    ) -> (
+        AsyncProdIter<ConcurrentMutRingBuf<S>>,
+        AsyncConsIter<ConcurrentMutRingBuf<S>, false>,
+    ) {
         self.set_prod_alive(true);
         self.set_cons_alive(true);
 
@@ -90,7 +96,13 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// - [`AsyncWorkIter`];
     /// - [`AsyncConsIter`].
     #[cfg(all(not(feature = "alloc"), any(feature = "async", doc)))]
-    pub fn split_mut_async(&mut self) -> (AsyncProdIter<ConcurrentMutRingBuf<S>>, AsyncWorkIter<ConcurrentMutRingBuf<S>>, AsyncConsIter<ConcurrentMutRingBuf<S>, true>) {
+    pub fn split_mut_async(
+        &mut self,
+    ) -> (
+        AsyncProdIter<ConcurrentMutRingBuf<S>>,
+        AsyncWorkIter<ConcurrentMutRingBuf<S>>,
+        AsyncConsIter<ConcurrentMutRingBuf<S>, true>,
+    ) {
         self.set_prod_alive(true);
         self.set_work_alive(true);
         self.set_cons_alive(true);
@@ -107,7 +119,12 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
     /// - [`AsyncProdIter`];
     /// - [`AsyncConsIter`].
     #[cfg(all(feature = "alloc", any(feature = "async", doc)))]
-    pub fn split_async<'buf>(self) -> (AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>, AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, false>) {
+    pub fn split_async<'buf>(
+        self,
+    ) -> (
+        AsyncProdIter<'buf, ConcurrentMutRingBuf<S>>,
+        AsyncConsIter<'buf, ConcurrentMutRingBuf<S>, false>,
+    ) {
         self.set_prod_alive(true);
         self.set_cons_alive(true);
 
@@ -117,10 +134,10 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
             AsyncConsIter::from_sync(ConsIter::new(r)),
         )
     }
-    
+
     pub(crate) fn _from(value: S) -> ConcurrentMutRingBuf<S> {
         assert!(value.len() > 0);
-        
+
         ConcurrentMutRingBuf {
             inner_len: NonZeroUsize::new(value.len()).unwrap(),
             inner: value.into(),
@@ -131,7 +148,7 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
 
             prod_alive: AtomicBool::default(),
             work_alive: AtomicBool::default(),
-            cons_alive: AtomicBool::default()
+            cons_alive: AtomicBool::default(),
         }
     }
 }

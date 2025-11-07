@@ -6,7 +6,6 @@ use std::slice::Iter;
 common_def!(buf);
 
 fn test_buf(v: Iter<usize>, mut prod: ProdIter<impl MutRB<Item = usize>>) {
-
     #[cfg(not(feature = "vmem"))]
     let b = {
         let (h, t) = prod.get_workable_slice_avail().unwrap();
@@ -15,8 +14,7 @@ fn test_buf(v: Iter<usize>, mut prod: ProdIter<impl MutRB<Item = usize>>) {
 
     #[cfg(feature = "vmem")]
     let b = prod.get_workable_slice_avail().unwrap();
-    
-    
+
     for (be, ve) in b.iter().zip(v) {
         assert_eq!(*ve, *be);
     }
@@ -39,7 +37,7 @@ fn test_new_buf() {
     #[cfg(not(feature = "vmem"))]
     {
         use mutringbuf::{ConcurrentStackRB, LocalStackRB, StackSplit};
-        
+
         let mut buf = ConcurrentStackRB::from(v.clone());
         let (prod, _) = buf.split();
         test_buf(v.iter(), prod);

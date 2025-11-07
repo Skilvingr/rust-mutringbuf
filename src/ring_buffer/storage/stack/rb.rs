@@ -11,18 +11,18 @@ macro_rules! impl_rb {
                 Self::_from(StackStorage::from(value))
             }
         }
-        
+
         impl<T, const N: usize> $t<T, N> {
             #[doc = concat!("Creates a new [`", stringify!($t), "`] with given capacity and zeroed (uninitialised) elements.")]
             /// # Safety
             /// The buffer must be then initialised using proper [`ProdIter`] methods (`*_init` ones).
             pub unsafe fn new_zeroed() -> Self {
                 let v: [UnsafeSyncCell<T>; N] = core::array::from_fn(|_| UnsafeSyncCell::new_zeroed());
-                
+
                 Self::_from(StackStorage::from(v))
             }
         }
-        
+
         impl<T: Default + Copy, const N: usize> Default for $t<T, N> {
             #[doc = concat!("Creates a new [`", stringify!($t), "`] with given capacity and elements initialised to `default`.")]
             fn default() -> Self {
@@ -31,13 +31,6 @@ macro_rules! impl_rb {
         }
     };
 }
-
-
-
-
-
-
-
 
 /// A stack-allocated ring buffer usable in concurrent environment.
 pub type ConcurrentStackRB<T, const N: usize> = ConcurrentMutRingBuf<StackStorage<T, N>>;

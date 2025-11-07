@@ -6,15 +6,9 @@ use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, MutRB, StorageManager};
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 #[cfg(feature = "alloc")]
-use crate::{
-    HeapSplit,
-    HeapStorage
-};
+use crate::{HeapSplit, HeapStorage};
 #[cfg(not(feature = "vmem"))]
-use crate::{
-    StackSplit,
-    StackStorage
-};
+use crate::{StackSplit, StackStorage};
 
 use crate::ring_buffer::storage::impl_splits::impl_splits;
 
@@ -44,7 +38,7 @@ impl_splits!(LocalMutRingBuf);
 impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
     pub(crate) fn _from(value: S) -> LocalMutRingBuf<S> {
         assert!(value.len() > 0);
-        
+
         LocalMutRingBuf {
             inner_len: NonZeroUsize::new(value.len()).unwrap(),
             inner: value.into(),
@@ -55,7 +49,7 @@ impl<S: Storage<Item = T>, T> LocalMutRingBuf<S> {
 
             prod_alive: false.into(),
             work_alive: false.into(),
-            cons_alive: false.into()
+            cons_alive: false.into(),
         }
     }
 }
@@ -78,17 +72,23 @@ impl<S: Storage> IterManager for LocalMutRingBuf<S> {
 
     #[inline]
     fn set_prod_index(&self, index: usize) {
-        unsafe { *self.prod_idx.get() = index; }
+        unsafe {
+            *self.prod_idx.get() = index;
+        }
     }
 
     #[inline]
     fn set_work_index(&self, index: usize) {
-        unsafe { *self.work_idx.get() = index; }
+        unsafe {
+            *self.work_idx.get() = index;
+        }
     }
 
     #[inline]
     fn set_cons_index(&self, index: usize) {
-        unsafe { *self.cons_idx.get() = index; }
+        unsafe {
+            *self.cons_idx.get() = index;
+        }
     }
 
     fn prod_alive(&self) -> bool {
@@ -104,15 +104,21 @@ impl<S: Storage> IterManager for LocalMutRingBuf<S> {
     }
 
     fn set_prod_alive(&self, alive: bool) {
-        unsafe { *self.prod_alive.get() = alive; }
+        unsafe {
+            *self.prod_alive.get() = alive;
+        }
     }
 
     fn set_work_alive(&self, alive: bool) {
-        unsafe { *self.work_alive.get() = alive; }
+        unsafe {
+            *self.work_alive.get() = alive;
+        }
     }
 
     fn set_cons_alive(&self, alive: bool) {
-        unsafe { *self.cons_alive.get() = alive; }
+        unsafe {
+            *self.cons_alive.get() = alive;
+        }
     }
 }
 

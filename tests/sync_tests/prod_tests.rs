@@ -1,7 +1,7 @@
 extern crate alloc;
 
-use mutringbuf::{MRBIterator};
 use crate::{common_def, get_buf};
+use mutringbuf::MRBIterator;
 
 common_def!();
 
@@ -44,7 +44,7 @@ fn test_push_slice() {
 fn test_push_mut_ref_init() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
+
     assert_eq!(prod.available(), BUFFER_SIZE - 1);
     for i in 0..BUFFER_SIZE - 1 {
         let next = prod.get_next_item_mut_init().unwrap() as *mut usize;
@@ -67,11 +67,10 @@ fn test_push_mut_ref_init() {
 fn test_push_mut_ref() {
     let mut buf = get_buf!(Concurrent);
     let (mut prod, mut cons) = buf.split();
-    
+
     assert_eq!(prod.available(), BUFFER_SIZE - 1);
     for i in 0..BUFFER_SIZE - 1 {
         unsafe {
-
             let next = prod.get_next_item_mut().unwrap() as *mut usize;
 
             next.write(i);

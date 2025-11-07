@@ -1,10 +1,10 @@
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::sync::atomic::Ordering::{Acquire, Release};
+use std::sync::atomic::{AtomicBool, AtomicUsize};
 use std::time::Instant;
 
-use mutringbuf::iterators::async_iterators::AsyncIterator;
 use crate::common_def;
+use mutringbuf::iterators::async_iterators::AsyncIterator;
 
 common_def!(buf);
 
@@ -14,12 +14,7 @@ async fn rb_fibonacci() {
     #[cfg(feature = "vmem")]
     let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE]);
 
-    let (
-        mut as_prod,
-        mut as_work,
-        mut as_cons
-    ) = buf.split_mut_async();
-
+    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
 
     // Flag variable to stop threads
     let stop_prod = Arc::new(AtomicBool::new(false));
@@ -41,7 +36,11 @@ async fn rb_fibonacci() {
             produced.push(counter);
 
             // Reset counter to avoid overflow
-            if counter < 20 { counter += 1; } else { counter = 1; }
+            if counter < 20 {
+                counter += 1;
+            } else {
+                counter = 1;
+            }
         }
 
         prod_last_index_clone.store(as_prod.index(), Release);
@@ -54,15 +53,17 @@ async fn rb_fibonacci() {
     let prod_last_index_clone = prod_last_index.clone();
     let prod_finished_clone = prod_finished.clone();
     let mut worker = tokio::task::spawn(async move {
-
         let mut acc = (1, 0);
 
-        while !prod_finished_clone.load(Acquire) || as_work.index() != prod_last_index_clone.load(Acquire) {
-
+        while !prod_finished_clone.load(Acquire)
+            || as_work.index() != prod_last_index_clone.load(Acquire)
+        {
             if let Some(value) = as_work.get_workable().await {
                 let (bt_h, bt_t) = &mut acc;
 
-                if *value == 1 { (*bt_h, *bt_t) = (1, 0); }
+                if *value == 1 {
+                    (*bt_h, *bt_t) = (1, 0);
+                }
 
                 *value = *bt_h + *bt_t;
 
@@ -79,11 +80,12 @@ async fn rb_fibonacci() {
         let mut consumed = vec![];
 
         while !prod_finished.load(Acquire) || as_cons.index() != prod_last_index.load(Acquire) {
-
             // Store consumed values to check them later
             if let Some(value) = as_cons.peek_ref().await {
                 consumed.push(*value);
-                unsafe { as_cons.advance(1); }
+                unsafe {
+                    as_cons.advance(1);
+                }
             }
         }
 
@@ -106,7 +108,10 @@ async fn rb_fibonacci() {
     assert_eq!(prod.available(), BUFFER_SIZE - 1);
     assert_eq!(work.available(), 0);
     assert_eq!(cons.available(), 0);
-    assert_eq!(consumed, produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>());
+    assert_eq!(
+        consumed,
+        produced.iter().map(|v| fib(*v)).collect::<Vec<usize>>()
+    );
 
     //println!("{:?}", produced);
     //println!("{:?}", consumed);
@@ -115,7 +120,7 @@ async fn rb_fibonacci() {
 
 #[tokio::test]
 async fn async_fibonacci_test() {
-    for _ in 0 .. 10 {
+    for _ in 0..10 {
         rb_fibonacci().await;
     }
 }

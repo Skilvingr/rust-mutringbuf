@@ -5,13 +5,13 @@ pub mod rb;
 
 use core::ops::Index;
 
+use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::{MRBIndex, Storage};
 use crate::{MutRB, UnsafeSyncCell};
-use crate::iterators::{ConsIter, ProdIter, WorkIter};
 
 /// Stack-allocated storage.
 pub struct StackStorage<T, const N: usize> {
-    inner: [UnsafeSyncCell<T>; N]
+    inner: [UnsafeSyncCell<T>; N],
 }
 
 impl<T, const N: usize> From<[T; N]> for StackStorage<T, N> {
@@ -20,16 +20,14 @@ impl<T, const N: usize> From<[T; N]> for StackStorage<T, N> {
         let ptr = &value as *const _ as *const [UnsafeSyncCell<T>; N];
 
         Self {
-            inner: unsafe { ptr.read() }
+            inner: unsafe { ptr.read() },
         }
     }
 }
 
 impl<T, const N: usize> From<[UnsafeSyncCell<T>; N]> for StackStorage<T, N> {
     fn from(value: [UnsafeSyncCell<T>; N]) -> StackStorage<T, N> {
-        Self {
-            inner: value
-        }
+        Self { inner: value }
     }
 }
 
@@ -38,7 +36,10 @@ impl<T, const N: usize> Index<usize> for StackStorage<T, N> {
 
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
-        assert!(index < N, "index out of bounds: the len is {N} but the index is {index}");
+        assert!(
+            index < N,
+            "index out of bounds: the len is {N} but the index is {index}"
+        );
         unsafe { self.inner.get_unchecked(index) }
     }
 }
@@ -89,8 +90,9 @@ pub mod test {
     #[test]
     fn from_tests() {
         use crate::{StackStorage, UnsafeSyncCell};
-        
+
         let _ = StackStorage::from([0; 100]);
-        let _: StackStorage<i32, 100> = StackStorage::from(core::array::from_fn(|_| UnsafeSyncCell::new(0)));
+        let _: StackStorage<i32, 100> =
+            StackStorage::from(core::array::from_fn(|_| UnsafeSyncCell::new(0)));
     }
 }

@@ -1,8 +1,8 @@
+#[allow(unused_imports)]
+use crate::iterators::WorkIter;
 use crate::iterators::iterator_trait::{MRBIterator, MutableSlice};
 use crate::iterators::util_macros::delegate;
 use crate::iterators::util_macros::muncher;
-#[allow(unused_imports)]
-use crate::iterators::WorkIter;
 
 #[doc = r##"
 Detached iterator: does not update the atomic index when advancing.
@@ -32,14 +32,11 @@ pub struct Detached<I: MRBIterator> {
 
 unsafe impl<I: MRBIterator> Send for Detached<I> {}
 
-
 impl<T, I: MRBIterator<Item = T>> Detached<I> {
     /// Creates a [`Self`] from an iterator.
     #[inline]
     pub(crate) fn from_iter(iter: I) -> Detached<I> {
-        Self {
-            inner: iter
-        }
+        Self { inner: iter }
     }
 
     /// Attaches and yields the iterator.
@@ -48,14 +45,13 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
         self.sync_index();
         self.inner
     }
-    
+
     fn inner(&self) -> &I {
         &self.inner
     }
     fn inner_mut(&mut self) -> &mut I {
         &mut self.inner
     }
-
 
     delegate!(MRBIterator (inline), pub fn available(&(mut) self) -> usize);
     delegate!(MRBIterator (inline), pub fn wait_for(&(mut) self, count: usize));
@@ -95,16 +91,15 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     /// Index must always be between consumer and producer.
     pub unsafe fn go_back(&mut self, count: usize) {
         let idx = self.inner.index();
-        
-        self.inner.set_local_index(
-            match idx < count {
-                true => unsafe { self.inner.buf_len().unchecked_sub(count).unchecked_sub(idx) },
-                false => unsafe { idx.unchecked_sub(count) }
-            }
-        );
+
+        self.inner.set_local_index(match idx < count {
+            true => unsafe { self.inner.buf_len().unchecked_sub(count).unchecked_sub(idx) },
+            false => unsafe { idx.unchecked_sub(count) },
+        });
 
         let cached_avail = self.inner.cached_avail();
-        self.inner.set_cached_avail(unsafe { cached_avail.unchecked_add(count) });
+        self.inner
+            .set_cached_avail(unsafe { cached_avail.unchecked_add(count) });
     }
 
     delegate!(MRBIterator (inline), pub fn is_prod_alive(&self) -> bool);
@@ -113,7 +108,7 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
     delegate!(MRBIterator (inline), pub fn prod_index(&self) -> usize);
     delegate!(MRBIterator (inline), pub fn work_index(&self) -> usize);
     delegate!(MRBIterator (inline), pub fn cons_index(&self) -> usize);
-    
+
     delegate!(MRBIterator (inline), pub fn get_workable(&(mut) self) -> Option<&'_ mut T>);
     delegate!(MRBIterator (inline), pub fn get_workable_slice_exact(&(mut) self, count: usize) -> Option<MutableSlice<'_, T>>);
     delegate!(MRBIterator (inline), pub fn get_workable_slice_avail(&(mut) self) -> Option<MutableSlice<'_, T>>);

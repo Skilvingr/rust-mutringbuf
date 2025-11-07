@@ -1,29 +1,27 @@
-use core::marker::PhantomData;
 use crate::iterators::async_iterators::AsyncIterator;
+use core::marker::PhantomData;
 
-use crate::{MRBIterator, MutRB};
-use crate::iterators::iterator_trait::PrivateMRBIterator;
 #[allow(unused_imports)]
 use crate::iterators::Detached;
-
+use crate::iterators::iterator_trait::PrivateMRBIterator;
+use crate::{MRBIterator, MutRB};
 
 #[doc = r##"
 Async version of [`Detached`].
 "##]
 pub struct AsyncDetached<I: AsyncIterator, B: MutRB> {
     inner: I,
-    phantom_data: PhantomData<B>
+    phantom_data: PhantomData<B>,
 }
 
 unsafe impl<I: AsyncIterator, B: MutRB> Send for AsyncDetached<I, B> {}
 
 impl<B: MutRB<Item = T>, T, I: AsyncIterator> AsyncDetached<I, B> {
-       
     /// Creates [`Self`] from an [`AsyncWorkIter`].
     pub(crate) fn from_iter(iter: I) -> AsyncDetached<I, B> {
         Self {
             inner: iter,
-            phantom_data: PhantomData
+            phantom_data: PhantomData,
         }
     }
 
@@ -32,7 +30,7 @@ impl<B: MutRB<Item = T>, T, I: AsyncIterator> AsyncDetached<I, B> {
         self.sync_index();
         self.inner
     }
-    
+
     /// Same as [`Detached::sync_index`].
     pub fn sync_index(&self) {
         self.inner.inner().set_atomic_index(self.inner.index())
@@ -53,15 +51,15 @@ impl<B: MutRB<Item = T>, T, I: AsyncIterator> AsyncDetached<I, B> {
     pub unsafe fn go_back(&mut self, count: usize) {
         let idx = self.inner.inner_mut().index();
         let buf_len = self.inner.inner_mut().buf_len();
-        
-        self.inner.inner_mut().set_local_index(
-            match idx < count {
-                true => unsafe { buf_len.unchecked_sub(count).unchecked_sub(idx) },
-                false => unsafe { idx.unchecked_sub(count) }
-            }
-        );
+
+        self.inner.inner_mut().set_local_index(match idx < count {
+            true => unsafe { buf_len.unchecked_sub(count).unchecked_sub(idx) },
+            false => unsafe { idx.unchecked_sub(count) },
+        });
 
         let avail = self.inner.inner_mut().cached_avail();
-        self.inner.inner_mut().set_cached_avail(unsafe { avail.unchecked_add(count) });
+        self.inner
+            .inner_mut()
+            .set_cached_avail(unsafe { avail.unchecked_add(count) });
     }
 }

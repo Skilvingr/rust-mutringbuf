@@ -1,6 +1,5 @@
 #![cfg_attr(doc, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
-
 #![no_std]
 
 #[cfg(feature = "alloc")]
@@ -15,15 +14,15 @@ pub use ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
 #[cfg_attr(doc, doc(cfg(feature = "alloc")))]
 #[cfg(feature = "alloc")]
 pub use crate::ring_buffer::storage::heap::{
-    rb::{ConcurrentHeapRB, LocalHeapRB}, HeapSplit,
-    HeapStorage,
+    HeapSplit, HeapStorage,
+    rb::{ConcurrentHeapRB, LocalHeapRB},
 };
 
 #[cfg_attr(doc, doc(cfg(not(feature = "vmem"))))]
 #[cfg(any(not(feature = "vmem"), doc))]
 pub use crate::ring_buffer::storage::stack::{
-    rb::{ConcurrentStackRB, LocalStackRB}, StackSplit,
-    StackStorage
+    StackSplit, StackStorage,
+    rb::{ConcurrentStackRB, LocalStackRB},
 };
 
 #[cfg_attr(doc, doc(cfg(feature = "vmem")))]

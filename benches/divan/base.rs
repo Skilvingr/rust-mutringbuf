@@ -1,5 +1,5 @@
-use mutringbuf::{MRBIterator, HeapSplit, LocalHeapRB};
 use divan::black_box;
+use mutringbuf::{HeapSplit, LocalHeapRB, MRBIterator};
 
 const BUFFER_SIZE: usize = 4096;
 const BATCH_SIZE: usize = 100;
@@ -21,7 +21,6 @@ fn push_pop_local(b: divan::Bencher) {
     });
 }
 
-
 #[divan::bench(sample_size = 100000)]
 fn push_pop_shared(b: divan::Bencher) {
     let buf = LocalHeapRB::default(BUFFER_SIZE);
@@ -34,7 +33,6 @@ fn push_pop_shared(b: divan::Bencher) {
         black_box(cons.pop().unwrap());
     });
 }
-
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_x100(b: divan::Bencher) {
@@ -53,7 +51,6 @@ fn push_pop_x100(b: divan::Bencher) {
         }
     });
 }
-
 
 #[divan::bench(sample_size = 100000)]
 fn push_pop_x100_local(b: divan::Bencher) {

@@ -1,5 +1,5 @@
-use mutringbuf::MRBIterator;
 use crate::{common_def, get_buf};
+use mutringbuf::MRBIterator;
 
 common_def!();
 
@@ -7,7 +7,7 @@ common_def!();
 pub fn prod_drop_test() {
     let mut buf = get_buf!(Concurrent);
     let (prod, work, cons) = buf.split_mut();
-    
+
     assert!(work.is_prod_alive());
     assert!(cons.is_work_alive());
     assert!(work.is_cons_alive());

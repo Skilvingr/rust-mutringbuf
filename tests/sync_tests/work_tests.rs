@@ -1,8 +1,8 @@
 extern crate alloc;
 
-use mutringbuf::{MRBIterator, MutRB};
-use mutringbuf::iterators::ProdIter;
 use crate::{common_def, get_buf};
+use mutringbuf::iterators::ProdIter;
+use mutringbuf::{MRBIterator, MutRB};
 
 common_def!();
 
@@ -63,7 +63,6 @@ fn test_work_mul() {
     assert_eq!(cons.available(), 0);
 
     if let Some((h, t)) = work.get_workable_slice_multiple_of(MULTIPLE) {
-
         let len = h.len() + t.len();
 
         h.iter_mut().for_each(|v| *v += 1);
@@ -80,7 +79,9 @@ fn test_work_mul() {
 
     for i in 0..BUFFER_SIZE - rem {
         assert_eq!(*cons.peek_ref().unwrap(), i + 1);
-        unsafe { cons.advance(1); }
+        unsafe {
+            cons.advance(1);
+        }
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE - rem);
@@ -88,7 +89,6 @@ fn test_work_mul() {
     assert_eq!(cons.available(), 0);
 
     if let Some((h, t)) = work.get_workable_slice_avail() {
-
         let len = h.len() + t.len();
 
         h.iter_mut().for_each(|v| *v += 1);

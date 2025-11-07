@@ -1,9 +1,9 @@
 extern crate alloc;
 
-use mutringbuf::{MRBIterator, MutRB};
-use mutringbuf::iterators::{ConsIter, ProdIter, WorkIter};
-use mutringbuf::iterators::Detached;
 use crate::{common_def, get_buf};
+use mutringbuf::iterators::Detached;
+use mutringbuf::iterators::{ConsIter, ProdIter, WorkIter};
+use mutringbuf::{MRBIterator, MutRB};
 
 common_def!();
 
@@ -13,9 +13,15 @@ fn fill_buf(prod: &mut ProdIter<impl MutRB<Item = usize>>) {
 }
 
 #[allow(clippy::type_complexity)]
-fn prepare<'buf>(mut prod: ProdIter<'buf, impl MutRB<Item = usize>>, mut work: WorkIter<'buf, impl MutRB<Item = usize>>, mut cons: ConsIter<'buf, impl MutRB<Item = usize>, true>)
-           -> (ProdIter<'buf, impl MutRB<Item = usize>>, Detached<WorkIter<'buf, impl MutRB<Item = usize>>>, ConsIter<'buf, impl MutRB<Item = usize>, true>) {
-
+fn prepare<'buf>(
+    mut prod: ProdIter<'buf, impl MutRB<Item = usize>>,
+    mut work: WorkIter<'buf, impl MutRB<Item = usize>>,
+    mut cons: ConsIter<'buf, impl MutRB<Item = usize>, true>,
+) -> (
+    ProdIter<'buf, impl MutRB<Item = usize>>,
+    Detached<WorkIter<'buf, impl MutRB<Item = usize>>>,
+    ConsIter<'buf, impl MutRB<Item = usize>, true>,
+) {
     assert_eq!(prod.available(), BUFFER_SIZE - 1);
     assert_eq!(work.available(), 0);
     assert_eq!(cons.available(), 0);
@@ -92,7 +98,9 @@ fn test_work_detached_set_index() {
 
     let (mut prod, mut work, mut cons) = prepare(prod, work, cons);
 
-    unsafe { work.set_index(work.index() - 1); }
+    unsafe {
+        work.set_index(work.index() - 1);
+    }
 
     assert_eq!(prod.available(), 0);
     assert_eq!(work.available(), 1);
@@ -122,15 +130,21 @@ fn test_work_go_back() {
 
     assert_eq!(work.index(), 0);
 
-    unsafe { work.go_back(1); }
+    unsafe {
+        work.go_back(1);
+    }
 
     assert_eq!(work.index(), BUFFER_SIZE - 1);
 
-    unsafe { work.advance(2); }
+    unsafe {
+        work.advance(2);
+    }
 
     assert_eq!(work.index(), 1);
 
-    unsafe { work.go_back(1); }
+    unsafe {
+        work.go_back(1);
+    }
 
     assert_eq!(work.index(), 0);
 }

@@ -1,5 +1,5 @@
-use mutringbuf::{ConcurrentHeapRB, HeapSplit};
 use divan::black_box;
+use mutringbuf::{ConcurrentHeapRB, HeapSplit};
 
 const BUFFER_SIZE: usize = 4096;
 

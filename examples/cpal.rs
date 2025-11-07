@@ -1,24 +1,26 @@
-
 #[cfg(cpal)]
 fn main() {
+    use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+    use cpal::{InputCallbackInfo, OutputCallbackInfo, StreamConfig};
+    use mutringbuf::HeapSplit;
+    use mutringbuf::{ConcurrentHeapRB, MRBIterator};
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
     use std::sync::atomic::Ordering::Relaxed;
     use std::thread;
-    use cpal::{InputCallbackInfo, OutputCallbackInfo, StreamConfig};
-    use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-    use mutringbuf::{ConcurrentHeapRB, MRBIterator};
-    use mutringbuf::HeapSplit;
-    
+
     const BUF_SIZE: usize = 4096 * 500;
     const DELAY_MS: usize = 500;
     const DECAY: f32 = 0.5;
 
     let host = cpal::default_host();
-    let (in_dev, out_dev) = (host.default_input_device().unwrap(), host.default_output_device().unwrap());
+    let (in_dev, out_dev) = (
+        host.default_input_device().unwrap(),
+        host.default_output_device().unwrap(),
+    );
     let (in_cfg, out_cfg) = (
         StreamConfig::from(in_dev.default_input_config().unwrap()),
-        StreamConfig::from(out_dev.default_output_config().unwrap())
+        StreamConfig::from(out_dev.default_output_config().unwrap()),
     );
 
     let delay_samples = DELAY_MS * (in_cfg.sample_rate.0 as usize / 1000);
@@ -57,46 +59,52 @@ fn main() {
 
                 unsafe { work.advance(len) };
             }
-        };
+        }
 
         // work was moved by thread::spawn, so, returning it here will allow to use it after call to join
         work
     });
 
-    let in_stream = in_dev.build_input_stream(
-        &in_cfg,
-        move |slice: &[f32], _info: &InputCallbackInfo| {
-            if prod.push_slice(slice).is_none() { println!("Input iter fell behind!"); }
-        },
-        move |err| { println!("INPUT ERROR: {}", err) },
-        None
-    ).expect("Cannot create input stream");
+    let in_stream = in_dev
+        .build_input_stream(
+            &in_cfg,
+            move |slice: &[f32], _info: &InputCallbackInfo| {
+                if prod.push_slice(slice).is_none() {
+                    println!("Input iter fell behind!");
+                }
+            },
+            move |err| println!("INPUT ERROR: {}", err),
+            None,
+        )
+        .expect("Cannot create input stream");
 
-    let out_stream = out_dev.build_output_stream(
-        &out_cfg,
-        move |slice: &mut [f32], _info: &OutputCallbackInfo| {
-            let len = slice.len();
+    let out_stream = out_dev
+        .build_output_stream(
+            &out_cfg,
+            move |slice: &mut [f32], _info: &OutputCallbackInfo| {
+                let len = slice.len();
 
-            #[cfg(not(feature = "vmem"))]
-            if let Some((h, t)) = cons.peek_slice(len) {
-                slice[.. h.len()].copy_from_slice(h);
-                slice[h.len() ..].copy_from_slice(t);
+                #[cfg(not(feature = "vmem"))]
+                if let Some((h, t)) = cons.peek_slice(len) {
+                    slice[..h.len()].copy_from_slice(h);
+                    slice[h.len()..].copy_from_slice(t);
 
-                unsafe { cons.advance(len) };
-            }
-            #[cfg(feature = "vmem")]
-            if let Some(r) = cons.peek_slice(len) {
-                slice.copy_from_slice(r);
+                    unsafe { cons.advance(len) };
+                }
+                #[cfg(feature = "vmem")]
+                if let Some(r) = cons.peek_slice(len) {
+                    slice.copy_from_slice(r);
 
-                unsafe { cons.advance(len) };
-            } else {
-                // Good!
-                println!("Output iter fell behind!");
-            }
-        },
-        move |err| { println!("OUTPUT ERROR: {}", err) },
-        None
-    ).expect("Cannot create output stream");
+                    unsafe { cons.advance(len) };
+                } else {
+                    // Good!
+                    println!("Output iter fell behind!");
+                }
+            },
+            move |err| println!("OUTPUT ERROR: {}", err),
+            None,
+        )
+        .expect("Cannot create output stream");
 
     in_stream.play().unwrap();
     out_stream.play().unwrap();

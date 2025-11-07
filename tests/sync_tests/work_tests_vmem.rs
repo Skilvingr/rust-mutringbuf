@@ -71,7 +71,9 @@ fn test_work_mul() {
 
     for i in 0..BUFFER_SIZE - rem {
         assert_eq!(*cons.peek_ref().unwrap(), i + 1);
-        unsafe { cons.advance(1); }
+        unsafe {
+            cons.advance(1);
+        }
     }
 
     assert_eq!(prod.available(), BUFFER_SIZE - rem);

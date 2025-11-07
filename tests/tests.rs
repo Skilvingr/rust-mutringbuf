@@ -16,7 +16,7 @@ macro_rules! common_def {
         const BUFFER_SIZE: usize = 16384;
         #[cfg(not(target_arch = "aarch64"))]
         const BUFFER_SIZE: usize = 4096;
-    }
+    };
 }
 #[cfg(not(feature = "vmem"))]
 macro_rules! common_def {
@@ -26,7 +26,7 @@ macro_rules! common_def {
     };
     (buf) => {
         const BUFFER_SIZE: usize = 400;
-    }
+    };
 }
 
 #[cfg(feature = "vmem")]
@@ -35,19 +35,18 @@ macro_rules! get_buf {
         #[cfg(feature = "vmem")]
         mutringbuf::LocalHeapRB::from(vec![0; BUFFER_SIZE])
     };
-    (Concurrent) => { 
+    (Concurrent) => {
         mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE])
-    }
+    };
 }
 #[cfg(not(feature = "vmem"))]
 macro_rules! get_buf {
     (Local) => {
         mutringbuf::LocalStackRB::from([0; BUFFER_SIZE])
-
     };
-    (Concurrent) => { 
+    (Concurrent) => {
         mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE])
-    }
+    };
 }
 pub(crate) use {common_def, get_buf};
 

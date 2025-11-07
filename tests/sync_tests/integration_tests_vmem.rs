@@ -1,7 +1,7 @@
 extern crate alloc;
 
-use mutringbuf::{MRBIterator};
 use crate::{common_def, get_buf};
+use mutringbuf::MRBIterator;
 
 common_def!();
 
@@ -55,7 +55,6 @@ fn test_push_work_pop_slice() {
     assert_eq!(work.available(), BUFFER_SIZE - 1);
     assert_eq!(cons.available(), 0);
 
-
     if let Some(res) = work.get_workable_slice_exact(BUFFER_SIZE - 1) {
         for i in res {
             *i += 1;
@@ -63,11 +62,9 @@ fn test_push_work_pop_slice() {
         unsafe { work.advance(BUFFER_SIZE - 1) };
     }
 
-
     assert_eq!(prod.available(), 0);
     assert_eq!(work.available(), 0);
     assert_eq!(cons.available(), BUFFER_SIZE - 1);
-
 
     if let Some(res) = cons.peek_slice(BUFFER_SIZE - 1) {
         for (consumed, i) in res.iter().zip(slice) {
@@ -85,7 +82,7 @@ fn test_push_work_pop_slice() {
 fn test_reset() {
     let (mut prod, mut work, mut cons) = get_buf!(Concurrent).split_mut();
 
-    let two_thirds_slice = (0..BUFFER_SIZE/3 * 2).collect::<Vec<usize>>();
+    let two_thirds_slice = (0..BUFFER_SIZE / 3 * 2).collect::<Vec<usize>>();
     let slice = (0..BUFFER_SIZE - 1).collect::<Vec<usize>>();
 
     assert_eq!(prod.available(), BUFFER_SIZE - 1);
@@ -94,21 +91,21 @@ fn test_reset() {
 
     prod.push_slice(&two_thirds_slice);
 
-    assert_eq!(prod.available(), BUFFER_SIZE/3);
-    assert_eq!(work.available(), BUFFER_SIZE/3 * 2);
+    assert_eq!(prod.available(), BUFFER_SIZE / 3);
+    assert_eq!(work.available(), BUFFER_SIZE / 3 * 2);
     assert_eq!(cons.available(), 0);
 
-    unsafe { work.advance(BUFFER_SIZE/3) };
+    unsafe { work.advance(BUFFER_SIZE / 3) };
 
-    assert_eq!(prod.available(), BUFFER_SIZE/3);
-    assert_eq!(work.available(), BUFFER_SIZE/3);
-    assert_eq!(cons.available(), BUFFER_SIZE/3);
+    assert_eq!(prod.available(), BUFFER_SIZE / 3);
+    assert_eq!(work.available(), BUFFER_SIZE / 3);
+    assert_eq!(cons.available(), BUFFER_SIZE / 3);
 
     work.reset_index();
 
-    assert_eq!(prod.available(), BUFFER_SIZE/3);
+    assert_eq!(prod.available(), BUFFER_SIZE / 3);
     assert_eq!(work.available(), 0);
-    assert_eq!(cons.available(), BUFFER_SIZE/3 * 2);
+    assert_eq!(cons.available(), BUFFER_SIZE / 3 * 2);
 
     cons.reset_index();
 
@@ -127,5 +124,4 @@ fn test_reset() {
     assert_eq!(prod.available(), 0);
     assert_eq!(work.available(), 0);
     assert_eq!(cons.available(), BUFFER_SIZE - 1);
-
 }

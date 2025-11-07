@@ -1,5 +1,5 @@
-use crate::iterators::{private_impl};
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
+use crate::iterators::private_impl;
 #[allow(unused_imports)]
 use crate::iterators::sync_iterators::detached::Detached;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
@@ -40,13 +40,16 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'_, B> {
         unsafe {
             self.cached_avail = match self.index <= succ_idx {
                 true => succ_idx.unchecked_sub(self.index),
-                false => self.buf_len().unchecked_sub(self.index).unchecked_add(succ_idx)
+                false => self
+                    .buf_len()
+                    .unchecked_sub(self.index)
+                    .unchecked_add(succ_idx),
             };
         }
 
         self.cached_avail
     }
-    
+
     #[inline]
     fn set_atomic_index(&self, index: usize) {
         self.buffer.set_work_index(index);

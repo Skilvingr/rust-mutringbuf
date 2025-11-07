@@ -10,9 +10,7 @@ use libc::c_int;
 /// Returns the page size in use by the system.
 #[cfg(unix)]
 pub fn page_size() -> usize {
-    unsafe {
-        libc::sysconf(libc::_SC_PAGESIZE) as usize
-    }
+    unsafe { libc::sysconf(libc::_SC_PAGESIZE) as usize }
 }
 
 /// Returns a multiple of the page size in use by the system.
@@ -34,17 +32,16 @@ unsafe fn open_fd() -> c_int {
     let mut name;
 
     let fd = loop {
-        name = CString::new(
-            if let Some(gn) = group_name {
-                format!("{}{}{}", gn, "/mrb", rand() % 99)
-            } else {
-                format!("{}{}", "/mrb", rand() % 99)
-            }
-        ).unwrap();
+        name = CString::new(if let Some(gn) = group_name {
+            format!("{}{}{}", gn, "/mrb", rand() % 99)
+        } else {
+            format!("{}{}", "/mrb", rand() % 99)
+        })
+        .unwrap();
         let fd = libc::shm_open(
             name.as_ptr(),
             libc::O_CREAT | libc::O_RDWR | libc::O_EXCL,
-            0700
+            0700,
         );
 
         if fd != -1 || *libc::__error() != libc::EEXIST {
@@ -64,7 +61,12 @@ unsafe fn open_fd() -> c_int {
 
 pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
     let page_size = page_size();
-    assert_eq!(value.len() % page_size, 0, "len must be a multiple of page size, which is: {}.", page_size);
+    assert_eq!(
+        value.len() % page_size,
+        0,
+        "len must be a multiple of page size, which is: {}.",
+        page_size
+    );
 
     unsafe {
         let size = size_of_val(value);
@@ -83,25 +85,28 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
             2 * size as libc::size_t,
             libc::PROT_NONE,
             libc::MAP_PRIVATE | libc::MAP_ANONYMOUS,
-            -1, 0
+            -1,
+            0,
         );
         assert_ne!(buffer as isize, -1, "mmap 1 failed");
-        
+
         let addr = libc::mmap(
             buffer,
             size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
             libc::MAP_SHARED | libc::MAP_FIXED,
-            fd, 0
+            fd,
+            0,
         );
         assert_ne!(addr as isize, -1, "mmap 2 failed");
-        
+
         let addr = libc::mmap(
             buffer.byte_add(size),
             size as libc::size_t,
             libc::PROT_READ | libc::PROT_WRITE,
             libc::MAP_SHARED | libc::MAP_FIXED,
-            fd, 0
+            fd,
+            0,
         );
         assert_ne!(addr as isize, -1, "mmap 3 failed");
 

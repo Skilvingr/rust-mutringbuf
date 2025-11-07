@@ -56,7 +56,9 @@ impl<T> UnsafeSyncCell<T> {
     #[inline]
     pub fn check_zeroed(ptr: *const T) -> bool {
         unsafe {
-            (*slice_from_raw_parts(ptr as *const u8, size_of::<T>())).iter().all(|x| *x == 0)
+            (*slice_from_raw_parts(ptr as *const u8, size_of::<T>()))
+                .iter()
+                .all(|x| *x == 0)
         }
     }
 

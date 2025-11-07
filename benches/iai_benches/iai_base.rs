@@ -1,12 +1,10 @@
-use std::hint::black_box;
-use gungraun::{library_benchmark, library_benchmark_group};
-use mutringbuf::{LocalHeapRB, HeapSplit};
 use gungraun::main;
-
+use gungraun::{library_benchmark, library_benchmark_group};
+use mutringbuf::{HeapSplit, LocalHeapRB};
+use std::hint::black_box;
 
 const BUFFER_SIZE: usize = 4096;
 const BATCH_SIZE: usize = 100;
-
 
 #[library_benchmark]
 #[bench::long(1000)]
@@ -103,7 +101,6 @@ fn slice_x100(value: u64) {
         black_box(data);
     }
 }
-
 
 library_benchmark_group!(
     name = bench_iai_base;
