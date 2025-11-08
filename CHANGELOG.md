@@ -1,3 +1,12 @@
+<a name="v0.6.0"></a>
+## v0.6.0 (Unreleased)
+
+* **Asynchronous support has been completely reworked.**
+
+Async iterators can no longer be obtained from a normal buffer (e.g., `ConcurrentHeapRB` or `ConcurrentStackRB`). Instead, two dedicated buffers have been added: `AsyncHeapRB` and `AsyncStackRB`.
+
+As a result, iterators can now synchronize properly, and each will see their own futures polled only when the next one makes a move.
+
 <a name="v0.5.4"></a>
 ## v0.5.4 (02/10/2025)
 

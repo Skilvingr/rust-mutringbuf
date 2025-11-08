@@ -1,6 +1,8 @@
 use crate::HeapStorage;
 #[allow(unused_imports)]
 use crate::iterators::ProdIter;
+#[cfg(any(feature = "async", doc))]
+use crate::ring_buffer::variants::async_rb::AsyncMutRingBuf;
 use crate::{ConcurrentMutRingBuf, LocalMutRingBuf, UnsafeSyncCell};
 use alloc::boxed::Box;
 use alloc::vec;
@@ -61,6 +63,12 @@ macro_rules! impl_rb {
 }
 
 // Concurrent
+
+/// A stack-allocated asynchronous ring buffer usable in concurrent environment.
+#[cfg(any(feature = "async", doc))]
+pub type AsyncHeapRB<T> = AsyncMutRingBuf<HeapStorage<T>>;
+#[cfg(any(feature = "async", doc))]
+impl_rb!(AsyncHeapRB);
 
 /// A heap-allocated ring buffer usable in a concurrent environment.
 pub type ConcurrentHeapRB<T> = ConcurrentMutRingBuf<HeapStorage<T>>;

@@ -2,7 +2,7 @@
 
 [package]
 name = "mutringbuf"
-version = "0.5.4"
+version = "0.6.0"
 edition = "2024"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
@@ -16,16 +16,18 @@ documentation = "https://docs.rs/mutringbuf"
 [features]
 default = ["alloc"]
 alloc = []
-vmem = ["alloc", 'dep:libc']
-async = []
+vmem = ["alloc", "dep:libc"]
+async = ["dep:futures"]
 
 [dependencies]
-crossbeam-utils = { version = "0.8.21", default-features = false }
+crossbeam-utils = { version = "0.8", default-features = false }
+futures = { version = "0.3", optional = true, default-features = false }
 libc = { version = "0.2", optional = true }
 
 [dev-dependencies]
 divan = "0.1.21"
-tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "macros"] }
+futures = { version = "0.3" }
+tokio = { version = "1.47.1", features = ["rt", "rt-multi-thread", "macros", "time"] }
 gungraun = "0.17.0"
 libc = "0.2"
 

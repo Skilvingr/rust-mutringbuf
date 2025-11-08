@@ -75,39 +75,45 @@ suitable for concurrent environments. In some cases, concurrent buffers may perf
 #### Stack-Allocated Buffers
 
 ```rust
-use mutringbuf::{ConcurrentStackRB, LocalStackRB};
+use mutringbuf::{ConcurrentStackRB, LocalStackRB, AsyncStackRB};
 
 // Buffers filled with default values
 let concurrent_buf = ConcurrentStackRB::<usize, 4096>::default();
 let local_buf = LocalStackRB::<usize, 4096>::default();
+let async_buf = AsyncStackRB::<usize, 4096>::default();
 
 // Buffers built from existing arrays
 let concurrent_buf = ConcurrentStackRB::from([0; 4096]);
 let local_buf = LocalStackRB::from([0; 4096]);
+let async_buf = AsyncStackRB::from([0; 4096]);
 
 // Buffers with uninitialised (zeroed) items
 unsafe {
     let concurrent_buf = ConcurrentStackRB::<usize, 4096>::new_zeroed();
     let local_buf = LocalStackRB::<usize, 4096>::new_zeroed();
+    let async_buf = AsyncStackRB::<usize, 4096>::new_zeroed();
 }
 ```
 
 #### Heap-Allocated Buffers
 ```rust
-use mutringbuf::{ConcurrentHeapRB, LocalHeapRB};
+use mutringbuf::{ConcurrentHeapRB, LocalHeapRB, AsyncHeapRB};
 
 // Buffers filled with default values
 let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::default(4096);
 let local_buf: LocalHeapRB<usize> = LocalHeapRB::default(4096);
+let async_buf: AsyncHeapRB<usize> = AsyncHeapRB::default(4096);
 
 // Buffers built from existing vectors
 let concurrent_buf = ConcurrentHeapRB::from(vec![0; 4096]);
 let local_buf = LocalHeapRB::from(vec![0; 4096]);
+let async_buf = AsyncHeapRB::from(vec![0; 4096]);
 
 // Buffers with uninitialised (zeroed) items
 unsafe {
     let concurrent_buf: ConcurrentHeapRB<usize> = ConcurrentHeapRB::new_zeroed(4096);
     let local_buf: LocalHeapRB<usize> = LocalHeapRB::new_zeroed(4096);
+    let async_buf: AsyncHeapRB<usize> = AsyncHeapRB::new_zeroed(4096);
 }
 ```
 
@@ -115,7 +121,7 @@ unsafe {
 
 The buffer can be utilised in two primary ways:
 
-#### Sync Immutable
+#### Immutable
 
 This is the standard way to use a ring buffer, where a producer inserts values that will eventually be consumed.
 
@@ -126,7 +132,7 @@ let buf = LocalHeapRB::from(vec![0; 4096]);
 let (mut prod, mut cons) = buf.split();
 ```
 
-#### Sync Mutable
+#### Mutable
 
 Similar to the immutable case, but with an additional iterator `work` that allows for in-place mutation of elements.
 
@@ -135,22 +141,6 @@ use mutringbuf::{LocalHeapRB, HeapSplit};
 
 let buf = LocalHeapRB::from(vec![0; 4096]);
 let (mut prod, mut work, mut cons) = buf.split_mut();
-```
-
-#### Async Immutable
-```rust ignore
-use mutringbuf::LocalHeapRB;
-
-let buf = LocalHeapRB::from(vec![0; 4096]);
-let (mut as_prod, mut as_cons) = buf.split_async();
-```
-
-#### Async Mutable
-```rust ignore
-use mutringbuf::LocalHeapRB;
-
-let buf = LocalHeapRB::from(vec![0; 4096]);
-let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
 ```
 
 Iterators can also be wrapped in a [`Detached`](https://docs.rs/mutringbuf/latest/mutringbuf/iterators/sync_iterators/detached/struct.Detached.html)
@@ -206,5 +196,5 @@ cargo run --example simple_async --features async
 
 Every other example_name can be run with:
 ```shell
-cargo run --example `example_name` 
+cargo run --example `example_name`
 ```

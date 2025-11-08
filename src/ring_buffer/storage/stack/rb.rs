@@ -1,6 +1,8 @@
 #[cfg(doc)]
 use crate::iterators::ProdIter;
 
+#[cfg(any(feature = "async", doc))]
+use crate::ring_buffer::variants::async_rb::AsyncMutRingBuf;
 use crate::{ConcurrentMutRingBuf, LocalMutRingBuf, StackStorage, UnsafeSyncCell};
 
 macro_rules! impl_rb {
@@ -31,6 +33,12 @@ macro_rules! impl_rb {
         }
     };
 }
+
+/// A stack-allocated asynchronous ring buffer usable in concurrent environment.
+#[cfg(any(feature = "async", doc))]
+pub type AsyncStackRB<T, const N: usize> = AsyncMutRingBuf<StackStorage<T, N>>;
+#[cfg(any(feature = "async", doc))]
+impl_rb!(AsyncStackRB);
 
 /// A stack-allocated ring buffer usable in concurrent environment.
 pub type ConcurrentStackRB<T, const N: usize> = ConcurrentMutRingBuf<StackStorage<T, N>>;

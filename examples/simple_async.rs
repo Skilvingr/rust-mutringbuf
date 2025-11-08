@@ -3,13 +3,13 @@ extern crate alloc;
 #[cfg(all(feature = "async", feature = "alloc"))]
 #[tokio::main]
 async fn main() {
-    use mutringbuf::ConcurrentHeapRB;
+    use mutringbuf::AsyncHeapRB;
     use mutringbuf::iterators::async_iterators::AsyncIterator;
 
     const BUFFER_SIZE: usize = 4095;
 
-    let buf = ConcurrentHeapRB::from(vec![0; BUFFER_SIZE + 1]);
-    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
+    let buf = AsyncHeapRB::from(vec![0; BUFFER_SIZE + 1]);
+    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut();
 
     as_prod.push(1).await;
 
@@ -71,6 +71,8 @@ async fn main() {
     assert!(!as_cons.is_prod_alive());
     drop(as_work);
     assert!(!as_cons.is_work_alive());
+
+    println!("OK");
 }
 
 #[cfg(any(not(feature = "async"), not(feature = "alloc")))]

@@ -9,16 +9,16 @@ use crate::{MRBIterator, MutRB};
 #[doc = r##"
 Async version of [`Detached`].
 "##]
-pub struct AsyncDetached<I: AsyncIterator, B: MutRB> {
+pub struct AsyncDetached<'buf, I: AsyncIterator<'buf>, B: MutRB> {
     inner: I,
-    phantom_data: PhantomData<B>,
+    phantom_data: PhantomData<&'buf B>,
 }
 
-unsafe impl<I: AsyncIterator, B: MutRB> Send for AsyncDetached<I, B> {}
+unsafe impl<'buf, I: AsyncIterator<'buf>, B: MutRB> Send for AsyncDetached<'buf, I, B> {}
 
-impl<B: MutRB<Item = T>, T, I: AsyncIterator> AsyncDetached<I, B> {
+impl<'buf, B: MutRB<Item = T>, T, I: AsyncIterator<'buf>> AsyncDetached<'buf, I, B> {
     /// Creates [`Self`] from an [`AsyncWorkIter`].
-    pub(crate) fn from_iter(iter: I) -> AsyncDetached<I, B> {
+    pub(crate) fn from_iter(iter: I) -> AsyncDetached<'buf, I, B> {
         Self {
             inner: iter,
             phantom_data: PhantomData,

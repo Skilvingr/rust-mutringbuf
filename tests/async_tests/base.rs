@@ -1,18 +1,50 @@
 extern crate alloc;
 
-use crate::common_def;
+use std::time::Duration;
+
 use mutringbuf::iterators::async_iterators::AsyncIterator;
+
+use crate::common_def;
 
 common_def!(buf);
 
 #[tokio::test]
+async fn test_full() {
+    #[cfg(not(feature = "vmem"))]
+    let buf = mutringbuf::AsyncStackRB::from([0; BUFFER_SIZE]);
+    #[cfg(feature = "vmem")]
+    let buf = mutringbuf::AsyncHeapRB::from(vec![0; BUFFER_SIZE]);
+
+    let (mut as_prod, mut as_cons) = buf.split();
+
+    let slice: Vec<i32> = (0..BUFFER_SIZE as i32 - 1).collect();
+    as_prod.push_slice(&slice).await;
+
+    let clone = slice.clone();
+    let pusher = tokio::spawn(async move {
+        as_prod.push_slice(&clone).await;
+    });
+
+    let popper = tokio::spawn(async move {
+        tokio::time::sleep(Duration::from_secs(2)).await;
+        let _ = as_cons.peek_available().await;
+        unsafe {
+            as_cons.advance(BUFFER_SIZE - 1);
+        }
+        println!("ADVANCED");
+    });
+
+    let _ = tokio::join!(pusher, popper);
+}
+
+#[tokio::test]
 async fn test_push_work_pop_single_and_slice() {
     #[cfg(not(feature = "vmem"))]
-    let buf = mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE]);
+    let buf = mutringbuf::AsyncStackRB::from([0; BUFFER_SIZE]);
     #[cfg(feature = "vmem")]
-    let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE]);
+    let buf = mutringbuf::AsyncHeapRB::from(vec![0; BUFFER_SIZE]);
 
-    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
+    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut();
 
     as_prod.push(1).await;
 

@@ -1,20 +1,27 @@
-use std::sync::Arc;
-use std::sync::atomic::Ordering::{Acquire, Release};
-use std::sync::atomic::{AtomicBool, AtomicUsize};
-use std::time::Instant;
+use std::{
+    sync::{
+        Arc,
+        atomic::{
+            AtomicBool, AtomicUsize,
+            Ordering::{Acquire, Release},
+        },
+    },
+    time::Instant,
+};
+
+use mutringbuf::iterators::async_iterators::AsyncIterator;
 
 use crate::common_def;
-use mutringbuf::iterators::async_iterators::AsyncIterator;
 
 common_def!(buf);
 
 async fn rb_fibonacci() {
     #[cfg(not(feature = "vmem"))]
-    let buf = mutringbuf::ConcurrentStackRB::from([0; BUFFER_SIZE]);
+    let buf = mutringbuf::AsyncStackRB::from([0; BUFFER_SIZE]);
     #[cfg(feature = "vmem")]
-    let buf = mutringbuf::ConcurrentHeapRB::from(vec![0; BUFFER_SIZE]);
+    let buf = mutringbuf::AsyncHeapRB::from(vec![0; BUFFER_SIZE]);
 
-    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut_async();
+    let (mut as_prod, mut as_work, mut as_cons) = buf.split_mut();
 
     // Flag variable to stop threads
     let stop_prod = Arc::new(AtomicBool::new(false));
