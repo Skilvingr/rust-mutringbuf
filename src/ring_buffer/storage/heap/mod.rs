@@ -21,7 +21,18 @@ impl<T> Drop for HeapStorage<T> {
     fn drop(&mut self) {
         unsafe {
             #[cfg(feature = "vmem")]
-            libc::munmap(self.inner as _, 2 * self.len * size_of::<T>());
+            {
+                let p = core::ptr::slice_from_raw_parts_mut(self.inner, self.len);
+                core::ptr::drop_in_place(p);
+
+                let size = self.len * size_of::<T>();
+
+                // glibc manual says that it is fine to unmap two mapped blocks at the same
+                // time. Nevertheless, I don't trust such a guarantee, as everything can change
+                // at any time, so the blocks get unmapped one after the other.
+                libc::munmap(self.inner.byte_add(size) as _, size);
+                libc::munmap(self.inner as _, size);
+            }
 
             #[cfg(not(feature = "vmem"))]
             let _ = Box::from_raw(core::ptr::slice_from_raw_parts_mut(self.inner, self.len));

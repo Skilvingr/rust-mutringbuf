@@ -8,9 +8,12 @@ use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 
-fn get_range_max(capacity: usize) -> usize {
+fn get_range_max<T>(capacity: usize) -> usize {
     #[cfg(feature = "vmem")]
-    return super::vmem_helper::get_page_size_mul(capacity);
+    {
+        let min_size = capacity * size_of::<T>();
+        return super::vmem_helper::get_page_size_mul(min_size) / size_of::<T>();
+    }
     #[cfg(not(feature = "vmem"))]
     return capacity;
 }
@@ -42,7 +45,7 @@ macro_rules! impl_rb {
             pub unsafe fn new_zeroed(capacity: usize) -> Self {
                 Self::_from(
                     HeapStorage::from(
-                        (0..get_range_max(capacity))
+                        (0..get_range_max::<T>(capacity))
                         .map(|_| UnsafeSyncCell::new_zeroed()).collect::<Box<[UnsafeSyncCell<T>]>>()
                     )
                 )
@@ -56,7 +59,7 @@ macro_rules! impl_rb {
             /// size (equal to or greater than it).
             pub fn default(capacity: usize) -> Self
                 where T: Default + Clone {
-                Self::from(vec![T::default(); get_range_max(capacity)])
+                Self::from(vec![T::default(); get_range_max::<T>(capacity)])
             }
         }
     };

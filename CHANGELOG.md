@@ -5,7 +5,21 @@
 
 Async iterators can no longer be obtained from a normal buffer (e.g., `ConcurrentHeapRB` or `ConcurrentStackRB`). Instead, two dedicated buffers have been added: `AsyncHeapRB` and `AsyncStackRB`.
 
-As a result, iterators can now synchronize properly, and each will see their own futures polled only when the next one makes a move.
+As a result, iterators can now synchronize properly, and each will have their own futures polled only when the next one makes a move.
+
+* **Vmem buffers are now more flexible regarding buffer length.**
+
+Previously, vmem-optimized buffers could only have a length that was a multiple of the OS-reported page size. While not an error, this was a limitation. Now, the size check applies to the entire buffer. For example, if `page_size = 4096` and a buffer contains elements of type `T` where `size_of::<T>() = 4096`, such a buffer can have any length.
+
+* **Added sanitizers and fixed a bug in the drop implementation.**
+
+* **`*_alive` and `set_*_alive` methods have been removed.**
+
+These methods no longer made sense. Users should monitor the status of iterators themselves, perhaps by loading and storing an external atomic variable.
+
+* **Fixed issue #2.**
+
+* **Fixed leak for uninitialized buffers.**
 
 <a name="v0.5.4"></a>
 ## v0.5.4 (02/10/2025)

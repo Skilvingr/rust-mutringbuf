@@ -5,8 +5,16 @@ pub trait ConcurrentRB {}
 
 /// Trait implemented by ring buffers.
 #[allow(private_bounds)]
-pub trait MutRB: IterManager + StorageManager<StoredType = Self::Item> {
+pub trait MutRB:
+    PrivateIterManager + IterManager + StorageManager<StoredType = Self::Item>
+{
     type Item;
+}
+
+pub(crate) trait PrivateIterManager {
+    fn set_alive_iters(&self, count: u8);
+    fn drop_iter(&self) -> u8;
+    fn acquire_fence(&self);
 }
 
 /// Trait used to manage indices.
@@ -17,13 +25,7 @@ pub trait IterManager {
     fn set_prod_index(&self, index: usize);
     fn set_work_index(&self, index: usize);
     fn set_cons_index(&self, index: usize);
-
-    fn prod_alive(&self) -> bool;
-    fn work_alive(&self) -> bool;
-    fn cons_alive(&self) -> bool;
-    fn set_prod_alive(&self, alive: bool);
-    fn set_work_alive(&self, alive: bool);
-    fn set_cons_alive(&self, alive: bool);
+    fn alive_iters(&self) -> u8;
 }
 
 /// Trait used to manage storage.

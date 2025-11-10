@@ -43,12 +43,10 @@ pub trait AsyncIterator<'buf> {
         AsyncDetached::from_iter(self)
     }
 
-    delegate!(MRBIterator, fn is_prod_alive(&self) -> bool);
-    delegate!(MRBIterator, fn is_work_alive(&self) -> bool);
-    delegate!(MRBIterator, fn is_cons_alive(&self) -> bool);
     delegate!(MRBIterator, fn prod_index(&self) -> usize);
     delegate!(MRBIterator, fn work_index(&self) -> usize);
     delegate!(MRBIterator, fn cons_index(&self) -> usize);
+    delegate!(MRBIterator, fn alive_iters(&self) -> u8);
     delegate!(MRBIterator, fn index(&self) -> usize);
     delegate!(MRBIterator, fn available(&(mut) self) -> usize);
 }

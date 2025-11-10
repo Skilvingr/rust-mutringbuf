@@ -68,9 +68,9 @@ async fn main() {
     }
 
     drop(as_prod);
-    assert!(!as_cons.is_prod_alive());
+    assert_eq!(as_cons.alive_iters(), 2);
     drop(as_work);
-    assert!(!as_cons.is_work_alive());
+    assert_eq!(as_cons.alive_iters(), 1);
 
     println!("OK");
 }

@@ -3,8 +3,9 @@
 
 use core::cell::UnsafeCell;
 use core::num::NonZeroUsize;
+use core::sync::atomic::AtomicU8;
+use core::sync::atomic::AtomicUsize;
 use core::sync::atomic::Ordering::{Acquire, Release};
-use core::sync::atomic::{AtomicBool, AtomicUsize};
 
 use crate::iterators::{
     AsyncConsIter, AsyncProdIter, AsyncWorkIter, async_iterators::AsyncIterator,
@@ -12,7 +13,7 @@ use crate::iterators::{
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{
-    ConcurrentRB, IterManager, MutRB, StorageManager,
+    ConcurrentRB, IterManager, MutRB, PrivateIterManager, StorageManager,
 };
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crossbeam_utils::CachePadded;
@@ -34,9 +35,7 @@ pub struct AsyncMutRingBuf<S: Storage> {
     pub(crate) work_waker: CachePadded<AtomicWaker>,
     pub(crate) cons_waker: CachePadded<AtomicWaker>,
 
-    prod_alive: AtomicBool,
-    work_alive: AtomicBool,
-    cons_alive: AtomicBool,
+    alive_iters: AtomicU8,
 }
 
 impl<S: Storage<Item = T>, T> MutRB for AsyncMutRingBuf<S> {
@@ -58,9 +57,7 @@ impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
         AsyncWorkIter<'buf, S>,
         AsyncConsIter<'buf, S, true>,
     ) {
-        self.set_prod_alive(true);
-        self.set_work_alive(true);
-        self.set_cons_alive(true);
+        self.set_alive_iters(3);
 
         let r = BufRef::new(self);
         (
@@ -75,8 +72,7 @@ impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
     /// - [`AsyncConsIter`].
     #[cfg(any(not(feature = "alloc"), doc))]
     pub fn split(&mut self) -> (AsyncProdIter<S, false>, AsyncConsIter<S, false>) {
-        self.set_prod_alive(true);
-        self.set_cons_alive(true);
+        self.set_alive_iters(2);
 
         let r = BufRef::from_ref(self);
         (
@@ -97,9 +93,7 @@ impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
         AsyncWorkIter<S>,
         AsyncConsIter<S, true>,
     ) {
-        self.set_prod_alive(true);
-        self.set_work_alive(true);
-        self.set_cons_alive(true);
+        self.set_alive_iters(3);
 
         let r = BufRef::from_ref(self);
         (
@@ -114,8 +108,7 @@ impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
     /// - [`AsyncConsIter`].
     #[cfg(any(feature = "alloc", doc))]
     pub fn split(self) -> (AsyncProdIter<'buf, S, false>, AsyncConsIter<'buf, S, false>) {
-        self.set_prod_alive(true);
-        self.set_cons_alive(true);
+        self.set_alive_iters(2);
 
         let r = BufRef::new(self);
         (
@@ -139,10 +132,30 @@ impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
             work_waker: CachePadded::new(AtomicWaker::new()),
             cons_waker: CachePadded::new(AtomicWaker::new()),
 
-            prod_alive: AtomicBool::default(),
-            work_alive: AtomicBool::default(),
-            cons_alive: AtomicBool::default(),
+            alive_iters: AtomicU8::default(),
         }
+    }
+}
+
+impl<S: Storage> PrivateIterManager for AsyncMutRingBuf<S> {
+    fn set_alive_iters(&self, count: u8) {
+        self.alive_iters.store(count, Release);
+    }
+
+    #[inline(always)]
+    fn drop_iter(&self) -> u8 {
+        self.alive_iters.fetch_sub(1, Release)
+    }
+
+    #[inline(always)]
+    fn acquire_fence(&self) {
+        #[cfg(not(feature = "thread_sanitiser"))]
+        core::sync::atomic::fence(Acquire);
+
+        // ThreadSanitizer does not support memory fences. To avoid false positive
+        // reports use atomic loads for synchronization instead.
+        #[cfg(feature = "thread_sanitiser")]
+        self.alive_iters.load(Acquire);
     }
 }
 
@@ -177,28 +190,8 @@ impl<S: Storage> IterManager for AsyncMutRingBuf<S> {
         self.cons_idx.store(index, Release);
     }
 
-    fn prod_alive(&self) -> bool {
-        self.prod_alive.load(Acquire)
-    }
-
-    fn work_alive(&self) -> bool {
-        self.work_alive.load(Acquire)
-    }
-
-    fn cons_alive(&self) -> bool {
-        self.cons_alive.load(Acquire)
-    }
-
-    fn set_prod_alive(&self, alive: bool) {
-        self.prod_alive.store(alive, Release);
-    }
-
-    fn set_work_alive(&self, alive: bool) {
-        self.work_alive.store(alive, Release);
-    }
-
-    fn set_cons_alive(&self, alive: bool) {
-        self.cons_alive.store(alive, Release);
+    fn alive_iters(&self) -> u8 {
+        self.alive_iters.load(Acquire)
     }
 }
 

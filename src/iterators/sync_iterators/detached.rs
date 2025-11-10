@@ -102,9 +102,6 @@ impl<T, I: MRBIterator<Item = T>> Detached<I> {
             .set_cached_avail(unsafe { cached_avail.unchecked_add(count) });
     }
 
-    delegate!(MRBIterator (inline), pub fn is_prod_alive(&self) -> bool);
-    delegate!(MRBIterator (inline), pub fn is_work_alive(&self) -> bool);
-    delegate!(MRBIterator (inline), pub fn is_cons_alive(&self) -> bool);
     delegate!(MRBIterator (inline), pub fn prod_index(&self) -> usize);
     delegate!(MRBIterator (inline), pub fn work_index(&self) -> usize);
     delegate!(MRBIterator (inline), pub fn cons_index(&self) -> usize);

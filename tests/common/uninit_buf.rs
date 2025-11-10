@@ -1,4 +1,5 @@
-#[cfg(feature = "alloc")]
+#![cfg(feature = "alloc")]
+
 #[test]
 fn test_uninit() {
     use crate::common_def;

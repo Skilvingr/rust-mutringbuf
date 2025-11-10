@@ -1,0 +1,20 @@
+#!/bin/bash
+
+test() {
+    export RUSTFLAGS="-Zsanitizer=$1"
+
+    cargo +nightly test --features thread_sanitiser --features async -Zbuild-std --target x86_64-unknown-linux-gnu --test tests &&
+    cargo +nightly test --features thread_sanitiser --features vmem --features async -Zbuild-std --target x86_64-unknown-linux-gnu --test tests &&
+    cargo +nightly run --features thread_sanitiser -Zbuild-std --target x86_64-unknown-linux-gnu --example simple &&
+    cargo +nightly run --features thread_sanitiser --features async -Zbuild-std --target x86_64-unknown-linux-gnu --example simple_async &&
+    cargo +nightly run --features thread_sanitiser -Zbuild-std --target x86_64-unknown-linux-gnu --example uninit_items
+}
+
+echo "ADDRESS" &&
+test address &&
+echo "Leak" &&
+test leak &&
+echo "MEMORY" &&
+test memory &&
+echo "THREAD" &&
+test thread

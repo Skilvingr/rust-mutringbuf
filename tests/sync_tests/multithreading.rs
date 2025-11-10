@@ -12,8 +12,8 @@ macro_rules! get_prod {
         $s.spawn(move || {
             let start = Instant::now();
 
-            while start.elapsed().as_secs() < 3 {
-                $prod.push_slice(&[0; 30]);
+            while start.elapsed().as_millis() < 5 {
+                $prod.push_slice(&[0; 3000]);
             }
         })
     };
@@ -23,7 +23,7 @@ macro_rules! get_work {
         $s.spawn(move || {
             let start = Instant::now();
 
-            while start.elapsed().as_secs() < 3 {
+            while start.elapsed().as_millis() < 5 {
                 let avail = $work.available();
                 unsafe {
                     $work.advance(avail);
@@ -37,7 +37,7 @@ macro_rules! get_cons {
         $s.spawn(move || {
             let start = Instant::now();
 
-            while start.elapsed().as_secs() < 3 {
+            while start.elapsed().as_millis() < 5 {
                 let avail = $cons.available();
                 unsafe {
                     $cons.advance(avail);

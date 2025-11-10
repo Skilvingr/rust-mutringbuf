@@ -1,12 +1,13 @@
 use core::cell::UnsafeCell;
 use core::num::NonZeroUsize;
+use core::sync::atomic::AtomicU8;
+use core::sync::atomic::AtomicUsize;
 use core::sync::atomic::Ordering::{Acquire, Release};
-use core::sync::atomic::{AtomicBool, AtomicUsize};
 
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{
-    ConcurrentRB, IterManager, MutRB, StorageManager,
+    ConcurrentRB, IterManager, MutRB, PrivateIterManager, StorageManager,
 };
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crossbeam_utils::CachePadded;
@@ -29,9 +30,7 @@ pub struct ConcurrentMutRingBuf<S: Storage> {
     work_idx: CachePadded<AtomicUsize>,
     cons_idx: CachePadded<AtomicUsize>,
 
-    prod_alive: AtomicBool,
-    work_alive: AtomicBool,
-    cons_alive: AtomicBool,
+    alive_iters: AtomicU8,
 }
 
 impl<S: Storage<Item = T>, T> MutRB for ConcurrentMutRingBuf<S> {
@@ -53,11 +52,30 @@ impl<S: Storage<Item = T>, T> ConcurrentMutRingBuf<S> {
             prod_idx: CachePadded::new(0.into()),
             work_idx: CachePadded::new(0.into()),
             cons_idx: CachePadded::new(0.into()),
-
-            prod_alive: AtomicBool::default(),
-            work_alive: AtomicBool::default(),
-            cons_alive: AtomicBool::default(),
+            alive_iters: AtomicU8::default(),
         }
+    }
+}
+
+impl<S: Storage> PrivateIterManager for ConcurrentMutRingBuf<S> {
+    fn set_alive_iters(&self, count: u8) {
+        self.alive_iters.store(count, Release);
+    }
+
+    #[inline(always)]
+    fn drop_iter(&self) -> u8 {
+        self.alive_iters.fetch_sub(1, Release)
+    }
+
+    #[inline(always)]
+    fn acquire_fence(&self) {
+        #[cfg(not(feature = "thread_sanitiser"))]
+        core::sync::atomic::fence(Acquire);
+
+        // ThreadSanitizer does not support memory fences. To avoid false positive
+        // reports use atomic loads for synchronization instead.
+        #[cfg(feature = "thread_sanitiser")]
+        self.alive_iters.load(Acquire);
     }
 }
 
@@ -92,28 +110,8 @@ impl<S: Storage> IterManager for ConcurrentMutRingBuf<S> {
         self.cons_idx.store(index, Release);
     }
 
-    fn prod_alive(&self) -> bool {
-        self.prod_alive.load(Acquire)
-    }
-
-    fn work_alive(&self) -> bool {
-        self.work_alive.load(Acquire)
-    }
-
-    fn cons_alive(&self) -> bool {
-        self.cons_alive.load(Acquire)
-    }
-
-    fn set_prod_alive(&self, alive: bool) {
-        self.prod_alive.store(alive, Release);
-    }
-
-    fn set_work_alive(&self, alive: bool) {
-        self.work_alive.store(alive, Release);
-    }
-
-    fn set_cons_alive(&self, alive: bool) {
-        self.cons_alive.store(alive, Release);
+    fn alive_iters(&self) -> u8 {
+        self.alive_iters.load(Acquire)
     }
 }
 

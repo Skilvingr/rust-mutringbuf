@@ -34,8 +34,7 @@ pub(crate) mod impl_splits {
                     ProdIter<'buf, $Struct<HeapStorage<T>>>,
                     ConsIter<'buf, $Struct<HeapStorage<T>>, false>,
                 ) {
-                    self.set_prod_alive(true);
-                    self.set_cons_alive(true);
+                    self.set_alive_iters(2);
 
                     let r = BufRef::new(self);
                     (ProdIter::new(r.clone()), ConsIter::new(r))
@@ -48,9 +47,7 @@ pub(crate) mod impl_splits {
                     WorkIter<'buf, $Struct<HeapStorage<T>>>,
                     ConsIter<'buf, $Struct<HeapStorage<T>>, true>,
                 ) {
-                    self.set_prod_alive(true);
-                    self.set_work_alive(true);
-                    self.set_cons_alive(true);
+                    self.set_alive_iters(3);
 
                     let r = BufRef::new(self);
                     (
@@ -71,8 +68,7 @@ pub(crate) mod impl_splits {
                     ProdIter<'_, $Struct<StackStorage<T, N>>>,
                     ConsIter<'_, $Struct<StackStorage<T, N>>, false>,
                 ) {
-                    self.set_prod_alive(true);
-                    self.set_cons_alive(true);
+                    self.set_alive_iters(2);
 
                     let r = BufRef::from_ref(self);
                     (ProdIter::new(r.clone()), ConsIter::new(r))
@@ -85,9 +81,7 @@ pub(crate) mod impl_splits {
                     WorkIter<'_, $Struct<StackStorage<T, N>>>,
                     ConsIter<'_, $Struct<StackStorage<T, N>>, true>,
                 ) {
-                    self.set_prod_alive(true);
-                    self.set_work_alive(true);
-                    self.set_cons_alive(true);
+                    self.set_alive_iters(3);
 
                     let r = BufRef::from_ref(self);
                     (

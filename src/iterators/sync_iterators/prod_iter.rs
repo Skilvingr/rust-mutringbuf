@@ -60,7 +60,7 @@ unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for ProdIter<'_, B> {}
 
 impl<B: MutRB + IterManager> Drop for ProdIter<'_, B> {
     fn drop(&mut self) {
-        self.buffer.set_prod_alive(false);
+        self.buffer.drop_iter();
     }
 }
 

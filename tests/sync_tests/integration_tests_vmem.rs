@@ -1,9 +1,14 @@
 extern crate alloc;
 
 use crate::{common_def, get_buf};
-use mutringbuf::MRBIterator;
+use mutringbuf::{ConcurrentHeapRB, MRBIterator};
 
 common_def!();
+
+#[test]
+fn test_odd_sizes() {
+    let _ = ConcurrentHeapRB::from(vec![[0; 4096]; 5]);
+}
 
 #[test]
 fn test_push_work_pop_single() {

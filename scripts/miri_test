@@ -3,7 +3,6 @@
 export MIRIFLAGS="-Zmiri-disable-isolation ${MIRIFLAGS:-}"
 
 cargo +nightly miri nextest run --features async &&
-cargo +nightly miri nextest run --test tests common::stack &&
 cargo +nightly miri run --example simple &&
 cargo +nightly miri run --example simple_async --features async &&
 cargo +nightly miri run --example uninit_items

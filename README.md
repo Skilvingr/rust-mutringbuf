@@ -2,7 +2,7 @@
 
 [![crates.io][crates-badge]][crates-url]
 [![Documentation][docs-badge]][docs-url]
-[![Rust + Miri][tests-badge]][tests-url]
+[![Rust + Miri + Sanitisers][tests-badge]][tests-url]
 
 [crates-badge]: https://img.shields.io/crates/v/mutringbuf.svg
 [crates-url]: https://crates.io/crates/mutringbuf
@@ -39,7 +39,7 @@ An interesting optimisation for circular buffers involves mapping the underlying
 virtual memory. More information can be found [here](https://en.wikipedia.org/wiki/Circular_buffer#Optimization).
 
 This crate supports this optimisation through the `vmem` feature, which can only be used with heap-allocated buffers and
-is currently limited to `unix` targets. The buffer size must be a multiple of the system's page size (usually `4096`).
+is currently limited to `unix` targets. The buffer size (length of the buffer times the size of the stored type) must be a multiple of the system's page size (usually `4096` for x86_64).
 When using the `default` and `new_zeroed` methods, the correct size is calculated based on the provided minimum size.
 However, when using the `from` methods, the user must ensure that this requirement is met to avoid panics.
 

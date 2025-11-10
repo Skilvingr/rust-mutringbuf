@@ -21,7 +21,7 @@ unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for ConsIt
 
 impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<'_, B, W> {
     fn drop(&mut self) {
-        self.buffer.set_cons_alive(false);
+        self.buffer.drop_iter();
     }
 }
 

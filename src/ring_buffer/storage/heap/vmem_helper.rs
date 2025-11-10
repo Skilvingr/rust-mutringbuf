@@ -61,16 +61,17 @@ unsafe fn open_fd() -> c_int {
 
 pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
     let page_size = page_size();
+    let size = size_of_val(value);
+
     assert_eq!(
-        value.len() % page_size,
+        size % page_size,
         0,
-        "len must be a multiple of page size, which is: {}.",
+        "the size of the buffer (len * size_of::<T>()) must be a multiple of page size, which is: {}.",
         page_size
     );
 
     unsafe {
-        let size = size_of_val(value);
-
+        // The real place where the buffer is allocated
         let fd = open_fd();
 
         assert_ne!(fd, -1, "shared fd creation failed");
@@ -80,6 +81,7 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
             panic!("ftruncate failed");
         }
 
+        // Reserve a block double the size of the buffer
         let buffer = libc::mmap(
             ptr::null_mut(),
             2 * size as libc::size_t,
@@ -90,6 +92,8 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
         );
         assert_ne!(buffer as isize, -1, "mmap 1 failed");
 
+        // Map the first part of the previously reserved memory to the fd.
+        // Regarding the reserved memory, the overlapping part is automatically unmapped.
         let addr = libc::mmap(
             buffer,
             size as libc::size_t,
@@ -100,6 +104,8 @@ pub(crate) fn new<T>(value: &[UnsafeSyncCell<T>]) -> *mut UnsafeSyncCell<T> {
         );
         assert_ne!(addr as isize, -1, "mmap 2 failed");
 
+        // Map the second part of the previously reserved memory to the fd.
+        // Regarding the reserved memory, the overlapping part is automatically unmapped.
         let addr = libc::mmap(
             buffer.byte_add(size),
             size as libc::size_t,

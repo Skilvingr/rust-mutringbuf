@@ -64,18 +64,11 @@ pub trait MRBIterator: PrivateMRBIterator<Self::Item> {
         self.buffer().inner_len()
     }
 
-    /// Returns `true` if the producer iterator is still alive, `false` if it has been dropped.
-    fn is_prod_alive(&self) -> bool {
-        self.buffer().prod_alive()
+    /// Returns how many iterators are still alive.
+    fn alive_iters(&self) -> u8 {
+        self.buffer().alive_iters()
     }
-    /// Returns `true` if the worker iterator is still alive, `false` if it has been dropped.
-    fn is_work_alive(&self) -> bool {
-        self.buffer().work_alive()
-    }
-    /// Returns `true` if the consumer iterator is still alive, `false` if it has been dropped.
-    fn is_cons_alive(&self) -> bool {
-        self.buffer().cons_alive()
-    }
+
     /// Returns the index of the producer.
     #[inline(always)]
     fn prod_index(&self) -> usize {

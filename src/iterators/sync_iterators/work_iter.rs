@@ -28,7 +28,7 @@ unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for WorkIter<'_, B> {}
 
 impl<B: MutRB + IterManager> Drop for WorkIter<'_, B> {
     fn drop(&mut self) {
-        self.buffer.set_work_alive(false);
+        self.buffer.drop_iter();
     }
 }
 

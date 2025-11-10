@@ -6,49 +6,37 @@ common_def!();
 #[test]
 pub fn prod_drop_test() {
     let mut buf = get_buf!(Concurrent);
-    let (prod, work, cons) = buf.split_mut();
+    let (prod, _work, cons) = buf.split_mut();
 
-    assert!(work.is_prod_alive());
-    assert!(cons.is_work_alive());
-    assert!(work.is_cons_alive());
+    assert_eq!(cons.alive_iters(), 3);
 
     drop(prod);
 
-    assert!(!work.is_prod_alive());
-    assert!(cons.is_work_alive());
-    assert!(work.is_cons_alive());
+    assert_eq!(cons.alive_iters(), 2);
 }
 
 #[test]
 pub fn work_drop_test() {
     let mut buf = get_buf!(Concurrent);
-    let (prod, work, cons) = buf.split_mut();
+    let (_prod, work, cons) = buf.split_mut();
 
-    assert!(cons.is_prod_alive());
-    assert!(cons.is_work_alive());
-    assert!(prod.is_cons_alive());
+    assert_eq!(cons.alive_iters(), 3);
 
     drop(work);
 
-    assert!(cons.is_prod_alive());
-    assert!(!cons.is_work_alive());
-    assert!(prod.is_cons_alive());
+    assert_eq!(cons.alive_iters(), 2);
 }
 
 #[test]
 pub fn cons_drop_test() {
     let mut buf = get_buf!(Concurrent);
-    let (prod, work, cons) = buf.split_mut();
+    let (prod, _work, cons) = buf.split_mut();
 
-    assert!(work.is_prod_alive());
-    assert!(prod.is_work_alive());
-    assert!(prod.is_cons_alive());
+    assert_eq!(prod.alive_iters(), 3);
 
     drop(cons);
 
-    assert!(work.is_prod_alive());
-    assert!(prod.is_work_alive());
-    assert!(!prod.is_cons_alive());
+    assert_eq!(prod.alive_iters(), 2);
 }
 
 #[test]

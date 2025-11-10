@@ -105,7 +105,7 @@ async fn test_push_work_pop_single_and_slice() {
     }
 
     drop(as_prod);
-    assert!(!as_cons.is_prod_alive());
+    assert_eq!(as_cons.alive_iters(), 2);
     drop(as_work);
-    assert!(!as_cons.is_work_alive());
+    assert_eq!(as_cons.alive_iters(), 1);
 }

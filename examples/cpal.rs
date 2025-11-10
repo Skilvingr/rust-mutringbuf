@@ -116,9 +116,9 @@ fn main() {
     let work = worker.join().unwrap();
 
     drop(in_stream); // This also drops prod
-    assert!(!work.is_prod_alive());
+    assert_eq!(work.alive_iters(), 2);
     drop(out_stream); // This also drops cons
-    assert!(!work.is_cons_alive());
+    assert_eq!(work.alive_iters(), 1);
     drop(work); // Drop work
 
     // => All iterators are now dropped, so buf gets dropped as well.

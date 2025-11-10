@@ -15,14 +15,15 @@ documentation = "https://docs.rs/mutringbuf"
 
 [features]
 default = ["alloc"]
-alloc = []
-vmem = ["alloc", "dep:libc"]
-async = ["dep:futures"]
+alloc = [] # Enable support for `alloc` crate
+vmem = ["alloc", "dep:libc"] # Enable support for vmem optimisation
+async = ["dep:futures"] # Enable support for async buffers
+thread_sanitiser = [] # [DEV ONLY] Avoid false positives when testing with ThreadSanitizer
 
 [dependencies]
 crossbeam-utils = { version = "0.8", default-features = false }
 futures = { version = "0.3", optional = true, default-features = false }
-libc = { version = "0.2", optional = true }
+libc = { version = "0.2", optional = true, default-features = false }
 
 [dev-dependencies]
 divan = "0.1.21"
@@ -59,3 +60,7 @@ harness = false
 name = "iai_base"
 path = "benches/iai_benches/iai_base.rs"
 harness = false
+
+[profile.dev]
+opt-level = 0
+debug = true
