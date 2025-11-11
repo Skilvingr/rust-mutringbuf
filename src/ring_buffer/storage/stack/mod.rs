@@ -3,10 +3,11 @@
 
 pub mod rb;
 
-use core::ops::Index;
+use core::ops::{Deref, Index};
 
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::{MRBIndex, Storage};
+use crate::ring_buffer::wrappers::buf_ref::RefDropManager;
 use crate::{MutRB, UnsafeSyncCell};
 
 /// Stack-allocated storage.
@@ -73,17 +74,30 @@ impl<T, const N: usize> Storage for StackStorage<T, N> {
 }
 
 /// Trait needed to call `split` method on a stack-allocated buffer.
-pub trait StackSplit<B: MutRB> {
+pub trait StackSplit {
+    type B: MutRB;
+
     /// Borrows the buffer, yielding two iterators. See:
     /// - [`ProdIter`];
     /// - [`ConsIter`].
-    fn split(&'_ mut self) -> (ProdIter<'_, B>, ConsIter<'_, B, false>);
+    fn split(
+        &'_ mut self,
+    ) -> (
+        ProdIter<'_, impl Deref<Target = Self::B> + RefDropManager>,
+        ConsIter<'_, Self::B, impl Deref<Target = Self::B> + RefDropManager, false>,
+    );
 
     /// Borrows the buffer, yielding three iterators. See:
     /// - [`ProdIter`];
     /// - [`WorkIter`];
     /// - [`ConsIter`].
-    fn split_mut(&'_ mut self) -> (ProdIter<'_, B>, WorkIter<'_, B>, ConsIter<'_, B, true>);
+    fn split_mut(
+        &'_ mut self,
+    ) -> (
+        ProdIter<'_, impl Deref<Target = Self::B> + RefDropManager>,
+        WorkIter<'_, Self::B, impl Deref<Target = Self::B> + RefDropManager>,
+        ConsIter<'_, Self::B, impl Deref<Target = Self::B> + RefDropManager, true>,
+    );
 }
 
 pub mod test {

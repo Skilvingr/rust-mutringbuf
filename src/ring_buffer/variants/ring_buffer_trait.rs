@@ -13,7 +13,7 @@ pub trait MutRB:
 
 pub(crate) trait PrivateIterManager {
     fn set_alive_iters(&self, count: u8);
-    fn drop_iter(&self) -> u8;
+    fn decrement_iter_counter(&self) -> u8;
     fn acquire_fence(&self);
 }
 

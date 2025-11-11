@@ -1,9 +1,9 @@
-use crate::iterators::sync_iterators::detached::Detached;
+use crate::iterators::Detached;
 use crate::ring_buffer::storage::MRBIndex;
 use crate::ring_buffer::variants::ring_buffer_trait::{IterManager, StorageManager};
-use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::{MutRB, Storage, UnsafeSyncCell};
 use core::mem::transmute;
+use core::ops::Deref;
 use core::slice;
 
 /// Mutable slice returned by slice-specialised functions.
@@ -151,7 +151,7 @@ pub trait MRBIterator: PrivateMRBIterator<Self::Item> {
 }
 
 pub(crate) trait PrivateMRBIterator<T> {
-    fn buffer(&self) -> &BufRef<'_, impl MutRB<Item = T>>;
+    fn buffer(&self) -> &impl Deref<Target = impl MutRB<Item = T>>;
     fn _available(&mut self) -> usize;
     fn cached_avail(&self) -> usize;
     fn set_cached_avail(&mut self, avail: usize);
@@ -332,7 +332,7 @@ pub(crate) mod iter_macros {
     macro_rules! private_impl {
         () => {
             #[inline]
-            fn buffer(&self) -> &BufRef<'_, impl MutRB<Item = T>> {
+            fn buffer(&self) -> &impl Deref<Target = impl MutRB<Item = T>> {
                 &self.buffer
             }
 

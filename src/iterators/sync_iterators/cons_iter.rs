@@ -1,9 +1,12 @@
+use core::marker::PhantomData;
+use core::ops::Deref;
+
 #[allow(unused_imports)]
 use crate::iterators::ProdIter;
 use crate::iterators::iterator_trait::{MRBIterator, NonMutableSlice, PrivateMRBIterator};
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
-use crate::ring_buffer::wrappers::buf_ref::BufRef;
+use crate::ring_buffer::wrappers::buf_ref::RefDropManager;
 
 #[doc = r##"
 Iterator used to pop data from the buffer.
@@ -11,21 +14,33 @@ Iterator used to pop data from the buffer.
 When working with types which implement both [`Copy`] and [`Clone`] traits, `copy` methods should be
 preferred over `clone` methods.
 "##]
-pub struct ConsIter<'buf, B: MutRB, const W: bool> {
+pub struct ConsIter<'buf, B: MutRB, R: Deref<Target = B> + RefDropManager, const W: bool> {
     index: usize,
     cached_avail: usize,
-    buffer: BufRef<'buf, B>,
+    buffer: R,
+    phantom: PhantomData<&'buf ()>,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T, const W: bool> Send for ConsIter<'_, B, W> {}
+unsafe impl<
+    B: ConcurrentRB + MutRB<Item = T>,
+    R: Deref<Target = B> + RefDropManager,
+    T,
+    const W: bool,
+> Send for ConsIter<'_, B, R, W>
+{
+}
 
-impl<B: MutRB + IterManager, const W: bool> Drop for ConsIter<'_, B, W> {
+impl<B: MutRB + IterManager, R: Deref<Target = B> + RefDropManager, const W: bool> Drop
+    for ConsIter<'_, B, R, W>
+{
     fn drop(&mut self) {
         self.buffer.drop_iter();
     }
 }
 
-impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<'_, B, W> {
+impl<B: MutRB<Item = T>, R: Deref<Target = B> + RefDropManager, T, const W: bool>
+    PrivateMRBIterator<T> for ConsIter<'_, B, R, W>
+{
     #[inline]
     fn _available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -60,16 +75,21 @@ impl<B: MutRB<Item = T>, T, const W: bool> PrivateMRBIterator<T> for ConsIter<'_
     private_impl!();
 }
 
-impl<B: MutRB<Item = T>, T, const W: bool> MRBIterator for ConsIter<'_, B, W> {
+impl<B: MutRB<Item = T>, R: Deref<Target = B> + RefDropManager, T, const W: bool> MRBIterator
+    for ConsIter<'_, B, R, W>
+{
     type Item = T;
 }
 
-impl<'buf, B: MutRB<Item = T>, T, const W: bool> ConsIter<'buf, B, W> {
-    pub(crate) fn new(value: BufRef<'buf, B>) -> Self {
+impl<'buf, B: MutRB<Item = T>, R: Deref<Target = B> + RefDropManager, T, const W: bool>
+    ConsIter<'buf, B, R, W>
+{
+    pub(crate) fn new(value: R) -> Self {
         Self {
             index: 0,
             buffer: value,
             cached_avail: 0,
+            phantom: PhantomData,
         }
     }
 

@@ -5,72 +5,72 @@ use core::marker::PhantomData;
 use core::ops::Deref;
 use core::ptr::NonNull;
 
-pub struct BufRef<'buf, B> {
+pub struct BufRef<'buf, B, const NEEDS_DROP: bool> {
     inner: NonNull<B>,
-    needs_drop: bool,
     _phantom: PhantomData<&'buf ()>,
 }
 
-#[allow(private_bounds)]
-impl<'buf, B: IterManager + PrivateIterManager> BufRef<'buf, B> {
-    #[cfg(feature = "alloc")]
-    pub(crate) fn new(buf: B) -> Self {
+impl<'buf, B: IterManager + PrivateIterManager, const NEEDS_DROP: bool>
+    BufRef<'buf, B, NEEDS_DROP>
+{
+    #[cfg(any(not(feature = "vmem"), doc))]
+    pub(crate) fn from_ref(buf: &'buf mut B) -> BufRef<'buf, B, false> {
+        BufRef::<'buf, B, false> {
+            inner: NonNull::from(buf),
+            _phantom: Default::default(),
+        }
+    }
+
+    pub(crate) fn new(buf: B) -> BufRef<'buf, B, true> {
         let x = Box::new(buf);
 
-        Self {
+        BufRef::<'buf, B, true> {
             inner: NonNull::new(Box::into_raw(x)).unwrap(),
-            needs_drop: true,
-            _phantom: Default::default(),
-        }
-    }
-
-    #[cfg(feature = "alloc")]
-    #[inline(never)]
-    fn try_drop(&mut self) {
-        if self.needs_drop {
-            unsafe {
-                let _ = Box::from_raw(self.inner.as_ptr());
-            }
-        }
-    }
-
-    #[cfg(not(feature = "vmem"))]
-    pub(crate) fn from_ref(buf: &'buf mut B) -> Self {
-        Self {
-            inner: NonNull::from(buf),
-            needs_drop: false,
             _phantom: Default::default(),
         }
     }
 }
 
-impl<B> Clone for BufRef<'_, B> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner,
-            needs_drop: self.needs_drop,
-            _phantom: Default::default(),
-        }
-    }
+pub(crate) trait RefDropManager {
+    fn drop_iter(&mut self);
+    fn try_drop(&mut self);
 }
-
-impl<B> Deref for BufRef<'_, B> {
-    type Target = B;
-
-    fn deref(&self) -> &Self::Target {
-        unsafe { self.inner.as_ref() }
-    }
-}
-
-#[allow(private_bounds)]
-impl<B: IterManager + PrivateIterManager> BufRef<'_, B> {
-    pub(crate) fn drop_iter(&mut self) {
-        if unsafe { self.inner.as_ref().drop_iter() } != 1 {
+impl<B: IterManager + PrivateIterManager, const NEEDS_DROP: bool> RefDropManager
+    for BufRef<'_, B, NEEDS_DROP>
+{
+    fn drop_iter(&mut self) {
+        if unsafe { self.inner.as_ref().decrement_iter_counter() } != 1 {
             return;
         }
 
         self.acquire_fence();
 
         self.try_drop();
+    }
+
+    #[inline(never)]
+    fn try_drop(&mut self) {
+        if NEEDS_DROP {
+            unsafe {
+                let _ = Box::from_raw(self.inner.as_ptr());
+            }
+        }
+    }
+}
+
+impl<B, const NEEDS_DROP: bool> Clone for BufRef<'_, B, NEEDS_DROP> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner,
+            _phantom: Default::default(),
+        }
+    }
+}
+
+impl<B, const NEEDS_DROP: bool> Deref for BufRef<'_, B, NEEDS_DROP> {
+    type Target = B;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { self.inner.as_ref() }
     }
 }

@@ -44,18 +44,60 @@ impl<S: Storage<Item = T>, T> MutRB for AsyncMutRingBuf<S> {
 
 impl<S: Storage<Item = T>, T> ConcurrentRB for AsyncMutRingBuf<S> {}
 
-impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
+#[cfg(any(not(feature = "vmem"), doc))]
+impl<'buf, T, const N: usize> AsyncMutRingBuf<crate::StackStorage<T, N>> {
+    /// Consumes the buffer, yielding two async iterators. See:
+    /// - [`AsyncProdIter`];
+    /// - [`AsyncConsIter`].
+    pub fn split(
+        &mut self,
+    ) -> (
+        AsyncProdIter<crate::StackStorage<T, N>, false>,
+        AsyncConsIter<crate::StackStorage<T, N>, false>,
+    ) {
+        self.set_alive_iters(2);
+
+        let r = BufRef::from_ref(self);
+        (
+            AsyncProdIter::from_sync(ProdIter::new(r.clone()), r.clone()),
+            AsyncConsIter::from_sync(ConsIter::new(r.clone()), r),
+        )
+    }
+
     /// Consumes the buffer, yielding three async iterators. See:
     /// - [`AsyncProdIter`];
     /// - [`AsyncWorkIter`];
     /// - [`AsyncConsIter`].
-    #[cfg(any(feature = "alloc", doc))]
+    pub fn split_mut(
+        &mut self,
+    ) -> (
+        AsyncProdIter<crate::StackStorage<T, N>, true>,
+        AsyncWorkIter<crate::StackStorage<T, N>>,
+        AsyncConsIter<crate::StackStorage<T, N>, true>,
+    ) {
+        self.set_alive_iters(3);
+
+        let r = BufRef::from_ref(self);
+        (
+            AsyncProdIter::from_sync(ProdIter::new(r.clone()), r.clone()),
+            AsyncWorkIter::from_sync(WorkIter::new(r.clone()), r.clone()),
+            AsyncConsIter::from_sync(ConsIter::new(r.clone()), r),
+        )
+    }
+}
+
+#[cfg(any(feature = "alloc", doc))]
+impl<'buf, T> AsyncMutRingBuf<crate::HeapStorage<T>> {
+    /// Consumes the buffer, yielding three async iterators. See:
+    /// - [`AsyncProdIter`];
+    /// - [`AsyncWorkIter`];
+    /// - [`AsyncConsIter`].
     pub fn split_mut(
         self,
     ) -> (
-        AsyncProdIter<'buf, S, true>,
-        AsyncWorkIter<'buf, S>,
-        AsyncConsIter<'buf, S, true>,
+        AsyncProdIter<'buf, crate::HeapStorage<T>, true>,
+        AsyncWorkIter<'buf, crate::HeapStorage<T>>,
+        AsyncConsIter<'buf, crate::HeapStorage<T>, true>,
     ) {
         self.set_alive_iters(3);
 
@@ -70,44 +112,12 @@ impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
     /// Consumes the buffer, yielding two async iterators. See:
     /// - [`AsyncProdIter`];
     /// - [`AsyncConsIter`].
-    #[cfg(any(not(feature = "alloc"), doc))]
-    pub fn split(&mut self) -> (AsyncProdIter<S, false>, AsyncConsIter<S, false>) {
-        self.set_alive_iters(2);
-
-        let r = BufRef::from_ref(self);
-        (
-            AsyncProdIter::from_sync(ProdIter::new(r.clone())),
-            AsyncConsIter::from_sync(ConsIter::new(r)),
-        )
-    }
-
-    /// Consumes the buffer, yielding three async iterators. See:
-    /// - [`AsyncProdIter`];
-    /// - [`AsyncWorkIter`];
-    /// - [`AsyncConsIter`].
-    #[cfg(any(not(feature = "alloc"), doc))]
-    pub fn split_mut(
-        &mut self,
+    pub fn split(
+        self,
     ) -> (
-        AsyncProdIter<S, true>,
-        AsyncWorkIter<S>,
-        AsyncConsIter<S, true>,
+        AsyncProdIter<'buf, crate::HeapStorage<T>, false>,
+        AsyncConsIter<'buf, crate::HeapStorage<T>, false>,
     ) {
-        self.set_alive_iters(3);
-
-        let r = BufRef::from_ref(self);
-        (
-            AsyncProdIter::from_sync(ProdIter::new(r.clone())),
-            AsyncWorkIter::from_sync(WorkIter::new(r.clone())),
-            AsyncConsIter::from_sync(ConsIter::new(r)),
-        )
-    }
-
-    /// Consumes the buffer, yielding two async iterators. See:
-    /// - [`AsyncProdIter`];
-    /// - [`AsyncConsIter`].
-    #[cfg(any(feature = "alloc", doc))]
-    pub fn split(self) -> (AsyncProdIter<'buf, S, false>, AsyncConsIter<'buf, S, false>) {
         self.set_alive_iters(2);
 
         let r = BufRef::new(self);
@@ -116,7 +126,9 @@ impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
             AsyncConsIter::from_sync(ConsIter::new(r.clone()), r),
         )
     }
+}
 
+impl<'buf, S: Storage<Item = T> + 'buf, T> AsyncMutRingBuf<S> {
     pub(crate) fn _from(value: S) -> AsyncMutRingBuf<S> {
         assert!(value.len() > 0);
 
@@ -143,7 +155,7 @@ impl<S: Storage> PrivateIterManager for AsyncMutRingBuf<S> {
     }
 
     #[inline(always)]
-    fn drop_iter(&self) -> u8 {
+    fn decrement_iter_counter(&self) -> u8 {
         self.alive_iters.fetch_sub(1, Release)
     }
 

@@ -1,11 +1,15 @@
+use core::{marker::PhantomData, ops::Deref};
+
 #[cfg(doc)]
 use {crate::iterators::ConsIter, crate::iterators::Detached, core::mem::MaybeUninit};
 
-use crate::iterators::iterator_trait::{MRBIterator, MutableSlice, PrivateMRBIterator};
 use crate::iterators::{copy_from_slice_unchecked, private_impl};
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
-use crate::ring_buffer::wrappers::buf_ref::BufRef;
 use crate::ring_buffer::wrappers::unsafe_sync_cell::UnsafeSyncCell;
+use crate::{
+    iterators::iterator_trait::{MRBIterator, MutableSlice, PrivateMRBIterator},
+    ring_buffer::wrappers::buf_ref::RefDropManager,
+};
 
 #[doc = r##"
 Iterator used to push data into the buffer.
@@ -50,21 +54,27 @@ initialised memory.
 On the other hand, `*_init methods` always perform a check over the memory they are going to write and choose the proper way to
 deal it, even dropping the old value, if there is the need. So they are safe to use upon a possibly uninitialised block.
 "##]
-pub struct ProdIter<'buf, B: MutRB> {
+pub struct ProdIter<'buf, R: Deref<Target: MutRB> + RefDropManager> {
     index: usize,
     cached_avail: usize,
-    buffer: BufRef<'buf, B>,
+    buffer: R,
+    phantom: PhantomData<&'buf ()>,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for ProdIter<'_, B> {}
+unsafe impl<R: Deref<Target: MutRB<Item = T> + ConcurrentRB> + RefDropManager, T> Send
+    for ProdIter<'_, R>
+{
+}
 
-impl<B: MutRB + IterManager> Drop for ProdIter<'_, B> {
+impl<R: Deref<Target: MutRB> + RefDropManager> Drop for ProdIter<'_, R> {
     fn drop(&mut self) {
         self.buffer.drop_iter();
     }
 }
 
-impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'_, B> {
+impl<R: Deref<Target: MutRB<Item = T>> + RefDropManager, T> PrivateMRBIterator<T>
+    for ProdIter<'_, R>
+{
     #[inline]
     fn _available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -96,16 +106,17 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for ProdIter<'_, B> {
     private_impl!();
 }
 
-impl<B: MutRB<Item = T>, T> MRBIterator for ProdIter<'_, B> {
+impl<R: Deref<Target: MutRB> + RefDropManager, T> MRBIterator for ProdIter<'_, R> {
     type Item = T;
 }
 
-impl<'buf, B: MutRB<Item = T>, T> ProdIter<'buf, B> {
-    pub(crate) fn new(value: BufRef<'buf, B>) -> Self {
+impl<'buf, R: Deref<Target: MutRB<Item = T>> + RefDropManager, T> ProdIter<'buf, R> {
+    pub(crate) fn new(value: R) -> Self {
         Self {
             index: 0,
             buffer: value,
             cached_avail: 0,
+            phantom: PhantomData,
         }
     }
 

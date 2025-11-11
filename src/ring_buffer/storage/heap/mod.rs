@@ -3,11 +3,17 @@
 pub mod rb;
 pub mod vmem_helper;
 
+#[cfg(feature = "alloc")]
+use core::ops::Deref;
 use core::ops::Index;
 
+#[cfg(feature = "alloc")]
+use crate::MutRB;
+use crate::UnsafeSyncCell;
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::{MRBIndex, Storage};
-use crate::{MutRB, UnsafeSyncCell};
+#[cfg(feature = "alloc")]
+use crate::ring_buffer::wrappers::buf_ref::RefDropManager;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 
@@ -133,11 +139,18 @@ impl<T> Storage for HeapStorage<T> {
 
 /// Trait needed to call `split` method on a heap-allocated buffer.
 #[cfg(feature = "alloc")]
-pub trait HeapSplit<B: MutRB> {
+pub trait HeapSplit {
+    type B: MutRB;
+
     /// Consumes the buffer, yielding two iterators. See:
     /// - [`ProdIter`];
     /// - [`ConsIter`].
-    fn split<'buf>(self) -> (ProdIter<'buf, B>, ConsIter<'buf, B, false>);
+    fn split<'buf>(
+        self,
+    ) -> (
+        ProdIter<'buf, impl Deref<Target = Self::B> + RefDropManager>,
+        ConsIter<'buf, Self::B, impl Deref<Target = Self::B> + RefDropManager, false>,
+    );
 
     /// Consumes the buffer, yielding three iterators. See:
     /// - [`ProdIter`];
@@ -146,9 +159,9 @@ pub trait HeapSplit<B: MutRB> {
     fn split_mut<'buf>(
         self,
     ) -> (
-        ProdIter<'buf, B>,
-        WorkIter<'buf, B>,
-        ConsIter<'buf, B, true>,
+        ProdIter<'buf, impl Deref<Target = Self::B> + RefDropManager>,
+        WorkIter<'buf, Self::B, impl Deref<Target = Self::B> + RefDropManager>,
+        ConsIter<'buf, Self::B, impl Deref<Target = Self::B> + RefDropManager, true>,
     );
 }
 

@@ -1,9 +1,12 @@
+use core::marker::PhantomData;
+use core::ops::Deref;
+
 use crate::iterators::iterator_trait::{MRBIterator, PrivateMRBIterator};
 use crate::iterators::private_impl;
 #[allow(unused_imports)]
 use crate::iterators::sync_iterators::detached::Detached;
 use crate::ring_buffer::variants::ring_buffer_trait::{ConcurrentRB, IterManager, MutRB};
-use crate::ring_buffer::wrappers::buf_ref::BufRef;
+use crate::ring_buffer::wrappers::buf_ref::RefDropManager;
 
 #[doc = r##"
 Iterator used to mutate elements in-place.
@@ -18,21 +21,27 @@ in order to move the iterator.
 [`Self::advance`] updates a global iterator, which is read by the consumer to decide if it can move on.
 To avoid this [`Detached`] can be obtained by calling [`Self::detach`].
 "##]
-pub struct WorkIter<'buf, B: MutRB> {
+pub struct WorkIter<'buf, B: MutRB, R: Deref<Target = B> + RefDropManager> {
     pub(crate) index: usize,
     pub(crate) cached_avail: usize,
-    pub(crate) buffer: BufRef<'buf, B>,
+    pub(crate) buffer: R,
+    phantom: PhantomData<&'buf ()>,
 }
 
-unsafe impl<B: ConcurrentRB + MutRB<Item = T>, T> Send for WorkIter<'_, B> {}
+unsafe impl<B: ConcurrentRB + MutRB<Item = T>, R: Deref<Target = B> + RefDropManager, T> Send
+    for WorkIter<'_, B, R>
+{
+}
 
-impl<B: MutRB + IterManager> Drop for WorkIter<'_, B> {
+impl<B: MutRB + IterManager, R: Deref<Target = B> + RefDropManager> Drop for WorkIter<'_, B, R> {
     fn drop(&mut self) {
         self.buffer.drop_iter();
     }
 }
 
-impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'_, B> {
+impl<B: MutRB<Item = T>, R: Deref<Target = B> + RefDropManager, T> PrivateMRBIterator<T>
+    for WorkIter<'_, B, R>
+{
     #[inline]
     fn _available(&mut self) -> usize {
         let succ_idx = self.succ_index();
@@ -63,16 +72,19 @@ impl<B: MutRB<Item = T>, T> PrivateMRBIterator<T> for WorkIter<'_, B> {
     private_impl!();
 }
 
-impl<B: MutRB<Item = T>, T> MRBIterator for WorkIter<'_, B> {
+impl<B: MutRB<Item = T>, R: Deref<Target = B> + RefDropManager, T> MRBIterator
+    for WorkIter<'_, B, R>
+{
     type Item = T;
 }
 
-impl<'buf, B: MutRB<Item = T>, T> WorkIter<'buf, B> {
-    pub(crate) fn new(value: BufRef<'buf, B>) -> WorkIter<'buf, B> {
+impl<'buf, B: MutRB<Item = T>, R: Deref<Target = B> + RefDropManager, T> WorkIter<'buf, B, R> {
+    pub(crate) fn new(value: R) -> WorkIter<'buf, B, R> {
         Self {
             index: 0,
             buffer: value,
             cached_avail: 0,
+            phantom: PhantomData,
         }
     }
 

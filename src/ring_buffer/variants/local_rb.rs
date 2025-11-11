@@ -1,12 +1,13 @@
 use core::cell::UnsafeCell;
 use core::num::NonZeroUsize;
+use core::ops::Deref;
 
 use crate::iterators::{ConsIter, ProdIter, WorkIter};
 use crate::ring_buffer::storage::Storage;
 use crate::ring_buffer::variants::ring_buffer_trait::{
     IterManager, MutRB, PrivateIterManager, StorageManager,
 };
-use crate::ring_buffer::wrappers::buf_ref::BufRef;
+use crate::ring_buffer::wrappers::buf_ref::{BufRef, RefDropManager};
 #[cfg(feature = "alloc")]
 use crate::{HeapSplit, HeapStorage};
 #[cfg(not(feature = "vmem"))]
@@ -59,7 +60,7 @@ impl<S: Storage> PrivateIterManager for LocalMutRingBuf<S> {
         }
     }
 
-    fn drop_iter(&self) -> u8 {
+    fn decrement_iter_counter(&self) -> u8 {
         unsafe {
             let ret = *self.alive_iters.get();
             *self.alive_iters.get() -= 1;

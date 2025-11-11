@@ -1,5 +1,6 @@
 use core::cell::UnsafeCell;
 use core::num::NonZeroUsize;
+use core::ops::Deref;
 use core::sync::atomic::AtomicU8;
 use core::sync::atomic::AtomicUsize;
 use core::sync::atomic::Ordering::{Acquire, Release};
@@ -10,6 +11,7 @@ use crate::ring_buffer::variants::ring_buffer_trait::{
     ConcurrentRB, IterManager, MutRB, PrivateIterManager, StorageManager,
 };
 use crate::ring_buffer::wrappers::buf_ref::BufRef;
+use crate::ring_buffer::wrappers::buf_ref::RefDropManager;
 use crossbeam_utils::CachePadded;
 
 use crate::ring_buffer::storage::impl_splits::impl_splits;
@@ -63,7 +65,7 @@ impl<S: Storage> PrivateIterManager for ConcurrentMutRingBuf<S> {
     }
 
     #[inline(always)]
-    fn drop_iter(&self) -> u8 {
+    fn decrement_iter_counter(&self) -> u8 {
         self.alive_iters.fetch_sub(1, Release)
     }
 
