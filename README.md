@@ -11,6 +11,9 @@
 [tests-badge]: https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml/badge.svg
 [tests-url]: https://github.com/Skilvingr/rust-mutringbuf/actions/workflows/rust.yml
 
+>[!IMPORTANT]
+># This crate has been moved to https://github.com/Skilvingr/rust-oneringbuf. The new crate is also published on [crates.io](https://crates.io/crates/oneringbuf).
+
 A lock-free single-producer, single-consumer (SPSC) ring buffer with in-place mutability, asynchronous support,
 and virtual memory optimisation.
 

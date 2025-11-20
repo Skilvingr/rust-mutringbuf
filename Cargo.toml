@@ -2,7 +2,7 @@
 
 [package]
 name = "mutringbuf"
-version = "0.6.0"
+version = "1.0.0"
 edition = "2024"
 readme = "README.md"
 authors = ["Skilfingr <skilvingr@gmail.com>"]
